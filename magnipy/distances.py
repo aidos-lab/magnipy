@@ -138,30 +138,12 @@ def get_dist(X, metric="Lp", p=2, normalise_by_diameter=False, check_for_duplica
         A dataset whose rows are observations and columns are features.
     metric: str
         The distance metric to use. The distance function can be
-        'Lp' - a negative definite metric for p in [1,2] but only a quasi-metric for p in (0,1)
-        'isomap' - a metric
-        'braycurtis' - a metric on sets 
-        'canberra' - not a metric, triangle inequality fails
-        'chebyshev' - a metric
-        'cityblock' - a metric (Manhattan i.e. L1 distance)  
-        'correlation' - not a metric, triangle inequality fails
-        'cosine' - not a metric, triangle inequality and identity of indiscernibles fail
-        'dice' - not a metric??
-        'euclidean' - a negative definite metric
-        'hamming' - a metric on X a space of binary strings
-        'jaccard' - a metric on a sets
-        'jensenshannon' - a metrics on probability distributions
-        'kulczynski1' - not a metric??
-        'mahalanobis' - a pseudo-metric (identity of indiscernibles)
-        'matching' - a metric on X a space of binary strings
-        'minkowski' - a negative definite metric for p in [1,2] but only a quasi-metric for p in (0,1)
-        'rogerstanimoto' - not a metric??
-        'russellrao' - a metric??
-        'seuclidean' - not a metric??
-        'sokalmichener' - a metric??
-        'sokalsneath', - a metric??
-        'sqeuclidean' - not a metric, triangle inequality fails
-        'yule' - not a metric??
+        'Lp', 'isomap',
+        'braycurtis', 'canberra', 'chebyshev', 'cityblock', 'correlation',
+        'cosine', 'dice', 'euclidean', 'hamming', 'jaccard', 'jensenshannon',
+        'kulczynski1', 'mahalanobis', 'matching', 'minkowski',
+        'rogerstanimoto', 'russellrao', 'seuclidean', 'sokalmichener',
+        'sokalsneath', 'sqeuclidean', 'yule'.
     p: float
         Parameter for the Minkowski metric.
     normalise_by_diameter: bool
