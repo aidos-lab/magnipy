@@ -34,7 +34,7 @@ def distances_isomap(X, n_neighbors=12, p=2):
     isom = isomap.fit(X)
     return isom.dist_matrix_
 
-def distances_scipy(X, metric="cosine", p=p):
+def distances_scipy(X, metric="cosine", p=2):
     """
     Compute the distance matrix using scipy.spatial.distance.cdist.
 

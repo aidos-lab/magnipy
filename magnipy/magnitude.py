@@ -494,7 +494,7 @@ def compute_t_conv(D, target_value, method="cholesky"):
         if 1 > target_value:
             raise Exception("The target value needs to be larger than 1!")
         # TODO also check for duplicates
-    t_conv = guess_convergence_scale(X=D, comp_mag=comp_mag, target_value=target_value, guess=10)
+    t_conv = guess_convergence_scale(D=D, comp_mag=comp_mag, target_value=target_value, guess=10)
     return t_conv
 
 def get_scales(t_conv, n_ts=10, log_scale = False):
