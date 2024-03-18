@@ -34,7 +34,7 @@ def distances_isomap(X, n_neighbors=12, p=2):
     isom = isomap.fit(X)
     return isom.dist_matrix_
 
-def distances_scipy(X, metric="cosine", p=2):
+def distances_scipy(X, X2, metric="cosine", p=2):
     """
     Compute the distance matrix using scipy.spatial.distance.cdist.
 
@@ -61,10 +61,13 @@ def distances_scipy(X, metric="cosine", p=2):
     ----------
     .. [1] https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.distance.cdist.html
     """
-    dist = cdist(X, X, metric=metric, p=p)
+    if metric == 'minkowski':
+        dist = cdist(X, X2, metric=metric, p=p)
+    else:
+        dist = cdist(X, X2, metric=metric)
     return dist
 
-def distances_lp(X, p=2):
+def distances_lp(X, X2, p=2):
     """
     Compute the Lp distance matrix using scipy.spatial.distance_matrix.
 
@@ -84,7 +87,7 @@ def distances_lp(X, p=2):
     ----------
     .. [1] https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.distance_matrix.html#scipy.spatial.distance_matrix
     """
-    dist = distance_matrix(X, X, p=p)
+    dist = distance_matrix(X, X2, p=p)
     return dist
 
 def normalise_distances_by_diameter(D):
@@ -128,7 +131,7 @@ def remove_duplicates(X):
     #print(str(round(n)) + " distinct points in X")
     return X_unique#, indices, n
 
-def get_dist(X, metric="Lp", p=2, normalise_by_diameter=False, check_for_duplicates=True, n_neighbors=12):
+def get_dist(X, X2=None, metric="Lp", p=2, normalise_by_diameter=False, check_for_duplicates=True, n_neighbors=12):
     """
     Compute the distance matrix.
 
@@ -161,14 +164,21 @@ def get_dist(X, metric="Lp", p=2, normalise_by_diameter=False, check_for_duplica
     if check_for_duplicates:
         X = remove_duplicates(X)
 
+    if X2 is None:
+        X2 = X
+    else:
+        X2 = remove_duplicates(X2)
+        #X2 = X
+    #isinstance(X2, np.ndarray):
+    #    X2 = remove_duplicates(X2)
     #if metric == "cosine":
     #    dist = distances_cosine(X)
     if metric == "Lp":
-        dist = distances_lp(X, p=2)
+        dist = distances_lp(X, X2, p=2)
     elif metric == "isomap":
         dist = distances_isomap(X, n_neighbors=n_neighbors, p=p)
     else:
-        dist = distances_scipy(X, metric=metric, p=p)
+        dist = distances_scipy(X,X2, metric=metric, p=p)
 
     if normalise_by_diameter:
         dist = normalise_distances_by_diameter(dist)
