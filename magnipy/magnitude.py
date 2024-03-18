@@ -175,7 +175,7 @@ def magnitude_from_weights(weights):
     """
     return weights.sum(axis=0)
 
-def magnitude_weights(D, ts, mag_fn):
+def magnitude_weights(D, ts, mag_fn, one_point_property=True, perturb_singularities=True):
     ## TODO Make sure to reference and account for assuming the one point property!
     """
     Compute the magnitude weights from a distance matrix across a fixed choice of scales. 
@@ -208,11 +208,15 @@ def magnitude_weights(D, ts, mag_fn):
     """
     n=D.shape[0]
     weights = np.ones(shape=(n, len(ts)))/n
+    
     for i, t in enumerate(ts):
         # see above loop
         if t==0:
-            weights[:,i] = np.ones(n)/n
-            continue
+            if one_point_property:
+                weights[:,i] = np.ones(n)/n
+            else:
+                weights[:, i] = np.full((n,), np.nan)
+                #raise Exception("We cannot compute magnitude at t=0 unless we assume the one point property!")
         else:
             Z = np.exp(-t * D)
             # if checksingularity():
@@ -220,12 +224,16 @@ def magnitude_weights(D, ts, mag_fn):
             try:
                 weights[:,i] = (mag_fn(Z))
             except Exception as e:
-                print(f'Exception: {e} for t: {t} perturbing matrix')
-                Z_new = Z + 0.01 * np.identity(n=n)  # perturb similarity mtx to invert
-                weights[:,i] = (mag_fn(Z_new))
+                if perturb_singularities:
+                    print(f'Exception: {e} for t: {t} perturbing matrix')
+                    Z_new = Z + 0.01 * np.identity(n=n)  # perturb similarity mtx to invert
+                    weights[:,i] = (mag_fn(Z_new))
+                else:
+                    raise Exception(f'Exception: {e} for t: {t}')
     return weights # np.array(
 
-def magnitude_from_distances(D, ts=np.arange(0.01, 5, 0.01), method="cholesky", get_weights=False):
+def magnitude_from_distances(D, ts=np.arange(0.01, 5, 0.01), method="cholesky", get_weights=False,
+                              one_point_property=True, perturb_singularities=True):
     """
     Compute the magnitude function of magnitude weights from a distance matrix
     across a fixed choice of scales.
@@ -273,7 +281,7 @@ def magnitude_from_distances(D, ts=np.arange(0.01, 5, 0.01), method="cholesky", 
             mag_fn = weights_pinv
         else:
             mag_fn = weights_naive
-        weights = magnitude_weights(D, ts, mag_fn)
+        weights = magnitude_weights(D, ts, mag_fn, one_point_property=one_point_property, perturb_singularities=perturb_singularities)
     
     if get_weights:
         return weights
@@ -281,7 +289,8 @@ def magnitude_from_distances(D, ts=np.arange(0.01, 5, 0.01), method="cholesky", 
         return magnitude_from_weights(weights)
 
 def compute_magnitude_until_convergence(D, ts=None, target_value=None, n_ts=10, 
-                                        log_scale = False, method="cholesky", get_weights=False):
+                                        log_scale = False, method="cholesky", get_weights=False, 
+                                        one_point_property=True, perturb_singularities=True):
     """
     Compute the magnitude function of magnitude weights from a distance matrix 
     either across a fixed choice of scales 
@@ -324,13 +333,14 @@ def compute_magnitude_until_convergence(D, ts=None, target_value=None, n_ts=10,
         raise Exception("D must be symmetric.")
     if ts is None:
         t_conv = compute_t_conv(D, target_value=target_value, method=method)
-        ts = get_scales(t_conv, n_ts, log_scale = log_scale)
+        ts = get_scales(t_conv, n_ts, log_scale = log_scale, one_point_property=one_point_property)
         #print(f"Evaluate magnitude at {self._n_ts} scales between 0 and the approximate convergence scale {self._t_conv}")
-    return magnitude_from_distances(D, ts, method=method, get_weights=get_weights), ts
+    return magnitude_from_distances(D, ts, method=method, get_weights=get_weights, one_point_property=one_point_property,
+                                     perturb_singularities=perturb_singularities), ts
 
 def compute_magnitude(X, ts=None, target_value=None, n_ts=10, log_scale = False, method="cholesky", 
                         get_weights=False, metric="Lp", p=2, normalise_by_diameter=False, 
-                        n_neighbors=12):
+                        n_neighbors=12, one_point_property=True, perturb_singularities=True):
     """
     Compute the magnitude function of magnitude weights given a dataset 
     either across a fixed choice of scales 
@@ -386,7 +396,8 @@ def compute_magnitude(X, ts=None, target_value=None, n_ts=10, log_scale = False,
     """
     D = get_dist(X, p=p, metric=metric, normalise_by_diameter=normalise_by_diameter, n_neighbors=n_neighbors)
     magnitude, ts = compute_magnitude_until_convergence(D, ts=ts, n_ts=n_ts, method=method, 
-                                                        log_scale = log_scale, get_weights=get_weights)
+                                                        log_scale = log_scale, get_weights=get_weights, 
+                                                        one_point_property=one_point_property, perturb_singularities=perturb_singularities)
     #compute_magnitude_from_distances(D, ts=ts, method=method, get_weights=get_weights)
     return magnitude, ts
 
@@ -485,7 +496,7 @@ def compute_t_conv(D, target_value, method="cholesky"):
         arXiv preprint arXiv:2311.16054.
     """
     def comp_mag(X, ts):
-        return magnitude_from_distances(X, ts, method=method)
+        return magnitude_from_distances(X, ts, method=method, one_point_property=True, perturb_singularities=True)
     if target_value is None:
         target_value=0.95*D.shape[0]
     else:
@@ -497,7 +508,7 @@ def compute_t_conv(D, target_value, method="cholesky"):
     t_conv = guess_convergence_scale(D=D, comp_mag=comp_mag, target_value=target_value, guess=10)
     return t_conv
 
-def get_scales(t_conv, n_ts=10, log_scale = False):
+def get_scales(t_conv, n_ts=10, log_scale = False, one_point_property=True):
     """
     Choose a fixed number of scale parameters 
     between zero and the approximated convergence scale 
@@ -518,10 +529,16 @@ def get_scales(t_conv, n_ts=10, log_scale = False):
     ts : array-like, shape (`n_ts`, )
         A vector of scaling parameters.
     """
-    if log_scale:
-        ts_log = np.geomspace(0.01, t_conv, n_ts) #np.log(t_conv)
-        ts=[0] + [i for i in ts_log[1:]]
-        ts=np.array(ts)
+    if one_point_property:
+        if log_scale:
+            ts_log = np.geomspace(t_conv/n_ts, t_conv, n_ts-1) #np.log(t_conv)
+            ts=[0] + [i for i in ts_log]
+            ts=np.array(ts)
+        else:
+            ts = np.linspace(0, t_conv, n_ts)
     else:
-        ts = np.linspace(0, t_conv, n_ts)
+        if log_scale:
+            ts = np.geomspace(t_conv/n_ts, t_conv, n_ts)
+        else:
+            ts = np.linspace(t_conv/n_ts, t_conv, n_ts)
     return ts
