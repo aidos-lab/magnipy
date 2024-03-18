@@ -44,7 +44,7 @@ def area_under_curve(magnitude, ts, integration="trapz", absolute_area=True, sca
     return area
 
 def mag_diff(magnitude, ts, D, magnitude2, ts2, D2, method="cholesky", t_cut=None, exact=False, 
-            integration="trapz", absolute_area=True, scale=True, plot=False):
+            integration="trapz", absolute_area=True, scale=True, plot=False, name=""):
     """
     Compute the difference between two magnitude functions via the area 
     between these functions as a summary of the difference in magnitude 
@@ -97,14 +97,14 @@ def mag_diff(magnitude, ts, D, magnitude2, ts2, D2, method="cholesky", t_cut=Non
 
     area = area_under_curve(ts=ts_list, magnitude=diff_of_interpolated_vectors, integration=integration, absolute_area=absolute_area, scale=scale)
     if plot:
-        plt.plot(ts_list, diff_of_interpolated_vectors, label="difference between magnitude functions")
+        plt.plot(ts_list, diff_of_interpolated_vectors, label="difference between magnitude functions "+name)
         plt.xlabel("t")
         plt.ylabel("difference between magnitude functions")
         plt.title(f"MagDiff {round(area,2)}")
     return area
 
 def mag_area(magnitude, ts, D=None, t_cut=None, integration="trapz", #normalise_by_cardinality=False, 
-            absolute_area=True, scale=True, plot=False):
+            absolute_area=True, scale=True, plot=False, name=""):
     """
     Compute the area under a magnitude function as a summary of magnitude 
     i.e. diversity across multiple scales.
@@ -141,14 +141,14 @@ def mag_area(magnitude, ts, D=None, t_cut=None, integration="trapz", #normalise_
         arXiv preprint arXiv:2311.16054.
     """
     if t_cut is not None:
-        magnitude, ts = cut_until_scale(ts, magnitude, t_cut, D=D, method="cholesky")
+        magnitude, ts = cut_until_scale(ts=ts, magnitude=magnitude, t_cut=t_cut, D=D, method="cholesky")
     area = area_under_curve(ts=ts, magnitude=magnitude, integration=integration, absolute_area=absolute_area, scale=scale)
     
     #if normalise_by_cardinality:
     #    area = area / D.shape[0]
 
     if plot:
-        plt.plot(ts, magnitude, label="magnitude function")
+        plt.plot(ts, magnitude, label="magnitude function "+name)
         plt.xlabel("t")
         plt.ylabel("magnitude")
         plt.title(f"MagArea {round(area,2)}")

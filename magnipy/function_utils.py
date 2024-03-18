@@ -230,13 +230,13 @@ def diff_of_functions(mag, ts, D, mag2, ts2, D2, exact=False, method="cholesky",
 def sum_of_functions(mag, ts, D, mag2, ts2, D2, exact=False, method="cholesky", t_cut=None):
     return combine_functions(mag, ts, D, mag2, ts2, D2, exact=exact, method=method, t_cut=t_cut, addition=True)
 
-def plot_magnitude_function(mag, ts):
-    plt.plot(mag, ts, label="magnitude function")
+def plot_magnitude_function(mag, ts, name=""):
+    plt.plot(mag, ts, label="magnitude function "+name)
     plt.xlabel("t")
     plt.ylabel("magnitude function")
 
-def plot_magnitude_dimension_profile(mag_dim, ts, log_scale=False):
-    plt.plot(ts, mag_dim, label="magnitude dimension profile")
+def plot_magnitude_dimension_profile(mag_dim, ts, log_scale=False, name=""):
+    plt.plot(ts, mag_dim, label="magnitude dimension profile "+name)
     if log_scale:
         plt.xlabel("log(t)")
     else:

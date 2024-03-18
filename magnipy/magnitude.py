@@ -395,7 +395,7 @@ def compute_magnitude(X, ts=None, target_value=None, n_ts=10, log_scale = False,
         arXiv preprint arXiv:2311.16054.
     """
     D = get_dist(X, p=p, metric=metric, normalise_by_diameter=normalise_by_diameter, n_neighbors=n_neighbors)
-    magnitude, ts = compute_magnitude_until_convergence(D, ts=ts, n_ts=n_ts, method=method, 
+    magnitude, ts = compute_magnitude_until_convergence(D, ts=ts, n_ts=n_ts, method=method, target_value=target_value,
                                                         log_scale = log_scale, get_weights=get_weights, 
                                                         one_point_property=one_point_property, perturb_singularities=perturb_singularities)
     #compute_magnitude_from_distances(D, ts=ts, method=method, get_weights=get_weights)
