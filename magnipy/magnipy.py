@@ -1,8 +1,8 @@
-from magnitude import compute_t_conv, get_scales, magnitude_from_distances, compute_magnitude_until_convergence, magnitude_from_weights
+from magnitude import compute_t_conv, get_scales, scale_when_scattered, compute_magnitude_until_convergence, magnitude_from_weights
 from magnitude_dimension import magitude_dimension_profile, magnitude_dimension, magnitude_dimension_profile_exact
 from distances import get_dist
 from summaries import mag_area, mag_diff
-from function_utils import diff_of_functions, sum_of_functions, plot_magnitude_function, plot_magnitude_dimension_profile
+from function_utils import diff_of_functions, sum_of_functions, plot_magnitude_function, plot_magnitude_dimension_profile, cut_until_scale, cut_ts
 
 class Magnipy:
     def __init__(self, X, ts=None, h=None, target_value=None, n_ts=10, log_scale = True, method="cholesky",
@@ -40,6 +40,7 @@ class Magnipy:
         self.__magnitude_dimension = None
         self.__magnitude_area = None
         self.__name=name
+        self.__t_scattered = None
 
     def get_magnitude_weights(self):
         if (self.__weights is None) | self.__recompute:
@@ -99,7 +100,7 @@ class Magnipy:
             self.__ts = get_scales(self.__t_conv, self.__n_ts, log_scale = self.__log_scale, one_point_property = self.__one_point_property)
         return self.__ts
     
-    def change_scales(self, ts):
+    def _change_scales(self, ts):
         self.__ts = ts
         self.__magnitude = None
         self.__magnitude_dimension_profile = None
@@ -107,6 +108,24 @@ class Magnipy:
         self.__magnitude_area = None
         self.__weights = None
         self.__ts_dim = None
+        #self.__recompute = True
+
+    def _cut_until_scale(self, t_cut):
+        if self.__magnitude is not None:
+            self.__magnitude, self.__ts = cut_until_scale(self.__ts, self.__magnitude, t_cut=t_cut, D=self.__D, method=self.__method)
+        elif self.__ts is not None:
+            self.__ts = cut_ts(self.__ts, t_cut)
+        #self.__t_cut = t_cut
+        #self.__magnitude = None
+        self.__magnitude_area = None
+        self.__magnitude_dimension = None
+        #self.__magnitude_dimension_profile = None
+        if self.__magnitude_dimension_profile is not None:
+            self.__magnitude_dimension_profile, self.__ts_dim = cut_until_scale(self.__ts_dim, self.__magnitude_dimension_profile, t_cut=t_cut, D=None, method=self.__method)
+        if self.__weights is not None:
+            self.__weights = self.__weights[:len()]
+        #self.__weights = None
+        #self.__ts_dim = None
         #self.__recompute = True
 
     def get_magnitude_dimension(self):
@@ -158,3 +177,8 @@ class Magnipy:
         #mag_diff = combined.get_magnitude_area(t_cut=t_cut, integration=integration, #normalise_by_cardinality=False, 
         #    absolute_area=absolute_area, scale=scale)
         return mag_difference
+    
+    def _scale_when_scattered(self):
+        if (self.__t_scattered is None) | self.__recompute:
+            self.__t_scattered = scale_when_scattered(self.__D)
+        return self.__t_scattered

@@ -3,9 +3,11 @@ name = "magnipy"
 version = "0.1.0"
 description = "A framework for computing the magnitude of a metric space."
 authors = ["LimbeckKat <katharina.limbeck@helmholtz-munich.de>"]
+repository="https://github.com/aidos-lab/magnipy"
+keywords = ["metric space magnitude"]
 license = "BSD-3-Clause"
 readme = "README.md"
-include = ["README.md"]
+include = ["README.md", "LICENSE"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
@@ -15,6 +17,11 @@ matplotlib = "^3.8.3"
 scikit-learn = "^1.4.1.post1"
 ipykernel = "^6.29.3"
 
+[tool.poetry.dev-dependencies]
+pytest = "^3.0"
+
+[tool.poetry.scripts]
+magnipy = "magnipy.magnipy:Magnipy"
 
 [build-system]
 requires = ["poetry-core"]

@@ -542,3 +542,8 @@ def get_scales(t_conv, n_ts=10, log_scale = False, one_point_property=True):
         else:
             ts = np.linspace(t_conv/n_ts, t_conv, n_ts)
     return ts
+
+def scale_when_scattered(D, n=None):
+    if n is None:
+        n = D.shape[0]
+    return np.log(n - 1) / np.min(D[np.nonzero(D)])

@@ -4,6 +4,11 @@ from scipy.interpolate import interp1d
 from magnitude import magnitude_from_distances
 from matplotlib import pyplot as plt
 
+def cut_ts(ts, t_cut):
+    index_cut = np.searchsorted(ts, t_cut)
+    ts_new = np.concatenate((ts[:index_cut], [t_cut]))
+    return ts_new
+
 def cut_until_scale(ts, magnitude, t_cut, D=None, method="cholesky", kind = 'linear'):
     """
     Cut off a magnitude function at a specified cut-off scale.
