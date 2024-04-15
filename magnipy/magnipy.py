@@ -1,13 +1,14 @@
-from magnitude import compute_t_conv, get_scales, scale_when_scattered, compute_magnitude_until_convergence, magnitude_from_weights
+from magnitude import compute_t_conv, get_scales, scale_when_scattered, scale_when_almost_scattered, compute_magnitude_until_convergence, magnitude_from_weights
 from magnitude_dimension import magitude_dimension_profile, magnitude_dimension, magnitude_dimension_profile_exact
 from distances import get_dist
 from summaries import mag_area, mag_diff
 from function_utils import diff_of_functions, sum_of_functions, plot_magnitude_function, plot_magnitude_dimension_profile, cut_until_scale, cut_ts
+import numpy as np
 
 class Magnipy:
-    def __init__(self, X, ts=None, h=None, target_value=None, n_ts=10, log_scale = True, method="cholesky",
+    def __init__(self, X, ts=None, target_value=None, n_ts=10, log_scale = True, method="cholesky",
                  metric="Lp", p=2, one_point_property=True, 
-                 n_neighbors=12, exact=False, return_log_scale=False, perturb_singularities=True, recompute=False, name=""):	
+                 n_neighbors=12, return_log_scale=False, perturb_singularities=True, recompute=False, name=""):	
         self.__X = X
         self.__target_value = target_value
         if X is None:
@@ -19,7 +20,6 @@ class Magnipy:
             if target_value is None:
                 self.__target_value = 0.95* self.__D.shape[0]
         self.__ts = ts
-        self.__h = h
         self.__n_ts = n_ts
         self.__log_scale = log_scale
         self.__method = method
@@ -41,6 +41,13 @@ class Magnipy:
         self.__magnitude_area = None
         self.__name=name
         self.__t_scattered = None
+        self.__t_almost_scattered = None
+    
+    def get_dist(self):
+        return self.__D
+
+    def get_name(self):
+        return self.__name
 
     def get_magnitude_weights(self):
         if (self.__weights is None) | self.__recompute:
@@ -70,10 +77,10 @@ class Magnipy:
             _, _ = self.get_magnitude()
         plot_magnitude_function(self.__ts, self.__magnitude, name=self.__name)
     
-    def get_magnitude_dimension_profile(self, exact=False):
+    def get_magnitude_dimension_profile(self, exact=False, h=None):
         if (self.__magnitude_dimension_profile is None) | self.__recompute:
             if exact:
-                self.__magnitude_dimension_profile, self.__ts_dim = magnitude_dimension_profile_exact(self.__D, ts=self.__ts, h=None, target_value=self.__target_value, n_ts=self.__n_ts, 
+                self.__magnitude_dimension_profile, self.__ts_dim = magnitude_dimension_profile_exact(self.__D, ts=self.__ts, h=h, target_value=self.__target_value, n_ts=self.__n_ts, 
                                       return_log_scale=self.__return_log_scale, one_point_property=self.__one_point_property, method=self.__method, 
                                                             log_scale = self.__log_scale,)
             else:
@@ -100,8 +107,18 @@ class Magnipy:
             self.__ts = get_scales(self.__t_conv, self.__n_ts, log_scale = self.__log_scale, one_point_property = self.__one_point_property)
         return self.__ts
     
-    def _change_scales(self, ts):
-        self.__ts = ts
+    #def get_scales(self):
+    
+    def change_scales(self, ts=None, t_cut=None):
+        if ts is None:
+            if t_cut is None:
+                self.__ts = None
+                #raise Exception("A new evaluation interval or a cut-off scale need to be specified to change the evaluation scales!")
+            else:
+                self.__ts = get_scales(t_cut, self.__n_ts, log_scale = self.__log_scale, one_point_property = self.__one_point_property)
+                #print(self.__ts[-1])
+        else:
+            self.__ts = ts
         self.__magnitude = None
         self.__magnitude_dimension_profile = None
         self.__magnitude_dimension = None
@@ -128,7 +145,7 @@ class Magnipy:
         #self.__ts_dim = None
         #self.__recompute = True
 
-    def get_magnitude_dimension(self):
+    def get_magnitude_dimension(self, exact=False):
         if self.__magnitude_dimension_profile is None:
             _, _ = self.get_magnitude_dimension_profile()
         if (self.__magnitude_dimension is None) | self.__recompute:
@@ -173,7 +190,7 @@ class Magnipy:
         mag_difference = mag_diff(self.__magnitude, self.__ts, self.__D, other.__magnitude, other.__ts, other.__D,  method=self.__method, 
                                                                 exact=exact, t_cut=t_cut, integration=integration, 
                                                                 absolute_area=absolute_area, scale=scale, plot=plot, name=self.__name + " - "+other.__name)
-        #combined = self.__substract(other, t_cut=t_cut)
+        #combined i= self.__substract(other, t_cut=t_cut)
         #mag_diff = combined.get_magnitude_area(t_cut=t_cut, integration=integration, #normalise_by_cardinality=False, 
         #    absolute_area=absolute_area, scale=scale)
         return mag_difference
@@ -182,3 +199,8 @@ class Magnipy:
         if (self.__t_scattered is None) | self.__recompute:
             self.__t_scattered = scale_when_scattered(self.__D)
         return self.__t_scattered
+    
+    def _scale_when_almost_scattered(self, q=None):
+        if (self.__t_almost_scattered is None) | self.__recompute:
+            self.__t_almost_scattered = scale_when_almost_scattered(self.__D, n=self.__n, q=q)
+        return self.__t_almost_scattered

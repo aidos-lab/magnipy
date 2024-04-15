@@ -126,7 +126,7 @@ def remove_duplicates(X):
     n_new = X_unique.shape[0]
     n = X.shape[0]
     if n_new != n:
-        print("Out of the "+ str(round(n)) + " observations in X, only "+ str(round(n)) + " are unique.")
+        print("Out of the "+ str(round(n)) + " observations in X, only "+ str(round(n_new)) + " are unique.")
     #n=X_unique.shape[0]
     #print(str(round(n)) + " distinct points in X")
     return X_unique#, indices, n

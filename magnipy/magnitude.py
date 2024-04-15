@@ -547,3 +547,10 @@ def scale_when_scattered(D, n=None):
     if n is None:
         n = D.shape[0]
     return np.log(n - 1) / np.min(D[np.nonzero(D)])
+
+def scale_when_almost_scattered(D, n=None, q=None):
+    if n is None:
+        n = D.shape[0]
+    if q is None:
+        q=1/n
+    return np.log(n - 1) / np.quantile(D[np.nonzero(D)], q=q)
