@@ -6,7 +6,7 @@ from function_utils import diff_of_functions, sum_of_functions, plot_magnitude_f
 import numpy as np
 
 class Magnipy:
-    def __init__(self, X, ts=None, target_value=None, n_ts=10, log_scale = True, method="cholesky",
+    def __init__(self, X, ts=None, target_value=None, n_ts=10, log_scale = False, method="cholesky",
                  metric="Lp", p=2, one_point_property=True, 
                  n_neighbors=12, return_log_scale=False, perturb_singularities=True, recompute=False, name=""):	
         self.__X = X
@@ -201,6 +201,6 @@ class Magnipy:
         return self.__t_scattered
     
     def _scale_when_almost_scattered(self, q=None):
-        if (self.__t_almost_scattered is None) | self.__recompute:
-            self.__t_almost_scattered = scale_when_almost_scattered(self.__D, n=self.__n, q=q)
+        #if (self.__t_almost_scattered is None) | self.__recompute:
+        self.__t_almost_scattered = scale_when_almost_scattered(self.__D, n=self.__n, q=q)
         return self.__t_almost_scattered
