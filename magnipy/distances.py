@@ -167,14 +167,15 @@ def get_dist(X, X2=None, metric="Lp", p=2, normalise_by_diameter=False, check_fo
     if X2 is None:
         X2 = X
     else:
-        X2 = remove_duplicates(X2)
+        if check_for_duplicates:
+            X2 = remove_duplicates(X2)
         #X2 = X
     #isinstance(X2, np.ndarray):
     #    X2 = remove_duplicates(X2)
     #if metric == "cosine":
     #    dist = distances_cosine(X)
     if metric == "Lp":
-        dist = distances_lp(X, X2, p=2)
+        dist = distances_lp(X, X2, p=p)
     elif metric == "isomap":
         dist = distances_isomap(X, n_neighbors=n_neighbors, p=p)
     else:
@@ -183,25 +184,3 @@ def get_dist(X, X2=None, metric="Lp", p=2, normalise_by_diameter=False, check_fo
     if normalise_by_diameter:
         dist = normalise_distances_by_diameter(dist)
     return dist
-
-def scale_when_scattered(D):
-    """
-    Compute the scale after which a scaled space is guaranteed to be scattered.
-
-    Parameters
-    ----------
-    D : array_like, shape (`n_obs`, `n_obs`)
-        A matrix of distances.
-  
-    Returns
-    -------
-    t_scatterd : float
-        The scaling parameter at which the space is scattered.
-    
-    References
-    ----------
-    .. [1] Leinster, T., 2013. The magnitude of metric spaces. Documenta Mathematica, 18, pp.857-905.
-    """
-    n=D.shape[0]
-    t_scattered = np.log(n - 1) / np.min(D[np.nonzero(D)])
-    return t_scattered

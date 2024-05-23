@@ -1,6 +1,6 @@
 import numpy as np
-from magnitude import compute_t_conv, get_scales, magnitude_from_distances, compute_magnitude_until_convergence
-from distances import get_dist
+from magnipy.magnitude import compute_t_conv, get_scales, magnitude_from_distances, compute_magnitude_until_convergence
+from magnipy.distances import get_dist
 
 def compute_magnitude_dimension_profile(X, ts=None, h=None, target_value=None, n_ts=10, log_scale = True, method="cholesky",
                                        metric="Lp", p=2, normalise_by_diameter=False, one_point_property=False, 

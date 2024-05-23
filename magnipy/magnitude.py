@@ -4,7 +4,7 @@ from scipy.linalg import solve_triangular, solve
 from scipy.sparse.linalg import cg
 from krypy.linsys import LinearSystem , Cg
 from scipy.optimize import toms748
-from distances import get_dist
+from magnipy.distances import get_dist
 
 def weights_cholesky(Z):
     """
@@ -176,7 +176,6 @@ def magnitude_from_weights(weights):
     return weights.sum(axis=0)
 
 def magnitude_weights(D, ts, mag_fn, one_point_property=True, perturb_singularities=True):
-    ## TODO Make sure to reference and account for assuming the one point property!
     """
     Compute the magnitude weights from a distance matrix across a fixed choice of scales. 
     Whenever the similarity matrix is not invertible, a small amount of constant noise is added 
@@ -215,7 +214,7 @@ def magnitude_weights(D, ts, mag_fn, one_point_property=True, perturb_singularit
             if one_point_property:
                 weights[:,i] = np.ones(n)/n
             else:
-                weights[:, i] = np.full((n,), np.nan)
+                weights[:, i] = np.full((n,n), np.nan)
                 #raise Exception("We cannot compute magnitude at t=0 unless we assume the one point property!")
         else:
             Z = np.exp(-t * D)
@@ -265,7 +264,9 @@ def magnitude_from_distances(D, ts=np.arange(0.01, 5, 0.01), method="cholesky", 
     # TODO only check if not checked before
     if D.shape[0] != D.shape[1]:
         raise Exception("D must be symmetric.")
-        # TODO also check for duplicates
+    if D.shape[0]==1:
+        weights = np.ones(shape=(1,len(ts)))
+    
     if method=="krylov":
         weights = weights_from_distances_krylov(D, ts)
     elif method =="cg":
@@ -458,6 +459,9 @@ def guess_convergence_scale(D, comp_mag, target_value, guess=10):
         mag = comp_mag(W, ts=[x])
         return mag[0] - target_value
     
+    ### n/t =< Mag(t) =< t^n |A|
+    ### 1 =< Mag(t) * t/n
+    ### n/Mag(t) =< t #Meckes for Euclidean space
     lower_guess = 0
     f_guess = f(guess)
     while (f_guess<0):
@@ -495,6 +499,8 @@ def compute_t_conv(D, target_value, method="cholesky"):
         Metric Space Magnitude for Evaluating the Diversity of Latent Representations. 
         arXiv preprint arXiv:2311.16054.
     """
+    if D.shape[0] == 1:
+        raise Exception("We cannot find the convergence scale for a one point space!")
     def comp_mag(X, ts):
         return magnitude_from_distances(X, ts, method=method, one_point_property=True, perturb_singularities=True)
     if target_value is None:
@@ -502,8 +508,8 @@ def compute_t_conv(D, target_value, method="cholesky"):
     else:
         if target_value >= D.shape[0]:
             raise Exception("The target value needs to be smaller than the cardinality!")
-        if 1 > target_value:
-            raise Exception("The target value needs to be larger than 1!")
+        if 0 >= target_value:
+            raise Exception("The target value needs to be larger than 0!")
         # TODO also check for duplicates
     t_conv = guess_convergence_scale(D=D, comp_mag=comp_mag, target_value=target_value, guess=10)
     return t_conv
@@ -544,11 +550,42 @@ def get_scales(t_conv, n_ts=10, log_scale = False, one_point_property=True):
     return ts
 
 def scale_when_scattered(D, n=None):
+    """
+    Compute the scale after which a scaled space is guaranteed to be scattered.
+
+    Parameters
+    ----------
+    D : array_like, shape (`n_obs`, `n_obs`)
+        A matrix of distances.
+  
+    Returns
+    -------
+    t_scatterd : float
+        The scaling parameter at which the space is scattered.
+    
+    References
+    ----------
+    .. [1] Leinster, T., 2013. The magnitude of metric spaces. Documenta Mathematica, 18, pp.857-905.
+    """
     if n is None:
         n = D.shape[0]
     return np.log(n - 1) / np.min(D[np.nonzero(D)])
 
 def scale_when_almost_scattered(D, n=None, q=None):
+    """
+    Compute the scale after which a scaled space is almost scattered.
+
+    Parameters
+    ----------
+    D : array_like, shape (`n_obs`, `n_obs`)
+        A matrix of distances.
+    q : float
+        The quantile to compute. Must be between 0 and 1.
+    Returns
+    -------
+    t_scatterd : float
+        The scaling parameter at which the space is almost scattered.
+    """
     if n is None:
         n = D.shape[0]
     if q is None:

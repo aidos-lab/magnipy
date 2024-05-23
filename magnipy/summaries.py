@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.integrate import simpson, trapz
-from function_utils import diff_of_functions, cut_until_scale
+from magnipy.function_utils import diff_of_functions, cut_until_scale
 from matplotlib import pyplot as plt
 
 def area_under_curve(magnitude, ts, integration="trapz", absolute_area=True, scale=True):

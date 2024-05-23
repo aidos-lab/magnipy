@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.integrate import simpson, trapz
 from scipy.interpolate import interp1d
-from magnitude import magnitude_from_distances
+from magnipy.magnitude import magnitude_from_distances
 from matplotlib import pyplot as plt
 
 def cut_ts(ts, t_cut):
