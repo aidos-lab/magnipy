@@ -82,7 +82,6 @@ def magitude_dimension_profile(mag, ts, return_log_scale=False, one_point_proper
         Metric Space Magnitude and Generalisation in Neural Networks. 
         Topological, Algebraic and Geometric Learning Workshop ICML 2023 (pp. 242-253).
     """
-    #one_point_property=(ts[0]==0)
     if ts[0]==0:
         log_magnitude = np.log(mag[1:])
         log_ts = np.log(ts[1:])
@@ -104,7 +103,7 @@ def magitude_dimension_profile(mag, ts, return_log_scale=False, one_point_proper
 
 def magnitude_dimension(mag_dim_profile):
     """
-    Estimate the intrinsic dimensionality i.e. the magnitude dimension of a space 
+    Estimate the intrinsic dimensionality i.e. the instantenious magnitude dimension of a space 
     by estimating the maximum value of its magnitude dimension profile.
 
     Parameters

@@ -4,7 +4,7 @@ from magnipy.distances import get_dist
 from magnipy.summaries import mag_area, mag_diff
 from magnipy.function_utils import diff_of_functions, sum_of_functions, plot_magnitude_function, plot_magnitude_dimension_profile, cut_until_scale, cut_ts
 import numpy as np
-from sklearn.preprocessing import normalize
+#from sklearn.preprocessing import normalize
 
 class Magnipy:
     def __init__(self, X, D=None, ts=None, target_value=None, target_prop=0.95,  n_ts=10, log_scale = False, method="cholesky",
@@ -109,9 +109,12 @@ class Magnipy:
         plot_magnitude_dimension_profile(ts=self.__ts_dim, mag_dim=self.__magnitude_dimension_profile, log_scale=self.__return_log_scale, name=self.__name)
 
     def get_t_conv(self):
-        if (self.__t_conv is None) | self.__recompute:
-            self.__t_conv = compute_t_conv(self.__D, target_value=self.__target_value, method=self.__method)
-        return self.__t_conv
+        if self.__scale_finding == "convergence":
+            if (self.__t_conv is None) | self.__recompute:
+                self.__t_conv = compute_t_conv(self.__D, target_value=self.__target_value, method=self.__method)
+            return self.__t_conv
+        elif self.__scale_finding == "scattered":
+            return self._scale_when_almost_scattered(q=None)
     
     def get_scales(self):
         if (self.__ts is None) | self.__recompute:

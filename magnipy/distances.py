@@ -105,7 +105,6 @@ def normalise_distances_by_diameter(D):
         A matrix of normalised distances.
     """
     diameter = np.max(D)
-    #print("Diameter " + str(round(diameter, 2)))
     return D/diameter
 
 def remove_duplicates(X):
@@ -127,9 +126,7 @@ def remove_duplicates(X):
     n = X.shape[0]
     if n_new != n:
         print("Out of the "+ str(round(n)) + " observations in X, only "+ str(round(n_new)) + " are unique.")
-    #n=X_unique.shape[0]
-    #print(str(round(n)) + " distinct points in X")
-    return X_unique#, indices, n
+    return X_unique
 
 def get_dist(X, X2=None, metric="Lp", p=2, normalise_by_diameter=False, check_for_duplicates=True, n_neighbors=12):
     """
@@ -169,11 +166,6 @@ def get_dist(X, X2=None, metric="Lp", p=2, normalise_by_diameter=False, check_fo
     else:
         if check_for_duplicates:
             X2 = remove_duplicates(X2)
-        #X2 = X
-    #isinstance(X2, np.ndarray):
-    #    X2 = remove_duplicates(X2)
-    #if metric == "cosine":
-    #    dist = distances_cosine(X)
     if metric == "Lp":
         dist = distances_lp(X, X2, p=p)
     elif metric == "isomap":
