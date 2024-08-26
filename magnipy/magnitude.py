@@ -5,6 +5,7 @@ from scipy.sparse.linalg import cg
 from krypy.linsys import LinearSystem , Cg
 from scipy.optimize import toms748
 from magnipy.distances import get_dist
+import numexpr as ne
 
 def weights_cholesky(Z):
     """
@@ -158,6 +159,40 @@ def weights_from_distances_cg(D, ts):
         weights[:,i]=w.squeeze()
     return weights
 
+def weights_spread(Z):
+    return 1/np.sum(Z, axis=0)
+
+def spread_weights(D, ts):
+    """
+    Compute the spread weights from a distance matrix across a fixed choice of scales. 
+    
+    Parameters
+    ----------
+    D : array_like, shape (`n_obs`, `n_obs`)
+        A matrix of distances.
+    ts : array-like, shape (`n_ts`, )
+        A vector of scaling parameters at which to evaluate magnitude.
+    mag_fn : function
+        A function that computes the magnitude weight vector from a similarity matrix.
+  
+    Returns
+    -------
+    weights : array_like, shape (`n_obs`, `n_ts`)
+        A matrix with the magnitude weights (whose ij-th entry is the spread weight 
+        of the ith observation evaluated at the jth scaling parameter).
+    
+    References
+    ----------
+    .. [1] 
+    """
+    n=D.shape[0]
+    weights = np.ones(shape=(n, len(ts)))/n
+    
+    for i, t in enumerate(ts):
+        Z = np.exp(-t * D)
+        weights[:,i] = (weights_spread(Z))
+    return weights
+
 def magnitude_from_weights(weights):
     """
     Compute the magnitude function from the magnitude weights. 
@@ -174,6 +209,24 @@ def magnitude_from_weights(weights):
         A vector with the values of the magnitude function.
     """
     return weights.sum(axis=0)
+
+def positive_weights_only(weights):
+    """
+    Ensure that the magnitude weights are positive. 
+
+    Parameters
+    ----------
+    weights : array_like, shape (`n_obs`, `n_ts`)
+        A matrix with the magnitude weights (whose ij-th entry is the magnitude weight 
+        of the ith observation evaluated at the jth scaling parameter).
+  
+    Returns
+    -------
+    weights : array_like, shape (`n_obs`, `n_ts`)
+        A matrix with the magnitude weights (whose ij-th entry is the magnitude weight 
+        of the ith observation evaluated at the jth scaling parameter).
+    """
+    return np.maximum(weights, 0)
 
 def magnitude_weights(D, ts, mag_fn, one_point_property=True, perturb_singularities=True):
     """
@@ -217,7 +270,11 @@ def magnitude_weights(D, ts, mag_fn, one_point_property=True, perturb_singularit
                 weights[:, i] = np.full((n,n), np.nan)
                 #raise Exception("We cannot compute magnitude at t=0 unless we assume the one point property!")
         else:
-            Z = np.exp(-t * D)
+            #Z = np.exp(-t * D)
+            
+            Z = np.zeros((n,n))
+            ne.evaluate("exp(-t*D)", out=Z)
+            
             # if checksingularity():
             #     print(warning)
             try:
@@ -232,7 +289,7 @@ def magnitude_weights(D, ts, mag_fn, one_point_property=True, perturb_singularit
     return weights # np.array(
 
 def magnitude_from_distances(D, ts=np.arange(0.01, 5, 0.01), method="cholesky", get_weights=False,
-                              one_point_property=True, perturb_singularities=True):
+                              one_point_property=True, perturb_singularities=True, positive_magnitude=False):
     """
     Compute the magnitude function of magnitude weights from a distance matrix
     across a fixed choice of scales.
@@ -267,7 +324,9 @@ def magnitude_from_distances(D, ts=np.arange(0.01, 5, 0.01), method="cholesky", 
     if D.shape[0]==1:
         weights = np.ones(shape=(1,len(ts)))
     
-    if method=="krylov":
+    if method=="spread":
+        weights = spread_weights(D, ts)
+    elif method=="krylov":
         weights = weights_from_distances_krylov(D, ts)
     elif method =="cg":
         weights = weights_from_distances_cg(D, ts)
@@ -284,6 +343,9 @@ def magnitude_from_distances(D, ts=np.arange(0.01, 5, 0.01), method="cholesky", 
             mag_fn = weights_naive
         weights = magnitude_weights(D, ts, mag_fn, one_point_property=one_point_property, perturb_singularities=perturb_singularities)
     
+    if positive_magnitude:
+        weights = positive_weights_only(weights)
+
     if get_weights:
         return weights
     else:
@@ -291,7 +353,8 @@ def magnitude_from_distances(D, ts=np.arange(0.01, 5, 0.01), method="cholesky", 
 
 def compute_magnitude_until_convergence(D, ts=None, target_value=None, n_ts=10, 
                                         log_scale = False, method="cholesky", get_weights=False, 
-                                        one_point_property=True, perturb_singularities=True):
+                                        one_point_property=True, perturb_singularities=True, 
+                                                        positive_magnitude=False):
     """
     Compute the magnitude function of magnitude weights from a distance matrix 
     either across a fixed choice of scales 
@@ -337,11 +400,12 @@ def compute_magnitude_until_convergence(D, ts=None, target_value=None, n_ts=10,
         ts = get_scales(t_conv, n_ts, log_scale = log_scale, one_point_property=one_point_property)
         #print(f"Evaluate magnitude at {self._n_ts} scales between 0 and the approximate convergence scale {self._t_conv}")
     return magnitude_from_distances(D, ts, method=method, get_weights=get_weights, one_point_property=one_point_property,
-                                     perturb_singularities=perturb_singularities), ts
+                                     perturb_singularities=perturb_singularities, 
+                                                        positive_magnitude=positive_magnitude), ts
 
 def compute_magnitude(X, ts=None, target_value=None, n_ts=10, log_scale = False, method="cholesky", 
                         get_weights=False, metric="Lp", p=2, normalise_by_diameter=False, 
-                        n_neighbors=12, one_point_property=True, perturb_singularities=True):
+                        n_neighbors=12, one_point_property=True, perturb_singularities=True, positive_magnitude=False):
     """
     Compute the magnitude function of magnitude weights given a dataset 
     either across a fixed choice of scales 
@@ -398,7 +462,8 @@ def compute_magnitude(X, ts=None, target_value=None, n_ts=10, log_scale = False,
     D = get_dist(X, p=p, metric=metric, normalise_by_diameter=normalise_by_diameter, n_neighbors=n_neighbors)
     magnitude, ts = compute_magnitude_until_convergence(D, ts=ts, n_ts=n_ts, method=method, target_value=target_value,
                                                         log_scale = log_scale, get_weights=get_weights, 
-                                                        one_point_property=one_point_property, perturb_singularities=perturb_singularities)
+                                                        one_point_property=one_point_property, perturb_singularities=perturb_singularities, 
+                                                        positive_magnitude=positive_magnitude)
     #compute_magnitude_from_distances(D, ts=ts, method=method, get_weights=get_weights)
     return magnitude, ts
 
@@ -471,7 +536,7 @@ def guess_convergence_scale(D, comp_mag, target_value, guess=10):
     t_conv = mag_convergence(lower_guess, guess, f, max_iterations=100)
     return t_conv
 
-def compute_t_conv(D, target_value, method="cholesky"):
+def compute_t_conv(D, target_value, method="cholesky", positive_magnitude=False):
     """
     Compute the scale at which the magnitude function has reached a certain target value 
     using numeric root-finding.
@@ -502,7 +567,8 @@ def compute_t_conv(D, target_value, method="cholesky"):
     if D.shape[0] == 1:
         raise Exception("We cannot find the convergence scale for a one point space!")
     def comp_mag(X, ts):
-        return magnitude_from_distances(X, ts, method=method, one_point_property=True, perturb_singularities=True)
+        return magnitude_from_distances(X, ts, method=method, one_point_property=True, perturb_singularities=True, 
+                                        positive_magnitude=positive_magnitude)
     if target_value is None:
         target_value=0.95*D.shape[0]
     else:

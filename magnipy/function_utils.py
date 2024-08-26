@@ -9,7 +9,7 @@ def cut_ts(ts, t_cut):
     ts_new = np.concatenate((ts[:index_cut], [t_cut]))
     return ts_new
 
-def cut_until_scale(ts, magnitude, t_cut, D=None, method="cholesky", kind = 'linear'):
+def cut_until_scale(ts, magnitude, t_cut, D=None, method="cholesky", kind = 'linear', positive_magnitude=False):
     """
     Cut off a magnitude function at a specified cut-off scale.
 
@@ -49,7 +49,7 @@ def cut_until_scale(ts, magnitude, t_cut, D=None, method="cholesky", kind = 'lin
         # Perform linear interpolation to find f(x_cut)
         f_x_cut = interp1d(x_sorted, y_sorted, kind=kind, fill_value='extrapolate')(t_cut)
     else:
-        f_x_cut = magnitude_from_distances(D, [t_cut], method)[0]
+        f_x_cut = magnitude_from_distances(D, [t_cut], method, positive_magnitude=positive_magnitude)[0]
     
     # Create new vectors up to and including t_cut
     ts = np.concatenate((x_sorted[:index_cut], [t_cut]))
@@ -93,7 +93,7 @@ def interpolate_functions(mag, ts,  mag2, ts2, kind='linear'):
     common_length = xs_list.shape[0]
 
     # Initialize an array to store the sum of interpolated vectors
-    sum_of_interpolated_vectors = np.zeros(common_length)
+    # sum_of_interpolated_vectors = np.zeros(common_length)
     
     inter1 = interp1d(ts, mag, kind=kind, fill_value=(1, np.max(mag)), bounds_error=False) #kind='quadratic'
     inter2 = interp1d(ts2, mag2, kind=kind, fill_value=(1, np.max(mag2)), bounds_error=False)
@@ -101,7 +101,7 @@ def interpolate_functions(mag, ts,  mag2, ts2, kind='linear'):
     interpolated2 = inter2(xs_list)
     return interpolated, interpolated2, xs_list
 
-def get_reevaluated_function(mag, ts, ts2, D, method="cholesky"):
+def get_reevaluated_function(mag, ts, ts2, D, method="cholesky", positive_magnitude=False):
     """
     Re-evaluate a magnitude function across more scales.
 
@@ -126,7 +126,7 @@ def get_reevaluated_function(mag, ts, ts2, D, method="cholesky"):
         The union of the evaluation scales.
     """
     ts_diff = np.setdiff1d(ts2, ts) # t in ts2 but not in ts
-    mag_new = magnitude_from_distances(D, ts_diff, method=method)
+    mag_new = magnitude_from_distances(D, ts_diff, method=method, positive_magnitude=positive_magnitude)
     new_ts = np.concatenate((ts_diff,ts))
     new_mags = np.concatenate((mag_new,mag))
     ind = new_ts.argsort()
@@ -134,7 +134,7 @@ def get_reevaluated_function(mag, ts, ts2, D, method="cholesky"):
     new_mags = new_mags[ind]
     return new_mags, new_ts
 
-def reevaluate_functions(mag, ts, D, mag2, ts2, D2, method="cholesky"):
+def reevaluate_functions(mag, ts, D, mag2, ts2, D2, method="cholesky", positive_magnitude=False):
     """
     Re-evaluate two magnitude functions across the same scales.
 
@@ -164,11 +164,11 @@ def reevaluate_functions(mag, ts, D, mag2, ts2, D2, method="cholesky"):
     ts_combined : array_like, shape (`n_ts_new`, )
         The union of the evaluation scales of both functions.
     """
-    new_mags, new_ts = get_reevaluated_function(mag, ts, ts2, D, method=method)
-    new_mags2, new_ts2 = get_reevaluated_function(mag2, ts2, ts, D2, method=method)
+    new_mags, new_ts = get_reevaluated_function(mag, ts, ts2, D, method=method, positive_magnitude=positive_magnitude)
+    new_mags2, new_ts2 = get_reevaluated_function(mag2, ts2, ts, D2, method=method, positive_magnitude=positive_magnitude)
     return new_mags, new_mags2, new_ts
 
-def combine_functions(mag, ts, D, mag2, ts2, D2, method="cholesky", exact=False, t_cut=None, addition=False):
+def combine_functions(mag, ts, D, mag2, ts2, D2, method="cholesky", exact=False, t_cut=None, addition=False, positive_magnitude=False):
     """
     Add or substract two magnitude functions.
 
@@ -205,8 +205,8 @@ def combine_functions(mag, ts, D, mag2, ts2, D2, method="cholesky", exact=False,
         The union of the evaluation scales of both functions.
     """
     if t_cut is not None:
-        mag, ts = cut_until_scale(ts, mag, t_cut, D=D, method=method)
-        mag2, ts2 = cut_until_scale(ts2, mag2, t_cut, D=D2, method=method)
+        mag, ts = cut_until_scale(ts, mag, t_cut, D=D, method=method, positive_magnitude=positive_magnitude)
+        mag2, ts2 = cut_until_scale(ts2, mag2, t_cut, D=D2, method=method, positive_magnitude=positive_magnitude)
     
     if ts is ts2:
         interpolated=mag
@@ -221,7 +221,8 @@ def combine_functions(mag, ts, D, mag2, ts2, D2, method="cholesky", exact=False,
                 interpolated, interpolated2, xs_list = interpolate_functions(mag, ts,  mag2, ts2, kind="linear")
             #interpolated, interpolated2, xs_list = reevaluate_functions(mag, ts, D, mag2, ts2, D2, method=method)
         else:
-            interpolated, interpolated2, xs_list = reevaluate_functions(mag, ts, D, mag2, ts2, D2, method=method)
+            interpolated, interpolated2, xs_list = reevaluate_functions(mag, ts, D, mag2, ts2, D2, method=method, 
+                                                                        positive_magnitude=positive_magnitude)
 
     if addition:
         sum_of_interpolated_vectors = interpolated+interpolated2
@@ -229,11 +230,11 @@ def combine_functions(mag, ts, D, mag2, ts2, D2, method="cholesky", exact=False,
         sum_of_interpolated_vectors = interpolated-interpolated2
     return sum_of_interpolated_vectors, xs_list
 
-def diff_of_functions(mag, ts, D, mag2, ts2, D2, exact=False, method="cholesky", t_cut=None):
-    return combine_functions(mag, ts, D, mag2, ts2, D2, exact=exact, method=method, t_cut=t_cut, addition=False)
+def diff_of_functions(mag, ts, D, mag2, ts2, D2, exact=False, method="cholesky", t_cut=None, positive_magnitude=False):
+    return combine_functions(mag, ts, D, mag2, ts2, D2, exact=exact, method=method, t_cut=t_cut, addition=False, positive_magnitude=positive_magnitude)
 
-def sum_of_functions(mag, ts, D, mag2, ts2, D2, exact=False, method="cholesky", t_cut=None):
-    return combine_functions(mag, ts, D, mag2, ts2, D2, exact=exact, method=method, t_cut=t_cut, addition=True)
+def sum_of_functions(mag, ts, D, mag2, ts2, D2, exact=False, method="cholesky", t_cut=None, positive_magnitude=False):
+    return combine_functions(mag, ts, D, mag2, ts2, D2, exact=exact, method=method, t_cut=t_cut, addition=True, positive_magnitude=positive_magnitude)
 
 def plot_magnitude_function(mag, ts, name=""):
     plt.plot(mag, ts, label="magnitude function "+name)
