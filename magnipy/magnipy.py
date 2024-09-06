@@ -70,11 +70,11 @@ class Magnipy:
                                                                 log_scale = self._log_scale, get_weights=True, 
                                                                 one_point_property=self._one_point_property, perturb_singularities=self._perturb_singularities, 
                                                                 positive_magnitude=self._positive_magnitude)
-        if self._ts is None:
-            self._t_conv = ts[-1]
-        self._weights = weights
-        self._ts = ts
-        return weights, ts
+            self._weights = weights
+            self._ts = ts
+            if self._ts is None:
+                self._t_conv = ts[-1]
+        return self._weights, self._ts
     
     def get_magnitude(self):
         if ((self._magnitude is None) & (self._weights is None)) | self._recompute:

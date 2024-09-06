@@ -159,40 +159,6 @@ def weights_from_distances_cg(D, ts):
         weights[:,i]=w.squeeze()
     return weights
 
-def weights_spread(Z):
-    return 1/np.sum(Z, axis=0)
-
-def spread_weights(D, ts):
-    """
-    Compute the spread weights from a distance matrix across a fixed choice of scales. 
-    
-    Parameters
-    ----------
-    D : array_like, shape (`n_obs`, `n_obs`)
-        A matrix of distances.
-    ts : array-like, shape (`n_ts`, )
-        A vector of scaling parameters at which to evaluate magnitude.
-    mag_fn : function
-        A function that computes the magnitude weight vector from a similarity matrix.
-  
-    Returns
-    -------
-    weights : array_like, shape (`n_obs`, `n_ts`)
-        A matrix with the magnitude weights (whose ij-th entry is the spread weight 
-        of the ith observation evaluated at the jth scaling parameter).
-    
-    References
-    ----------
-    .. [1] 
-    """
-    n=D.shape[0]
-    weights = np.ones(shape=(n, len(ts)))/n
-    
-    for i, t in enumerate(ts):
-        Z = np.exp(-t * D)
-        weights[:,i] = (weights_spread(Z))
-    return weights
-
 def magnitude_from_weights(weights):
     """
     Compute the magnitude function from the magnitude weights. 
@@ -324,9 +290,7 @@ def magnitude_from_distances(D, ts=np.arange(0.01, 5, 0.01), method="cholesky", 
     if D.shape[0]==1:
         weights = np.ones(shape=(1,len(ts)))
     
-    if method=="spread":
-        weights = spread_weights(D, ts)
-    elif method=="krylov":
+    if method=="krylov":
         weights = weights_from_distances_krylov(D, ts)
     elif method =="cg":
         weights = weights_from_distances_cg(D, ts)

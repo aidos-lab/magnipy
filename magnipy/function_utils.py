@@ -3,6 +3,7 @@ from scipy.integrate import simpson, trapz
 from scipy.interpolate import interp1d
 from magnipy.magnitude import magnitude_from_distances
 from matplotlib import pyplot as plt
+import seaborn as sns
 
 def cut_ts(ts, t_cut):
     index_cut = np.searchsorted(ts, t_cut)
@@ -240,6 +241,7 @@ def plot_magnitude_function(mag, ts, name=""):
     plt.plot(mag, ts, label="magnitude function "+name)
     plt.xlabel("t")
     plt.ylabel("magnitude function")
+    sns.despine()
 
 def plot_magnitude_dimension_profile(mag_dim, ts, log_scale=False, name=""):
     plt.plot(ts, mag_dim, label="magnitude dimension profile "+name)
@@ -248,3 +250,4 @@ def plot_magnitude_dimension_profile(mag_dim, ts, log_scale=False, name=""):
     else:
         plt.xlabel("t")
     plt.ylabel("magnitude dimension profile")
+    sns.despine()
