@@ -237,7 +237,6 @@ def magnitude_weights(D, ts, mag_fn, one_point_property=True, perturb_singularit
                 #raise Exception("We cannot compute magnitude at t=0 unless we assume the one point property!")
         else:
             #Z = np.exp(-t * D)
-            
             Z = np.zeros((n,n))
             ne.evaluate("exp(-t*D)", out=Z)
             

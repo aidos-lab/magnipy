@@ -44,19 +44,20 @@ class Magnipy:
         self._return_log_scale = return_log_scale
         self._recompute = recompute
         self._positive_magnitude = positive_magnitude
+        self._name=name
 
         self._magnitude = None
         self._weights = None
         self._magnitude_dimension_profile = None
         self._ts_dim = None
-        self._ts = None
         self._t_conv = None
         self._magnitude_dimension = None
         self._magnitude_area = None
-        self._name=name
         self._t_scattered = None
         self._t_almost_scattered = None
-    
+        
+        _ = self.get_magnitude_weights()
+
     def get_dist(self):
         return self._D
 
