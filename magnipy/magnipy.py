@@ -6,27 +6,23 @@ from magnipy.function_utils import diff_of_functions, sum_of_functions, plot_mag
 import numpy as np
 
 class Magnipy:
-    def __init__(self, X, D=None, ts=None, target_value=None, target_prop=0.95,  n_ts=10, log_scale = False, method="cholesky",
+    def __init__(self, X, ts=None, target_prop=0.95,  n_ts=30, log_scale = False, method="cholesky",
                  metric="Lp", p=2, one_point_property=True, proportion_scattered=None, scale_finding="convergence",
                  n_neighbors=12, return_log_scale=False, perturb_singularities=True, recompute=False, name="", 
                                         positive_magnitude=False):	
         
-
         self._X = X
-        self._target_value = target_value
-        if ((X is None) & (D is None)):
+        if ((X is None) & (metric !="precomputed")):
             self._D = None
             self._n = None
-        elif (D is None):
+        elif (metric !="precomputed"):
             self._D = get_dist(X, p=p, metric=metric, normalise_by_diameter=False, n_neighbors=n_neighbors)
             self._n = self._D.shape[0]
-            if target_value is None:
-                self._target_value = target_prop* self._D.shape[0]
+            self._target_value = target_prop* self._D.shape[0]
         else:
-            self._D = D
+            self._D = X
             self._n = self._D.shape[0]
-            if target_value is None:
-                self._target_value = target_prop* self._D.shape[0]
+            self._target_value = target_prop* self._D.shape[0]
 
         self._proportion_scattered=proportion_scattered
         if (scale_finding != "scattered") & (scale_finding != "convergence"):
@@ -55,8 +51,6 @@ class Magnipy:
         self._magnitude_area = None
         self._t_scattered = None
         self._t_almost_scattered = None
-        
-        _ = self.get_magnitude_weights()
 
     def get_dist(self):
         return self._D

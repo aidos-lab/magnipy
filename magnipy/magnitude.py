@@ -6,6 +6,7 @@ from krypy.linsys import LinearSystem , Cg
 from scipy.optimize import toms748
 from magnipy.distances import get_dist
 import numexpr as ne
+import pytest
 
 def weights_cholesky(Z):
     """
@@ -81,6 +82,26 @@ def weights_scipy(Z):
     w = solve(Z, np.ones(Z.shape[0]), assume_a = "pos")
     return w
 
+
+def weights_scipy_sym(Z):
+    """
+    Compute the magnitude weight vector from a similarity matrix by solving for 
+    the row sums with scipy.solve assuming the similarity matrix is 
+    positive definite. 
+
+    Parameters
+    ----------
+    Z : array_like, shape (`n_obs`, `n_obs`)
+        The similarity matrix.
+  
+    Returns
+    -------
+    w : array_like, shape (`n_ts`, )
+        The magnitue weight vector.
+    """
+    w = solve(Z, np.ones(Z.shape[0]), assume_a = "sym")
+    return w
+
 def weights_cg(Z):
     """
     Compute the magnitude weight vector from a similarity matrix 
@@ -100,8 +121,9 @@ def weights_cg(Z):
     w, _ = cg(Z, ones, atol=1e-3)
     return w
 
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def weights_from_distances_krylov(D, ts):
-    """
+    """""
     Compute magnitude weights from a similarity matrix across a fixed choice of scales
     using pre-conditioned conjugate gradient iteration as implemented by Shilan (2021). 
 
@@ -121,7 +143,7 @@ def weights_from_distances_krylov(D, ts):
     References
     ----------
     .. [1] from the PhD thesis of Salim, Shilan (2021)
-    """
+    """""
     n=D.shape[0]
     weights = np.zeros(shape=(n, len(ts)))
     w = np.ones(n)/n
@@ -289,13 +311,15 @@ def magnitude_from_distances(D, ts=np.arange(0.01, 5, 0.01), method="cholesky", 
     if D.shape[0]==1:
         weights = np.ones(shape=(1,len(ts)))
     
-    if method=="krylov":
-        weights = weights_from_distances_krylov(D, ts)
-    elif method =="cg":
+    #if method=="krylov":
+    #    weights = weights_from_distances_krylov(D, ts)
+    if method =="cg":
         weights = weights_from_distances_cg(D, ts)
     else:
         if method=="scipy":
             mag_fn = weights_scipy
+        elif method == "scipy_sym":
+            mag_fn = weights_scipy_sym
         elif method=="cholesky":
             mag_fn = weights_cholesky
         elif method =="conjugate_gradient_iteration":
