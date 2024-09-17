@@ -4,6 +4,7 @@ from magnipy.distances import get_dist
 from magnipy.summaries import mag_area, mag_diff
 from magnipy.function_utils import diff_of_functions, sum_of_functions, plot_magnitude_function, plot_magnitude_dimension_profile, cut_until_scale, cut_ts
 import numpy as np
+import copy
 
 class Magnipy:
     def __init__(self, X, ts=None, target_prop=0.95,  n_ts=30, log_scale = False, method="cholesky",
@@ -191,6 +192,7 @@ class Magnipy:
             self._n = self._D.shape[0]
         else:
             X = np.concatenate((self._X, X_new), axis=0)
+            self._X = X
             self._D = get_dist(X, p=self._p, metric=self._metric, normalise_by_diameter=False, n_neighbors=self._n_neighbors)
             self._n = self._D.shape[0]
         if update_ts:
@@ -205,6 +207,30 @@ class Magnipy:
         self._magnitude_area = None
         self._weights = None
         self._ts_dim = None
+
+    def remove_points(self, ind_delete, update_ts=False):
+        if self._X is None:
+            raise Exception("There are no points to remove!")
+        else:
+            X = np.delete(self._X, ind_delete, axis=0)
+            self._D = get_dist(X, p=self._p, metric=self._metric, normalise_by_diameter=False, n_neighbors=self._n_neighbors)
+            self._n = self._D.shape[0]
+            self._X = X
+        if update_ts:
+            self._ts = None
+            self._t_conv = None
+            self._t_scattered = None
+            self._t_almost_scattered = None
+        self._magnitude = None
+        self._weights = None
+        self._magnitude_dimension_profile = None
+        self._magnitude_dimension = None
+        self._magnitude_area = None
+        self._weights = None
+        self._ts_dim = None     
+
+    def copy(self):
+        return copy.deepcopy(self)
     
     def _substract(self, other, t_cut=None, exact=True):
         if self._metric != other._metric:

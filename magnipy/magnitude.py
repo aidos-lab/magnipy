@@ -6,7 +6,6 @@ from krypy.linsys import LinearSystem , Cg
 from scipy.optimize import toms748
 from magnipy.distances import get_dist
 import numexpr as ne
-import pytest
 
 def weights_cholesky(Z):
     """
@@ -121,7 +120,6 @@ def weights_cg(Z):
     w, _ = cg(Z, ones, atol=1e-3)
     return w
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def weights_from_distances_krylov(D, ts):
     """""
     Compute magnitude weights from a similarity matrix across a fixed choice of scales

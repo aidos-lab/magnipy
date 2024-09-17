@@ -1,9 +1,8 @@
 from magnipy import Magnipy
 import numpy as np
 from math import e
-import pytest
 
-def test_graph():
+def test_graph_mag():
     Mag = Magnipy(X=np.array(
         [[0., 1., 2., 2., 3.],
         [1., 0., 1., 1., 2.],
@@ -16,7 +15,7 @@ def test_graph():
 
     assert np.isclose(Mag.get_magnitude()[0][0], analytic)
 
-def test():
+def test_graph_function():
     ts = np.linspace(0.01, 1, 100)
     Mag = Magnipy(X=np.array(
         [[0., 1., 2., 2., 3.],

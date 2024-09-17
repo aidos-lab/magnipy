@@ -1,6 +1,5 @@
 from magnipy import Magnipy
 import numpy as np
-import pytest
 
 def test_mag():
     Mag = Magnipy(X=np.array([[0],[1]]), ts=[1])
@@ -21,7 +20,6 @@ def test_fun():
 
     analytic = np.array([2/(1+np.exp(-t)) for t in ts])
 
-    #with self.assertRaises(AssertionError):
     np.testing.assert_array_almost_equal(Mag.get_magnitude()[0], analytic)
 
 def test_weights():
@@ -34,5 +32,4 @@ def test_weights():
         w = 1/(1+np.exp(-ts[i]))
         weights[:,i] = [w, w]
 
-    #with self.assertRaises(AssertionError):
     np.testing.assert_array_almost_equal(Mag.get_magnitude_weights()[0], weights)
