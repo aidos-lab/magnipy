@@ -1,4 +1,4 @@
-from magnipy.magnitude import compute_t_conv, get_scales, scale_when_scattered, scale_when_almost_scattered, compute_magnitude_until_convergence, magnitude_from_weights
+from magnipy.magnitude import compute_t_conv, get_scales, scale_when_scattered, scale_when_almost_scattered, compute_magnitude_until_convergence, magnitude_from_weights, similarity_matrix
 from magnipy.magnitude_dimension import magitude_dimension_profile, magnitude_dimension, magnitude_dimension_profile_exact
 from magnipy.distances import get_dist
 from magnipy.summaries import mag_area, mag_diff
@@ -13,16 +13,15 @@ class Magnipy:
                                         positive_magnitude=False):	
         
         self._X = X
-        if ((X is None) & (metric !="precomputed")):
-            self._D = None
-            self._n = None
-        elif (metric !="precomputed"):
+        if (metric !="precomputed"):
             self._D = get_dist(X, p=p, metric=metric, normalise_by_diameter=False, n_neighbors=n_neighbors)
             self._n = self._D.shape[0]
             self._target_value = target_prop* self._D.shape[0]
+            self._Z = similarity_matrix(self._D)
         else:
             self._D = X
             self._n = self._D.shape[0]
+            self._Z = similarity_matrix(self._D)
             self._target_value = target_prop* self._D.shape[0]
 
         self._proportion_scattered=proportion_scattered
@@ -75,14 +74,15 @@ class Magnipy:
     def get_magnitude(self):
         if ((self._magnitude is None) & (self._weights is None)) | self._recompute:
             ts=self.get_scales()
-            self._magnitude, ts = compute_magnitude_until_convergence(self._D, ts=self._ts, n_ts=self._n_ts, method=self._method, 
+            self._magnitude, ts = compute_magnitude_until_convergence(self._Z, ts=self._ts, n_ts=self._n_ts, method=self._method, 
                                                             log_scale = self._log_scale, get_weights=False, 
                                                             one_point_property=self._one_point_property, perturb_singularities=self._perturb_singularities, 
-                                                            positive_magnitude=self._positive_magnitude)
+                                                            positive_magnitude=self._positive_magnitude,
+                                                            input_distances=False)
             if self._ts is None:
                 self._t_conv = ts[-1]
                 self._ts = ts
-        elif (self._magnitude is None) & ~(self._weights is None):
+        elif (self._magnitude is None) & (not (self._weights is None)):
              self._magnitude = magnitude_from_weights(self._weights)
         return self._magnitude, self._ts
     
@@ -112,8 +112,8 @@ class Magnipy:
     def get_t_conv(self):
         if self._scale_finding == "convergence":
             if (self._t_conv is None) | self._recompute:
-                self._t_conv = compute_t_conv(self._D, target_value=self._target_value, method=self._method, 
-                                               positive_magnitude=self._positive_magnitude)
+                self._t_conv = compute_t_conv(self._Z, target_value=self._target_value, method=self._method, 
+                                               positive_magnitude=self._positive_magnitude, input_distances=False)
             return self._t_conv
         elif self._scale_finding == "scattered":
             return self._scale_when_almost_scattered(q=None)
@@ -149,10 +149,11 @@ class Magnipy:
         self._ts_dim = None
 
     def _eval_at_scales(self, ts_new, get_weights=False):
-        mag, ts = compute_magnitude_until_convergence(self._D, ts=ts_new, method=self._method, get_weights=get_weights, 
+        mag, ts = compute_magnitude_until_convergence(self._Z, ts=ts_new, method=self._method, get_weights=get_weights, 
                                                             one_point_property=self._one_point_property, 
                                                             perturb_singularities=self._perturb_singularities,
-                                                            positive_magnitude=self._positive_magnitude)
+                                                            positive_magnitude=self._positive_magnitude, 
+                                                            input_distances=False)
         return mag, ts
 
     def _cut_until_scale(self, t_cut):
@@ -190,10 +191,12 @@ class Magnipy:
             self._X = X_new
             self._D = get_dist(X_new, p=self._p, metric=self._metric, normalise_by_diameter=False, n_neighbors=self._n_neighbors)
             self._n = self._D.shape[0]
+            self._Z = similarity_matrix(self._D)
         else:
             X = np.concatenate((self._X, X_new), axis=0)
             self._X = X
             self._D = get_dist(X, p=self._p, metric=self._metric, normalise_by_diameter=False, n_neighbors=self._n_neighbors)
+            self._Z = similarity_matrix(self._D)
             self._n = self._D.shape[0]
         if update_ts:
             self._ts = None
@@ -213,7 +216,11 @@ class Magnipy:
             raise Exception("There are no points to remove!")
         else:
             X = np.delete(self._X, ind_delete, axis=0)
-            self._D = get_dist(X, p=self._p, metric=self._metric, normalise_by_diameter=False, n_neighbors=self._n_neighbors)
+            D = np.delete(self._D, ind_delete, axis=0)
+            D = np.delete(D, ind_delete, axis=1)
+            self._D = D
+            self._Z = similarity_matrix(self._D)
+            #self._D = get_dist(X, p=self._p, metric=self._metric, normalise_by_diameter=False, n_neighbors=self._n_neighbors)
             self._n = self._D.shape[0]
             self._X = X
         if update_ts:

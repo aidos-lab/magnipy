@@ -23,7 +23,7 @@ def magnitude_dimension_profile_exact(D, ts=None, h=None, target_value=None, n_t
         raise Exception("D must be symmetric.")
     if ts is None:
         t_conv = compute_t_conv(D, target_value=target_value, method=method)
-        if one_point_property & ~return_log_scale:
+        if one_point_property & (not return_log_scale):
             n_tsss = n_ts-1
         else:
             n_tsss = n_ts

@@ -89,7 +89,6 @@ def magnitude_by_batch_SGD(S, num_epochs=100, batch_size=1, lr=0.01, device='cpu
             optimizer.step()
     return model.weights 
 
-
 def magnitude_by_batch_SGD_points(points, num_epochs=100, batch_size=1, lr=0.01, device='cpu'):
     S = similarity_matrix(points)
     return magnitude_by_batch_SGD(S, num_epochs, batch_size, lr, device)

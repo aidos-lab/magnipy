@@ -1,33 +1,28 @@
 from magnipy import Magnipy
 import numpy as np
 from math import e
+import pytest
 
-def test_graph_mag():
-    Mag = Magnipy(X=np.array(
-        [[0., 1., 2., 2., 3.],
-        [1., 0., 1., 1., 2.],
-        [2., 1., 0., 1., 2.],
-        [2., 1., 1., 0., 1.],
-        [3., 2., 2., 1., 0.]]), metric="precomputed", ts=[1])
-
-    q=np.exp(-1)
-    analytic = (5+5*q-4*q**2)/((1+q)*(1+2*q))
-
-    assert np.isclose(Mag.get_magnitude()[0][0], analytic)
+methods = ["cholesky", "scipy", "scipy_sym", "inv", "pinv", "conjugate_gradient_iteration", "cg", "krylov"]
+tss= [[1], np.linspace(0.01, 1, 100), None]
 
 def test_graph_function():
-    ts = np.linspace(0.01, 1, 100)
-    Mag = Magnipy(X=np.array(
-        [[0., 1., 2., 2., 3.],
-        [1., 0., 1., 1., 2.],
-        [2., 1., 0., 1., 2.],
-        [2., 1., 1., 0., 1.],
-        [3., 2., 2., 1., 0.]]),metric="precomputed", ts=ts)
+    #ts = np.linspace(0.01, 1, 100)
+    for ts in tss:
+        for method in methods:
+            Mag = Magnipy(X=np.array(
+                [[0., 1., 2., 2., 3.],
+                [1., 0., 1., 1., 2.],
+                [2., 1., 0., 1., 2.],
+                [2., 1., 1., 0., 1.],
+                [3., 2., 2., 1., 0.]]),metric="precomputed", ts=ts, method=method, n_ts=100)
 
-    analytic = []
-    for t in ts:
-        q = np.exp(-t)
-        analytic.append((5+5*q-4*q**2)/((1+q)*(1+2*q)))
-    analytic = np.array(analytic)
+            mag, ts = Mag.get_magnitude()
 
-    assert np.allclose(Mag.get_magnitude()[0], analytic)
+            analytic = []
+            for t in ts:
+                q = np.exp(-t)
+                analytic.append((5+5*q-4*q**2)/((1+q)*(1+2*q)))
+            analytic = np.array(analytic)
+
+            assert np.allclose(mag, analytic), "Function graph test failed for method: "+method + " and ts: "+ str(ts)

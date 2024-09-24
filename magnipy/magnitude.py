@@ -120,7 +120,7 @@ def weights_cg(Z):
     w, _ = cg(Z, ones, atol=1e-3)
     return w
 
-def weights_from_distances_krylov(D, ts):
+def weights_from_similarities_krylov(Z, ts, positive_definite = True):
     """""
     Compute magnitude weights from a similarity matrix across a fixed choice of scales
     using pre-conditioned conjugate gradient iteration as implemented by Shilan (2021). 
@@ -142,16 +142,16 @@ def weights_from_distances_krylov(D, ts):
     ----------
     .. [1] from the PhD thesis of Salim, Shilan (2021)
     """""
-    n=D.shape[0]
+    n=Z.shape[0]
     weights = np.zeros(shape=(n, len(ts)))
     w = np.ones(n)/n
     for i in range(len(ts)):
-        linear_system = LinearSystem(np.exp(-ts[i]* D), np.ones(n), self_adjoint = True, positive_definite = True)
+        linear_system = LinearSystem(Z**(ts[i]), np.ones(n), self_adjoint = True, positive_definite = positive_definite)
         w = Cg(linear_system,  x0 = w).xk
         weights[:,i]=w.squeeze()
     return weights
 
-def weights_from_distances_cg(D, ts):
+def weights_from_similarities_cg(Z, ts):
     """
     Compute magnitude weights from a distance matrix across a fixed choice of scales
     using pre-conditioned conjugate gradient iteration. 
@@ -169,13 +169,13 @@ def weights_from_distances_cg(D, ts):
         A matrix with the magnitude weights (whose ij-th entry is the magnitude weight 
         of the ith observation evaluated at the jth scaling parameter).
     """
-    n=D.shape[0]
+    n=Z.shape[0]
     weights = np.zeros(shape=(n, len(ts)))
     w = np.ones(n)/n
     for i in range(len(ts)):
         # associated similarity matrix
-        Z = np.exp(-ts[i]*D)
-        w, _ = cg(Z, np.ones(n), w)
+        #Z = np.exp(-ts[i]*D)
+        w, _ = cg(Z**(ts[i]), np.ones(n), w)
         weights[:,i]=w.squeeze()
     return weights
 
@@ -214,7 +214,60 @@ def positive_weights_only(weights):
     """
     return np.maximum(weights, 0)
 
-def magnitude_weights(D, ts, mag_fn, one_point_property=True, perturb_singularities=True):
+def weights_spread(Z):
+    """
+    Compute the spread weight vector from a similarity matrix. 
+
+    Parameters
+    ----------
+    Z : array_like, shape (`n_obs`, `n_obs`)
+        The similarity matrix.
+  
+    Returns
+    -------
+    w : array_like, shape (`n_ts`, )
+        The spread weight vector.
+    """
+    return 1/np.sum(Z, axis=0)
+
+def spread_weights(Z, ts):
+    """
+    Compute the spread weights from a distance matrix across a fixed choice of scales. 
+    
+    Parameters
+    ----------
+    D : array_like, shape (`n_obs`, `n_obs`)
+        A matrix of distances.
+    ts : array-like, shape (`n_ts`, )
+        A vector of scaling parameters at which to evaluate magnitude.
+    mag_fn : function
+        A function that computes the magnitude weight vector from a similarity matrix.
+  
+    Returns
+    -------
+    weights : array_like, shape (`n_obs`, `n_ts`)
+        A matrix with the magnitude weights (whose ij-th entry is the spread weight 
+        of the ith observation evaluated at the jth scaling parameter).
+    
+    References
+    ----------
+    .. [1] 
+    """
+    n=Z.shape[0]
+    weights = np.ones(shape=(n, len(ts)))/n
+    
+    for i, t in enumerate(ts):
+        #Z = np.exp(-t * D)
+        weights[:,i] = (weights_spread(Z**t))
+    return weights
+
+def similarity_matrix(D):
+    #n = D.shape[0]
+    Z = np.zeros(D.shape)
+    ne.evaluate("exp(-D)", out=Z)
+    return Z
+
+def magnitude_weights(Z, ts, mag_fn, one_point_property=True, perturb_singularities=True):
     """
     Compute the magnitude weights from a distance matrix across a fixed choice of scales. 
     Whenever the similarity matrix is not invertible, a small amount of constant noise is added 
@@ -244,7 +297,7 @@ def magnitude_weights(D, ts, mag_fn, one_point_property=True, perturb_singularit
         Practical applications of metric space magnitude and weighting vectors. 
         arXiv preprint arXiv:2006.14063.
     """
-    n=D.shape[0]
+    n=Z.shape[0]
     weights = np.ones(shape=(n, len(ts)))/n
     
     for i, t in enumerate(ts):
@@ -256,25 +309,22 @@ def magnitude_weights(D, ts, mag_fn, one_point_property=True, perturb_singularit
                 weights[:, i] = np.full((n,n), np.nan)
                 #raise Exception("We cannot compute magnitude at t=0 unless we assume the one point property!")
         else:
-            #Z = np.exp(-t * D)
-            Z = np.zeros((n,n))
-            ne.evaluate("exp(-t*D)", out=Z)
-            
             # if checksingularity():
             #     print(warning)
             try:
-                weights[:,i] = (mag_fn(Z))
+                weights[:,i] = (mag_fn(Z**t))
             except Exception as e:
                 if perturb_singularities:
                     print(f'Exception: {e} for t: {t} perturbing matrix')
-                    Z_new = Z + 0.01 * np.identity(n=n)  # perturb similarity mtx to invert
+                    Z_new = Z**t + 0.01 * np.identity(n=n)  # perturb similarity mtx to invert
                     weights[:,i] = (mag_fn(Z_new))
                 else:
                     raise Exception(f'Exception: {e} for t: {t}')
     return weights # np.array(
 
 def magnitude_from_distances(D, ts=np.arange(0.01, 5, 0.01), method="cholesky", get_weights=False,
-                              one_point_property=True, perturb_singularities=True, positive_magnitude=False):
+                              one_point_property=True, perturb_singularities=True, positive_magnitude=False,
+                              input_distances=True):
     """
     Compute the magnitude function of magnitude weights from a distance matrix
     across a fixed choice of scales.
@@ -309,10 +359,17 @@ def magnitude_from_distances(D, ts=np.arange(0.01, 5, 0.01), method="cholesky", 
     if D.shape[0]==1:
         weights = np.ones(shape=(1,len(ts)))
     
-    #if method=="krylov":
-    #    weights = weights_from_distances_krylov(D, ts)
-    if method =="cg":
-        weights = weights_from_distances_cg(D, ts)
+    if input_distances:
+        Z = similarity_matrix(D)
+    else:
+        Z = D
+
+    if method=="spread":
+        weights = spread_weights(Z, ts)
+    elif method=="krylov":
+        weights = weights_from_similarities_krylov(Z, ts)
+    elif method =="cg":
+        weights = weights_from_similarities_cg(Z, ts)
     else:
         if method=="scipy":
             mag_fn = weights_scipy
@@ -326,7 +383,7 @@ def magnitude_from_distances(D, ts=np.arange(0.01, 5, 0.01), method="cholesky", 
             mag_fn = weights_pinv
         else:
             mag_fn = weights_naive
-        weights = magnitude_weights(D, ts, mag_fn, one_point_property=one_point_property, perturb_singularities=perturb_singularities)
+        weights = magnitude_weights(Z, ts, mag_fn, one_point_property=one_point_property, perturb_singularities=perturb_singularities)
     
     if positive_magnitude:
         weights = positive_weights_only(weights)
@@ -339,7 +396,7 @@ def magnitude_from_distances(D, ts=np.arange(0.01, 5, 0.01), method="cholesky", 
 def compute_magnitude_until_convergence(D, ts=None, target_value=None, n_ts=10, 
                                         log_scale = False, method="cholesky", get_weights=False, 
                                         one_point_property=True, perturb_singularities=True, 
-                                                        positive_magnitude=False):
+                                                        positive_magnitude=False, input_distances=True):
     """
     Compute the magnitude function of magnitude weights from a distance matrix 
     either across a fixed choice of scales 
@@ -380,13 +437,19 @@ def compute_magnitude_until_convergence(D, ts=None, target_value=None, n_ts=10,
     """
     if D.shape[0] != D.shape[1]:
         raise Exception("D must be symmetric.")
+    
+    if input_distances:
+        Z = similarity_matrix(D)
+    else:
+        Z = D
+    
     if ts is None:
-        t_conv = compute_t_conv(D, target_value=target_value, method=method)
+        t_conv = compute_t_conv(Z, target_value=target_value, method=method, input_distances=False, positive_magnitude=positive_magnitude)
         ts = get_scales(t_conv, n_ts, log_scale = log_scale, one_point_property=one_point_property)
         #print(f"Evaluate magnitude at {self._n_ts} scales between 0 and the approximate convergence scale {self._t_conv}")
-    return magnitude_from_distances(D, ts, method=method, get_weights=get_weights, one_point_property=one_point_property,
+    return magnitude_from_distances(Z, ts, method=method, get_weights=get_weights, one_point_property=one_point_property,
                                      perturb_singularities=perturb_singularities, 
-                                                        positive_magnitude=positive_magnitude), ts
+                                                        positive_magnitude=positive_magnitude, input_distances=False), ts
 
 def compute_magnitude(X, ts=None, target_value=None, n_ts=10, log_scale = False, method="cholesky", 
                         get_weights=False, metric="Lp", p=2, normalise_by_diameter=False, 
@@ -445,10 +508,11 @@ def compute_magnitude(X, ts=None, target_value=None, n_ts=10, log_scale = False,
         arXiv preprint arXiv:2311.16054.
     """
     D = get_dist(X, p=p, metric=metric, normalise_by_diameter=normalise_by_diameter, n_neighbors=n_neighbors)
-    magnitude, ts = compute_magnitude_until_convergence(D, ts=ts, n_ts=n_ts, method=method, target_value=target_value,
+    Z = similarity_matrix(D)
+    magnitude, ts = compute_magnitude_until_convergence(Z, ts=ts, n_ts=n_ts, method=method, target_value=target_value,
                                                         log_scale = log_scale, get_weights=get_weights, 
                                                         one_point_property=one_point_property, perturb_singularities=perturb_singularities, 
-                                                        positive_magnitude=positive_magnitude)
+                                                        positive_magnitude=positive_magnitude, input_distances=False)
     #compute_magnitude_from_distances(D, ts=ts, method=method, get_weights=get_weights)
     return magnitude, ts
 
@@ -521,7 +585,7 @@ def guess_convergence_scale(D, comp_mag, target_value, guess=10):
     t_conv = mag_convergence(lower_guess, guess, f, max_iterations=100)
     return t_conv
 
-def compute_t_conv(D, target_value, method="cholesky", positive_magnitude=False):
+def compute_t_conv(D, target_value, method="cholesky", positive_magnitude=False, input_distances=True):
     """
     Compute the scale at which the magnitude function has reached a certain target value 
     using numeric root-finding.
@@ -553,7 +617,7 @@ def compute_t_conv(D, target_value, method="cholesky", positive_magnitude=False)
         raise Exception("We cannot find the convergence scale for a one point space!")
     def comp_mag(X, ts):
         return magnitude_from_distances(X, ts, method=method, one_point_property=True, perturb_singularities=True, 
-                                        positive_magnitude=positive_magnitude)
+                                        positive_magnitude=positive_magnitude, input_distances=False)
     if target_value is None:
         target_value=0.95*D.shape[0]
     else:
@@ -562,7 +626,13 @@ def compute_t_conv(D, target_value, method="cholesky", positive_magnitude=False)
         if 0 >= target_value:
             raise Exception("The target value needs to be larger than 0!")
         # TODO also check for duplicates
-    t_conv = guess_convergence_scale(D=D, comp_mag=comp_mag, target_value=target_value, guess=10)
+    
+    if input_distances:
+        Z = similarity_matrix(D)
+    else:
+        Z = D
+
+    t_conv = guess_convergence_scale(D=Z, comp_mag=comp_mag, target_value=target_value, guess=10)
     return t_conv
 
 def get_scales(t_conv, n_ts=10, log_scale = False, one_point_property=True):
