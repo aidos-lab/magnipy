@@ -8,17 +8,19 @@ import copy
 
 class Magnipy:
     def __init__(self, X, ts=None, target_prop=0.95,  n_ts=30, log_scale = False, method="cholesky",
-                 metric="Lp", p=2, one_point_property=True, proportion_scattered=None, scale_finding="convergence",
+                 metric="euclidean", p=2, Adj=None, one_point_property=True, proportion_scattered=None, scale_finding="convergence",
                  n_neighbors=12, return_log_scale=False, perturb_singularities=True, recompute=False, name="", 
                                         positive_magnitude=False):	
         
-        self._X = X
+        self._Adj = Adj
         if (metric !="precomputed"):
-            self._D = get_dist(X, p=p, metric=metric, normalise_by_diameter=False, n_neighbors=n_neighbors)
+            self._X = X
+            self._D = get_dist(X, Adj = self._Adj, p = p, metric = metric, normalise_by_diameter = False, n_neighbors = n_neighbors)
             self._n = self._D.shape[0]
             self._target_value = target_prop* self._D.shape[0]
             self._Z = similarity_matrix(self._D)
         else:
+            self._X = None
             self._D = X
             self._n = self._D.shape[0]
             self._Z = similarity_matrix(self._D)
@@ -53,7 +55,14 @@ class Magnipy:
         self._t_almost_scattered = None
 
     def get_dist(self):
+        if (self._D is None) | self._recompute:
+            self._D = get_dist(self._X, Adj = self._Adj, p=self._p, metric=self._metric, normalise_by_diameter=False, n_neighbors=self._n_neighbors)
         return self._D
+
+    def get_similarity_matrix(self):
+        if (self._Z is None) | self._recompute:
+            self._Z = similarity_matrix(self._D)
+        return self._Z
 
     def get_name(self):
         return self._name
@@ -61,10 +70,11 @@ class Magnipy:
     def get_magnitude_weights(self):
         if (self._weights is None) | self._recompute:
             ts=self.get_scales()
-            weights, ts = compute_magnitude_until_convergence(self._D, ts=self._ts, n_ts=self._n_ts, method=self._method, 
+            weights, ts = compute_magnitude_until_convergence(self._Z, ts=self._ts, n_ts=self._n_ts, method=self._method, 
                                                                 log_scale = self._log_scale, get_weights=True, 
                                                                 one_point_property=self._one_point_property, perturb_singularities=self._perturb_singularities, 
-                                                                positive_magnitude=self._positive_magnitude)
+                                                                positive_magnitude=self._positive_magnitude,
+                                                                input_distances=False)
             self._weights = weights
             self._ts = ts
             if self._ts is None:
@@ -186,16 +196,18 @@ class Magnipy:
             absolute_area=absolute_area, scale=scale, plot=plot, name=self._name, positive_magnitude=self._positive_magnitude)
         return self._magnitude_area
     
-    def include_points(self, X_new, update_ts=False):
+    def include_points(self, X_new, Adj_new = None, update_ts=False):
         if self._X is None:
             self._X = X_new
-            self._D = get_dist(X_new, p=self._p, metric=self._metric, normalise_by_diameter=False, n_neighbors=self._n_neighbors)
+            self._Adj = Adj_new
+            self._D = get_dist(self._X, Adj = self._Adj, p=self._p, metric=self._metric, normalise_by_diameter=False, n_neighbors=self._n_neighbors)
             self._n = self._D.shape[0]
             self._Z = similarity_matrix(self._D)
         else:
             X = np.concatenate((self._X, X_new), axis=0)
             self._X = X
-            self._D = get_dist(X, p=self._p, metric=self._metric, normalise_by_diameter=False, n_neighbors=self._n_neighbors)
+            self._Adj = Adj_new
+            self._D = get_dist(self._X, Adj = self._Adj, p=self._p, metric=self._metric, normalise_by_diameter=False, n_neighbors=self._n_neighbors)
             self._Z = similarity_matrix(self._D)
             self._n = self._D.shape[0]
         if update_ts:
@@ -212,17 +224,26 @@ class Magnipy:
         self._ts_dim = None
 
     def remove_points(self, ind_delete, update_ts=False):
-        if self._X is None:
+        if (self._X is None) and (self._Adj is None):
             raise Exception("There are no points to remove!")
         else:
-            X = np.delete(self._X, ind_delete, axis=0)
-            D = np.delete(self._D, ind_delete, axis=0)
-            D = np.delete(D, ind_delete, axis=1)
+            if (self._X is not None):
+                X = np.delete(self._X, ind_delete, axis=0)
+                self._X = X
+
+            if (self._Adj is not None) | (self._metric == "isomap"):
+                if self._Adj is not None:
+                    self._Adj = np.delete(self._Adj, ind_delete, axis=0)
+                    self._Adj = np.delete(self._Adj, ind_delete, axis=1)
+                D = get_dist(self._X, Adj = self._Adj, p=self._p, metric=self._metric, normalise_by_diameter=False, 
+                    n_neighbors=self._n_neighbors, check_for_duplicates=False)
+            else:
+                D = np.delete(self._D, ind_delete, axis=0)
+                D = np.delete(D, ind_delete, axis=1)
             self._D = D
             self._Z = similarity_matrix(self._D)
             #self._D = get_dist(X, p=self._p, metric=self._metric, normalise_by_diameter=False, n_neighbors=self._n_neighbors)
             self._n = self._D.shape[0]
-            self._X = X
         if update_ts:
             self._ts = None
             self._t_conv = None

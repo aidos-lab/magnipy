@@ -2,7 +2,7 @@ import numpy as np
 from scipy.linalg import cho_factor
 from scipy.linalg import solve_triangular, solve
 from scipy.sparse.linalg import cg
-from krypy.linsys import LinearSystem , Cg
+#from krypy.linsys import LinearSystem , Cg
 from scipy.optimize import toms748
 from magnipy.distances import get_dist
 import numexpr as ne
@@ -120,36 +120,36 @@ def weights_cg(Z):
     w, _ = cg(Z, ones, atol=1e-3)
     return w
 
-def weights_from_similarities_krylov(Z, ts, positive_definite = True):
-    """""
-    Compute magnitude weights from a similarity matrix across a fixed choice of scales
-    using pre-conditioned conjugate gradient iteration as implemented by Shilan (2021). 
-
-    Parameters
-    ----------
-    D : array_like, shape (`n_obs`, `n_obs`)
-        A matrix of distances.
-    ts : array-like, shape (`n_ts`, )
-        A vector of scaling parameters at which to evaluate magnitude.
-  
-    Returns
-    -------
-    weights : array_like, shape (`n_obs`, `n_ts`)
-        A matrix with the magnitude weights (whose ij-th entry is the magnitude weight 
-        of the ith observation evaluated at the jth scaling parameter).
-
-    References
-    ----------
-    .. [1] from the PhD thesis of Salim, Shilan (2021)
-    """""
-    n=Z.shape[0]
-    weights = np.zeros(shape=(n, len(ts)))
-    w = np.ones(n)/n
-    for i in range(len(ts)):
-        linear_system = LinearSystem(Z**(ts[i]), np.ones(n), self_adjoint = True, positive_definite = positive_definite)
-        w = Cg(linear_system,  x0 = w).xk
-        weights[:,i]=w.squeeze()
-    return weights
+#def weights_from_similarities_krylov(Z, ts, positive_definite = True):
+#    """""
+#    Compute magnitude weights from a similarity matrix across a fixed choice of scales
+#    using pre-conditioned conjugate gradient iteration as implemented by Shilan (2021). #
+#
+#    Parameters
+#    ----------
+#    D : array_like, shape (`n_obs`, `n_obs`)
+#        A matrix of distances.
+#    ts : array-like, shape (`n_ts`, )
+#        A vector of scaling parameters at which to evaluate magnitude.
+#  
+#    Returns
+#    -------
+#    weights : array_like, shape (`n_obs`, `n_ts`)
+#        A matrix with the magnitude weights (whose ij-th entry is the magnitude weight 
+#        of the ith observation evaluated at the jth scaling parameter).#
+#
+#    References
+#    ----------
+#    .. [1] from the PhD thesis of Salim, Shilan (2021)
+#    """""
+#    n=Z.shape[0]
+#    weights = np.zeros(shape=(n, len(ts)))
+#    w = np.ones(n)/n
+#    for i in range(len(ts)):
+#        linear_system = LinearSystem(Z**(ts[i]), np.ones(n), self_adjoint = True, positive_definite = positive_definite)
+#        w = Cg(linear_system,  x0 = w).xk
+#        weights[:,i]=w.squeeze()
+#    return weights
 
 def weights_from_similarities_cg(Z, ts):
     """
@@ -366,8 +366,8 @@ def magnitude_from_distances(D, ts=np.arange(0.01, 5, 0.01), method="cholesky", 
 
     if method=="spread":
         weights = spread_weights(Z, ts)
-    elif method=="krylov":
-        weights = weights_from_similarities_krylov(Z, ts)
+    #elif method=="krylov":
+    #    weights = weights_from_similarities_krylov(Z, ts)
     elif method =="cg":
         weights = weights_from_similarities_cg(Z, ts)
     else:

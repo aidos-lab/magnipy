@@ -2,6 +2,7 @@ from sklearn.manifold import Isomap
 from scipy.spatial import distance_matrix
 from scipy.spatial.distance import cdist
 import numpy as np
+from scipy.sparse.csgraph import shortest_path
 
 def distances_isomap(X, n_neighbors=12, p=2):
     """
@@ -33,6 +34,21 @@ def distances_isomap(X, n_neighbors=12, p=2):
     isomap = Isomap(n_neighbors=n_neighbors, n_components=2, p=p)
     isom = isomap.fit(X)
     return isom.dist_matrix_
+
+def distances_geodesic(X, X2, Adj, p=2, metric = "euclidean"):
+    if X is None:
+        weighted_adjacency = Adj
+    else:
+        feature_distances = distances_scipy(X, X2, metric = metric, p=p)
+        #cdist(X, X2, metric = metric)
+
+        # Step 2: Combine feature distances with adjacency matrix
+        # For example, you can multiply adjacency matrix by feature distances to create a weighted graph
+        weighted_adjacency = Adj * feature_distances
+
+    # Step 3: Compute geodesic distances using Dijkstra's algorithm on the weighted adjacency matrix
+    geodesic_distances = shortest_path(weighted_adjacency, directed=False)
+    return geodesic_distances
 
 def distances_scipy(X, X2, metric="cosine", p=2):
     """
@@ -128,7 +144,7 @@ def remove_duplicates(X):
         print("Out of the "+ str(round(n)) + " observations in X, only "+ str(round(n_new)) + " are unique.")
     return X_unique
 
-def get_dist(X, X2=None, metric="Lp", p=2, normalise_by_diameter=False, check_for_duplicates=True, n_neighbors=12):
+def get_dist(X, X2=None, Adj=None, metric="euclidean", p=2, normalise_by_diameter=False, check_for_duplicates=True, n_neighbors=12):
     """
     Compute the distance matrix.
 
@@ -158,20 +174,26 @@ def get_dist(X, X2=None, metric="Lp", p=2, normalise_by_diameter=False, check_fo
     D : ndarray, shape (`n_obs`, `n_obs`)
         A matrix of distances.
     """
-    if check_for_duplicates:
+
+    if check_for_duplicates and (X is not None):
         X = remove_duplicates(X)
+
 
     if X2 is None:
         X2 = X
     else:
-        if check_for_duplicates:
+        if check_for_duplicates and (X is not None):
             X2 = remove_duplicates(X2)
-    if metric == "Lp":
-        dist = distances_lp(X, X2, p=p)
-    elif metric == "isomap":
-        dist = distances_isomap(X, n_neighbors=n_neighbors, p=p)
+
+    if (Adj is not None):
+        dist = distances_geodesic(X, X2, Adj, p=p, metric=metric)
     else:
-        dist = distances_scipy(X,X2, metric=metric, p=p)
+        if metric == "Lp":
+            dist = distances_lp(X, X2, p=p)
+        elif metric == "isomap":
+            dist = distances_isomap(X, n_neighbors=n_neighbors, p=p)
+        else:
+            dist = distances_scipy(X, X2, metric=metric, p=p)
 
     if normalise_by_diameter:
         dist = normalise_distances_by_diameter(dist)

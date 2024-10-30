@@ -2,7 +2,7 @@ from magnipy import Magnipy
 import numpy as np
 import pytest
 
-methods = ["cholesky", "scipy", "scipy_sym", "inv", "pinv", "conjugate_gradient_iteration", "cg", "krylov"]
+methods = ["cholesky", "scipy", "scipy_sym", "inv", "pinv", "conjugate_gradient_iteration", "cg"]#, "krylov"]
 tss= [[1], np.linspace(0.01, 1, 100), None]
 
 def tes_ts():
