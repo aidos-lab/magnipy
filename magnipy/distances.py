@@ -36,11 +36,34 @@ def distances_isomap(X, n_neighbors=12, p=2):
     return isom.dist_matrix_
 
 def distances_geodesic(X, X2, Adj, p=2, metric = "euclidean"):
+    """
+    Compute a weighted / geodesic distance matrix from a graph.
+
+    Parameters
+    ----------
+    X : array_like, shape (`n_obs`, `n_vars`)
+        A dataset whose rows are observations and columns are features.
+    X2 : array_like, shape (`n_obs`, `n_vars`)
+        A dataset whose rows are observations and columns are features.
+    p: float
+        Parameter for the Minkowski metric.
+    Adj : array_like, shape (`n_obs`, `n_obs`)
+        An adjacency matrix.
+  
+    Returns
+    -------
+    D : ndarray, shape (`n_obs`, `n_obs`)
+        A matrix of distances as computed by scipy.spatial.distance.cdist.
+
+    References
+    ----------
+    .. [1] https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.distance.cdist.html
+    """
+
     if X is None:
         weighted_adjacency = Adj
     else:
         feature_distances = distances_scipy(X, X2, metric = metric, p=p)
-        #cdist(X, X2, metric = metric)
 
         # Step 2: Combine feature distances with adjacency matrix
         # For example, you can multiply adjacency matrix by feature distances to create a weighted graph
@@ -152,6 +175,10 @@ def get_dist(X, X2=None, Adj=None, metric="euclidean", p=2, normalise_by_diamete
     ----------
     X : array_like, shape (`n_obs`, `n_vars`)
         A dataset whose rows are observations and columns are features.
+    X2 : array_like, shape (`n_obs`, `n_vars`)
+        A dataset whose rows are observations and columns are features.
+    Adj : array_like, shape (`n_obs`, `n_obs`)
+        An adjacency matrix.
     metric: str
         The distance metric to use. The distance function can be
         'Lp', 'isomap',

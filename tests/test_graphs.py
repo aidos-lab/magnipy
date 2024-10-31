@@ -7,7 +7,6 @@ methods = ["cholesky", "scipy", "scipy_sym", "inv", "pinv", "conjugate_gradient_
 tss= [[1], np.linspace(0.01, 1, 100), None]
 
 def test_graph_function():
-    #ts = np.linspace(0.01, 1, 100)
     for ts in tss:
         for method in methods:
             Mag = Magnipy(X=np.array(

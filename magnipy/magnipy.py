@@ -7,26 +7,79 @@ import numpy as np
 import copy
 
 class Magnipy:
-    def __init__(self, X, ts=None, target_prop=0.95,  n_ts=30, log_scale = False, method="cholesky",
-                 metric="euclidean", p=2, Adj=None, one_point_property=True, proportion_scattered=None, scale_finding="convergence",
+    def __init__(self, X, ts=None, scale_finding="convergence", target_prop=0.95,  n_ts=30, log_scale = False, method="cholesky",
+                 metric="euclidean", p=2, Adj=None, one_point_property=True, 
                  n_neighbors=12, return_log_scale=False, perturb_singularities=True, recompute=False, name="", 
                                         positive_magnitude=False):	
-        
+        """
+        Initialises a Magnipy object.
+
+        Parameters
+        ----------
+        X : array_like, shape (`n_obs`, `n_vars`)
+            A dataset whose rows are observations and columns are features.
+        ts : array_like, shape (`n_ts`, )
+            The scales at which to evaluate the magnitude functions. If None, the scales are computed automatically.
+        scale_finding : str
+            The method to use to find the scale at which to evaluate the magnitude functions. Either 'scattered' or 'convergence'.
+        target_prop : float
+            The proportion of points that are scattered OR the proportion of cardinality that the magnitude functon converges to.
+        n_ts : int
+            The number of scales at which to evaluate the magnitude functions.
+        log_scale : bool
+            Whether to use a log-scale for the evaluation scales.
+        method : str
+            The method to use to compute the magnitude functions. 
+            One of 'cholesky', 'scipy', 'scipy_sym', 'inv', 'pinv', 'conjugate_gradient_iteration', 'cg'.
+        metric : str
+            The distance metric to use. The distance function can be
+            'Lp', 'isomap',
+            'braycurtis', 'canberra', 'chebyshev', 'cityblock', 'correlation',
+            'cosine', 'dice', 'euclidean', 'hamming', 'jaccard', 'jensenshannon',
+            'kulczynski1', 'mahalanobis', 'matching', 'minkowski',
+            'rogerstanimoto', 'russellrao', 'seuclidean', 'sokalmichener',
+            'sokalsneath', 'sqeuclidean', 'yule'.
+        p : float
+            Parameter for the Minkowski metric.
+        Adj : array_like, shape (`n_obs`, `n_obs`)
+            An adjacency matrix used to compute geodesic distances. If None, all points are adjacent.
+        n_neighbors : int
+            The number of nearest neighbours used to compute geodesic distances. Only used if the metric is "isomap".
+        return_log_scale : bool
+            Whether to return the scales on log-scale when computing the magnitude dimension profile.
+        one_point_property : bool
+            Whether to enforce the one-point property.
+        perturb_singularities : bool
+            Whether to perturb the simularity matrix whenever singularities in the magnitude function occure.
+        recompute : bool
+            Whether to recompute the magnitude functions if they have already been computed.
+        name : str
+            The name of the Magnipy object.
+        positive_magnitude : bool
+            Whether to compute positive magnitude, by taking only the sum of the positive weights.
+
+        Returns
+        -------
+        Magnipy
+            A Magnipy object.
+        """
+
+
         self._Adj = Adj
         if (metric !="precomputed"):
             self._X = X
             self._D = get_dist(X, Adj = self._Adj, p = p, metric = metric, normalise_by_diameter = False, n_neighbors = n_neighbors)
             self._n = self._D.shape[0]
-            self._target_value = target_prop* self._D.shape[0]
+            self._target_value = target_prop * self._D.shape[0]
             self._Z = similarity_matrix(self._D)
         else:
             self._X = None
             self._D = X
             self._n = self._D.shape[0]
             self._Z = similarity_matrix(self._D)
-            self._target_value = target_prop* self._D.shape[0]
+            self._target_value = target_prop * self._D.shape[0]
 
-        self._proportion_scattered=proportion_scattered
+        self._proportion_scattered = target_prop
         if (scale_finding != "scattered") & (scale_finding != "convergence"):
             raise Exception("The scale finding method must be either 'scattered' or 'convergence'.")
         self._scale_finding=scale_finding
@@ -55,19 +108,36 @@ class Magnipy:
         self._t_almost_scattered = None
 
     def get_dist(self):
+        """
+        Compute the distance matrix.
+        """
         if (self._D is None) | self._recompute:
             self._D = get_dist(self._X, Adj = self._Adj, p=self._p, metric=self._metric, normalise_by_diameter=False, n_neighbors=self._n_neighbors)
         return self._D
 
     def get_similarity_matrix(self):
+        """
+        Compute the similarity matrix.
+        """
         if (self._Z is None) | self._recompute:
             self._Z = similarity_matrix(self._D)
         return self._Z
 
     def get_name(self):
+        """
+        Get the name of the Magnipy object.
+        """
         return self._name
 
     def get_magnitude_weights(self):
+        """
+        Compute the magnitude weights.
+        
+        Returns
+        -------
+        weights : array_like, shape (`n_obs`, `n_ts`)
+            The weights of the magnitude function.
+        """
         if (self._weights is None) | self._recompute:
             ts=self.get_scales()
             weights, ts = compute_magnitude_until_convergence(self._Z, ts=self._ts, n_ts=self._n_ts, method=self._method, 
@@ -82,6 +152,16 @@ class Magnipy:
         return self._weights, self._ts
     
     def get_magnitude(self):
+        """
+        Compute the magnitude function.
+
+        Returns
+        -------
+        magnitude : array_like, shape (`n_ts`, )
+            The values of the magnitude function.
+        ts : array_like, shape (`n_ts`, )
+            The scales at which the magnitude function has been evaluated.
+        """
         if ((self._magnitude is None) & (self._weights is None)) | self._recompute:
             ts=self.get_scales()
             self._magnitude, ts = compute_magnitude_until_convergence(self._Z, ts=self._ts, n_ts=self._n_ts, method=self._method, 
@@ -97,11 +177,24 @@ class Magnipy:
         return self._magnitude, self._ts
     
     def plot_magnitude_function(self):
+        """
+        Plot the magnitude function.
+        """
         if (self._magnitude is None) | self._recompute:
             _, _ = self.get_magnitude()
         plot_magnitude_function(self._ts, self._magnitude, name=self._name)
     
     def get_magnitude_dimension_profile(self, exact=False, h=None):
+        """
+        Compute the magnitude dimension profile.
+
+        Parameters
+        ----------
+        exact : bool
+            Whether to compute the magnitude dimension profile exactly.
+        h : float
+            The stepsize to use for exact computations of the slope.
+        """
         if (self._magnitude_dimension_profile is None) | self._recompute:
             if exact:
                 self._magnitude_dimension_profile, self._ts_dim = magnitude_dimension_profile_exact(self._D, ts=self._ts, h=h, target_value=self._target_value, n_ts=self._n_ts, 
@@ -115,11 +208,17 @@ class Magnipy:
         return self._magnitude_dimension_profile, self._ts_dim
 
     def plot_magnitude_dimension_profile(self):
+        """
+        Plot the magnitude dimension profile.
+        """
         if (self._magnitude_dimension_profile is None) | self._recompute:
             _, _ = self.get_magnitude_dimension_profile()
         plot_magnitude_dimension_profile(ts=self._ts_dim, mag_dim=self._magnitude_dimension_profile, log_scale=self._return_log_scale, name=self._name)
 
     def get_t_conv(self):
+        """
+        Compute the scale at which the magnitude functions reach a certain value of magnitude.
+        """
         if self._scale_finding == "convergence":
             if (self._t_conv is None) | self._recompute:
                 self._t_conv = compute_t_conv(self._Z, target_value=self._target_value, method=self._method, 
@@ -129,6 +228,9 @@ class Magnipy:
             return self._scale_when_almost_scattered(q=None)
     
     def get_scales(self):
+        """
+        Compute the scales at which to evaluate the magnitude functions.
+        """
         if (self._ts is None) | self._recompute:
             if self._scale_finding == "scattered":
                 if self._proportion_scattered is None | self._recompute:
@@ -143,6 +245,16 @@ class Magnipy:
         return self._ts
     
     def change_scales(self, ts=None, t_cut=None):
+        """
+        Change the evaluation scales of the magnitude functions.
+
+        Parameters
+        ----------
+        ts : array_like, shape (`n_ts_new`, )
+            The new scales at which to evaluate the magnitude functions.
+        t_cut : float
+            The scale at which to cut the magnitude functions.
+        """
         if ts is None:
             if t_cut is None:
                 self._ts = None
@@ -159,6 +271,23 @@ class Magnipy:
         self._ts_dim = None
 
     def _eval_at_scales(self, ts_new, get_weights=False):
+        """
+        Evaluate the magnitude functions at new scales.
+
+        Parameters
+        ----------
+        ts_new : array_like, shape (`n_ts_new`, )
+            The new scales at which to evaluate the magnitude functions.
+        get_weights : bool
+            Whether to compute the weights.
+        
+        Returns
+        -------
+        mag : array_like, shape (`n_ts_new`, )
+            The values of the magnitude function evaluated at the new scales.
+        ts : array_like, shape (`n_ts_new`, )
+            The new scales at which the magnitude function has been evaluated.
+        """
         mag, ts = compute_magnitude_until_convergence(self._Z, ts=ts_new, method=self._method, get_weights=get_weights, 
                                                             one_point_property=self._one_point_property, 
                                                             perturb_singularities=self._perturb_singularities,
@@ -167,6 +296,14 @@ class Magnipy:
         return mag, ts
 
     def _cut_until_scale(self, t_cut):
+        """
+        Cut the magnitude functions at a given scale.
+        
+        Parameters
+        ----------
+        t_cut : float
+            The scale at which to cut the magnitude functions.
+        """
         if self._magnitude is not None:
             self._magnitude, self._ts = cut_until_scale(self._ts, self._magnitude, t_cut=t_cut, D=self._D, 
                                                           method=self._method, positive_magnitude=self._positive_magnitude)
@@ -181,20 +318,24 @@ class Magnipy:
             self._weights = self._weights[:len()]
 
     def get_magnitude_dimension(self, exact=False):
+        """
+        Compute the magnitude dimension.
+        
+        Parameters
+        ----------
+        exact : bool
+            Whether to compute the magnitude dimension exactly.
+        
+        Returns
+        -------
+        magnitude_dimension : float
+            The magnitude dimension. We compute it as the maximum value of the magnitude dimension profile.
+        """
         if self._magnitude_dimension_profile is None:
-            _, _ = self.get_magnitude_dimension_profile()
+            _, _ = self.get_magnitude_dimension_profile(exact=exact)
         if (self._magnitude_dimension is None) | self._recompute:
             self._magnitude_dimension = magnitude_dimension(self._magnitude_dimension_profile)
         return self._magnitude_dimension
-    
-    def get_magnitude_area(self, t_cut=None, integration="trapz",
-            absolute_area=True, scale=False, plot=False):
-        if self._magnitude is None:
-            _, _ = self.get_magnitude()
-        if self._magnitude_area is None:
-            self._magnitude_area = mag_area(magnitude=self._magnitude, ts=self._ts,  D=self._D, t_cut=t_cut, integration=integration, #normalise_by_cardinality=False, 
-            absolute_area=absolute_area, scale=scale, plot=plot, name=self._name, positive_magnitude=self._positive_magnitude)
-        return self._magnitude_area
     
     def include_points(self, X_new, Adj_new = None, update_ts=False):
         if self._X is None:
@@ -224,6 +365,22 @@ class Magnipy:
         self._ts_dim = None
 
     def remove_points(self, ind_delete, update_ts=False):
+        """
+        Remove observations.
+
+        Parameters
+        ----------
+        ind_delete :
+            The indices of the observations to remove.
+        update_ts : bool
+            Whether to update the scales of evaluation.
+    
+        Returns
+        -------
+        Magnipy :
+            A Magnipy object with the observations removed.
+        """
+
         if (self._X is None) and (self._Adj is None):
             raise Exception("There are no points to remove!")
         else:
@@ -258,9 +415,29 @@ class Magnipy:
         self._ts_dim = None     
 
     def copy(self):
+        """  
+        Return a copy of the Magnipy object.
+        """
         return copy.deepcopy(self)
     
     def _substract(self, other, t_cut=None, exact=True):
+        """
+        Substract the magnitude functions of two Magnipy objects.
+
+        Parameters
+        ----------
+        other : Magnipy
+            The other Magnipy object.
+        t_cut : float
+            The scale at which to cut the magnitude functions.
+        exact : bool
+            Whether to compute the magnitude difference exactly.
+        
+        Returns
+        -------
+        Magnipy
+            The difference of the magnitude functions
+        """
         if self._metric != other._metric:
             raise Exception("Magnitude functions need to share the same notion of distance in order to be substracted across the same scales of t!!")
         combined = Magnipy(None)
@@ -271,6 +448,23 @@ class Magnipy:
         return combined
 
     def _add(self, other, t_cut=None, exact=True):
+        """
+        Add the magnitude functions of two Magnipy objects.
+
+        Parameters
+        ----------
+        other : Magnipy
+            The other Magnipy object.
+        t_cut : float
+            The scale at which to cut the magnitude functions.
+        exact : bool
+            Whether to compute the magnitude sum exactly.
+        
+        Returns
+        -------
+        Magnipy
+            The sum of the magnitude functions
+        """
         if self._metric != other._metric:
             raise Exception("Magnitude functions need to share the same notion of distance in order to be added across the same scales of t!!")
         combined = Magnipy(None)
@@ -279,9 +473,66 @@ class Magnipy:
                                                                 exact=exact, t_cut=t_cut, positive_magnitude=self._positive_magnitude)
         combined._n_ts = len(combined._ts)
         return combined
-    
-    def get_magnitude_difference(self, other, t_cut=None, integration="trapz",
+        
+    def MagArea(self, t_cut=None, integration="trapz",
+            absolute_area=True, scale=False, plot=False):
+        """
+        Compute MagArea, the area under the magnitude function.
+
+        Parameters
+        ----------
+        t_cut : float
+            The scale at which to cut the magnitude function.
+        integration : str
+            The method of integration to use.
+        absolute_area : bool
+            Whether to compute the absolute area.
+        scale : bool
+            Whether to scale the magnitude functions to be on a domain [0,1] before computing the area.
+        plot : bool
+            Whether to plot the magnitude function.
+        
+        Returns
+        -------
+        mag_area : float
+            The area under the magnitude function.
+        """
+        if self._magnitude is None:
+            _, _ = self.get_magnitude()
+
+        if self._magnitude_area is None:
+            self._magnitude_area = mag_area(magnitude=self._magnitude, ts=self._ts,  D=self._D, t_cut=t_cut, integration=integration, #normalise_by_cardinality=False, 
+            absolute_area=absolute_area, scale=scale, plot=plot, name=self._name, positive_magnitude=self._positive_magnitude)
+
+        return self._magnitude_area
+
+    def MagDiff(self, other, t_cut=None, integration="trapz",
             absolute_area=True, scale=False, plot=False, exact=True):
+        """
+        Compute MagDiff i.e. the area between the magnitude functions of two Magnipy objects.
+
+        Parameters
+        ----------
+        other : Magnipy
+            The other Magnipy object.
+        t_cut : float
+            The scale at which to cut the magnitude functions.
+        integration : str
+            The method of integration to use.
+        absolute_area : bool
+            Whether to compute the absolute area.
+        scale : bool
+            Whether to scale the magnitude functions to be on a domain [0,1] before computing the difference.
+        plot : bool
+            Whether to plot the magnitude function difference.
+        exact : bool
+            Whether to compute the magnitude difference exactly.
+        
+        Returns
+        -------
+        mag_difference : float
+            The magnitude difference between the two magnitude functions.
+        """
         if self._magnitude is None:
             _, _ = self.get_magnitude()
         if other._magnitude is None:
@@ -292,22 +543,38 @@ class Magnipy:
                                                                 positive_magnitude=self._positive_magnitude)
         return mag_difference
     
-    def MagDiff(self, other, t_cut=None, integration="trapz",
-            absolute_area=True, scale=False, plot=False, exact=True):
-        return self.get_magnitude_difference(other, t_cut=t_cut, integration=integration,
-            absolute_area=absolute_area, scale=scale, plot=plot, exact=exact)
-    
-    def MagArea(self, t_cut=None, integration="trapz",
-            absolute_area=True, scale=False, plot=False):
-        return self.get_magnitude_area(t_cut=t_cut, integration=integration,
-            absolute_area=absolute_area, scale=scale, plot=plot)
-    
     def _scale_when_scattered(self):
+        """
+        Compute the scale at which the metric space is scattered.
+
+        Returns
+        -------
+        t_scattered : float
+            The scale at which the metric space is scattered.
+        
+        References
+        ----------
+        [1] Leinster T. The magnitude of metric spaces. Documenta Mathematica. 2013 Jan 1;18:857-905.
+        """
         if (self._t_scattered is None) | self._recompute:
             self._t_scattered = scale_when_scattered(self._D)
         return self._t_scattered
     
     def _scale_when_almost_scattered(self, q=None):
+        """
+        Compute the scale at which the metric space is almost scattered.
+
+        Parameters
+        ----------
+        q : float
+            The proportion of points that are scattered.
+        
+        Returns
+        -------
+        t_almost_scattered : float
+            The scale at which the metric space is almost scattered.
+        """
+
         if (self._t_almost_scattered is None) | self._recompute:
-            self._t_almost_scattered = scale_when_almost_scattered(self._D, n=self._n, q=q)
+            self._t_almost_scattered = scale_when_almost_scattered(self._D, n=self._n, q=q)    
         return self._t_almost_scattered

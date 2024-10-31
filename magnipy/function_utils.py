@@ -6,6 +6,9 @@ from matplotlib import pyplot as plt
 import seaborn as sns
 
 def cut_ts(ts, t_cut):
+    """
+    Cut off a magnitude function at a specified cut-off scale.
+    """
     index_cut = np.searchsorted(ts, t_cut)
     ts_new = np.concatenate((ts[:index_cut], [t_cut]))
     return ts_new
@@ -231,18 +234,30 @@ def combine_functions(mag, ts, D, mag2, ts2, D2, method="cholesky", exact=False,
     return sum_of_interpolated_vectors, xs_list
 
 def diff_of_functions(mag, ts, D, mag2, ts2, D2, exact=False, method="cholesky", t_cut=None, magnitude_from_distances=magnitude_from_distances):
+    """
+    Substract two magnitude functions.
+    """
     return combine_functions(mag, ts, D, mag2, ts2, D2, exact=exact, method=method, t_cut=t_cut, addition=False, magnitude_from_distances=magnitude_from_distances)
 
 def sum_of_functions(mag, ts, D, mag2, ts2, D2, exact=False, method="cholesky", t_cut=None, magnitude_from_distances=magnitude_from_distances):
+    """
+    Add two magnitude functions.
+    """
     return combine_functions(mag, ts, D, mag2, ts2, D2, exact=exact, method=method, t_cut=t_cut, addition=True, magnitude_from_distances=magnitude_from_distances)
 
 def plot_magnitude_function(mag, ts, name=""):
+    """
+    Plot a magnitude function.
+    """
     plt.plot(mag, ts, label="magnitude function "+name)
     plt.xlabel("t")
     plt.ylabel("magnitude function")
     sns.despine()
 
 def plot_magnitude_dimension_profile(mag_dim, ts, log_scale=False, name=""):
+    """
+    Plot a magnitude dimension profile.
+    """
     plt.plot(ts, mag_dim, label="magnitude dimension profile "+name)
     if log_scale:
         plt.xlabel("log(t)")
