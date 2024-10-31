@@ -5,6 +5,9 @@ from magnipy.distances import get_dist
 def compute_magnitude_dimension_profile(X, ts=None, h=None, target_value=None, n_ts=10, log_scale = True, method="cholesky",
                                        metric="Lp", p=2, normalise_by_diameter=False, one_point_property=False, 
                         n_neighbors=12, exact=False, return_log_scale=False):
+    """
+    Compute the magnitude dimension profile of a dataset X.
+    """
     D = get_dist(X, p=p, metric=metric, normalise_by_diameter=normalise_by_diameter, n_neighbors=n_neighbors)
     if exact:
         slopes, ts = magnitude_dimension_profile_exact(D, ts=ts,h=h, n_ts=n_ts, method=method, target_value=target_value,
@@ -19,6 +22,9 @@ def compute_magnitude_dimension_profile(X, ts=None, h=None, target_value=None, n
 
 def magnitude_dimension_profile_exact(D, ts=None, h=None, target_value=None, n_ts=10, log_scale = True,
                                       return_log_scale=False, one_point_property=True, method="cholesky"):
+    """
+    Compute the magnitude dimension profile of a dataset X.
+    """
     if D.shape[0] != D.shape[1]:
         raise Exception("D must be symmetric.")
     if ts is None:
@@ -30,7 +36,6 @@ def magnitude_dimension_profile_exact(D, ts=None, h=None, target_value=None, n_t
         ts = get_scales(t_conv, n_tsss, log_scale = log_scale, one_point_property = False)#[1:] ## remove the first scale for now
         h = np.min(np.diff(np.log(ts)))/5
         log_ts= np.log(ts)
-        #h = np.log((ts[1]-ts[0]))/100
     else:
         if ts[0] == 0:
             ts = ts[1:]

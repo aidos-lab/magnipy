@@ -306,14 +306,14 @@ class Magnipy:
         """
         if self._magnitude is not None:
             self._magnitude, self._ts = cut_until_scale(self._ts, self._magnitude, t_cut=t_cut, D=self._D, 
-                                                          method=self._method, positive_magnitude=self._positive_magnitude)
+                                                          method=self._method)
         elif self._ts is not None:
             self._ts = cut_ts(self._ts, t_cut)
         self._magnitude_area = None
         self._magnitude_dimension = None
         if self._magnitude_dimension_profile is not None:
             self._magnitude_dimension_profile, self._ts_dim = cut_until_scale(self._ts_dim, self._magnitude_dimension_profile, t_cut=t_cut, D=None, 
-                                                                                method=self._method, positive_magnitude=self._positive_magnitude)
+                                                                                method=self._method)
         if self._weights is not None:
             self._weights = self._weights[:len()]
 
@@ -443,7 +443,7 @@ class Magnipy:
         combined = Magnipy(None)
         combined._magnitude, combined._ts = diff_of_functions(self._magnitude, self._ts, self._D, 
                                                                 other._magnitude, other._ts, other._D, method=self._method, 
-                                                                exact=exact, t_cut=t_cut, positive_magnitude=self._positive_magnitude)
+                                                                exact=exact, t_cut=t_cut)
         combined._n_ts = len(combined._ts)
         return combined
 
@@ -470,7 +470,7 @@ class Magnipy:
         combined = Magnipy(None)
         combined._magnitude, combined._ts = sum_of_functions(self._magnitude, self._ts, self._D, 
                                                                 other._magnitude, other._ts, other._D, method=self._method, 
-                                                                exact=exact, t_cut=t_cut, positive_magnitude=self._positive_magnitude)
+                                                                exact=exact, t_cut=t_cut)
         combined._n_ts = len(combined._ts)
         return combined
         
@@ -502,7 +502,7 @@ class Magnipy:
 
         if self._magnitude_area is None:
             self._magnitude_area = mag_area(magnitude=self._magnitude, ts=self._ts,  D=self._D, t_cut=t_cut, integration=integration, #normalise_by_cardinality=False, 
-            absolute_area=absolute_area, scale=scale, plot=plot, name=self._name, positive_magnitude=self._positive_magnitude)
+            absolute_area=absolute_area, scale=scale, plot=plot, name=self._name)
 
         return self._magnitude_area
 
@@ -539,8 +539,7 @@ class Magnipy:
             _, _ = other.get_magnitude()
         mag_difference = mag_diff(self._magnitude, self._ts, self._D, other._magnitude, other._ts, other._D,  method=self._method, 
                                                                 exact=exact, t_cut=t_cut, integration=integration, 
-                                                                absolute_area=absolute_area, scale=scale, plot=plot, name=self._name + " - "+other._name, 
-                                                                positive_magnitude=self._positive_magnitude)
+                                                                absolute_area=absolute_area, scale=scale, plot=plot, name=self._name + " - "+other._name)
         return mag_difference
     
     def _scale_when_scattered(self):
