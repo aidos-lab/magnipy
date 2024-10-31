@@ -1,6 +1,6 @@
 # magnipy: Metric Space Magnitude Computations
 
-This is a package for computing the **magnitude of a metric space**, which encodes the **effective size, diversity and geometry** of a metric space. Given a dataset or distance matrix, magnitude measures the effective number of distinct points in the space at a scale of dissimilarity between observations.
+This is a repository for computing the **magnitude of a metric space**, which encodes the **effective size, diversity and geometry** of a metric space. Given a dataset or distance matrix, magnitude measures the effective number of distinct points in the space at a scale of dissimilarity between observations.
 
 `Magnipy` enables the computation of:
 - magnitude, **magnitude weights and magnitude functions** across varying resolutions
