@@ -227,6 +227,11 @@ def weights_spread(Z):
     -------
     w : array_like, shape (`n_ts`, )
         The spread weight vector.
+  
+    References
+    ----------
+    .. [1] Willerton S. Spread: a measure of the size of metric spaces. International Journal of 
+        Computational Geometry & Applications. 2015;25(03):207-25.
     """
     return 1/np.sum(Z, axis=0)
 
@@ -251,7 +256,8 @@ def spread_weights(Z, ts):
     
     References
     ----------
-    .. [1] 
+    .. [1] Willerton S. Spread: a measure of the size of metric spaces. International Journal of 
+        Computational Geometry & Applications. 2015;25(03):207-25.
     """
     n=Z.shape[0]
     weights = np.ones(shape=(n, len(ts)))/n
@@ -296,6 +302,7 @@ def magnitude_weights(Z, ts, mag_fn, one_point_property=True, perturb_singularit
     .. [2] Bunch, E., Dickinson, D., Kline, J. and Fung, G., 2020. 
         Practical applications of metric space magnitude and weighting vectors. 
         arXiv preprint arXiv:2006.14063.
+    .. [3] Leinster, T., 2013. The magnitude of metric spaces. Documenta Mathematica, 18, pp.857-905.
     """
     n=Z.shape[0]
     weights = np.ones(shape=(n, len(ts)))/n
