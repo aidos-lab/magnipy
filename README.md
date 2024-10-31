@@ -36,9 +36,9 @@ Please consider citing our work!
 @inproceedings{andreeva2023metric,
   title         = {Metric Space Magnitude and Generalisation in Neural Networks},
   author        = {Andreeva, Rayna and Limbeck, Katharina and Rieck, Bastian and Sarkar, Rik},
-  year          = 2023,
+  year          = {2023},
   booktitle     = {Proceedings of 2nd Annual Workshop on Topology, Algebra, and Geometry in Machine Learning~(TAG-ML)},
-  volume        = 221,
+  volume        = {221},
   pages         = {242--253}
 }
 ```
