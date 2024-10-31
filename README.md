@@ -1,13 +1,13 @@
 # magnipy: Metric Space Magnitude Computations
 
-This is a package for computing the **magnitude of a metric space**, which encodes the **effective size, diversity and geometry** of a metric space. Given a dataset or distance matrix, magnitude measures the effective number of distict points in the space at a scale of dissimilarity between observations.
+This is a package for computing the **magnitude of a metric space**, which encodes the **effective size, diversity and geometry** of a metric space. Given a dataset or distance matrix, magnitude measures the effective number of distinct points in the space at a scale of dissimilarity between observations.
 
 `Magnipy` enables the computation of:
-- magnitude, **magnitude weights and magnitude functions** across varying resolutions;
-- magnitude dimension profiles and the **magnitude dimension** to estimate **intrinsic dimensionality**;
-- an **automated scale-finding** proceedure to find suitable evaluation scales;
-- **MagArea** the area under a magnitude function, a multi-scale measure of the **intrinsic diversity** of a space; and
-- **MagDiff** the area between two magnitude functions to measure the **difference in diversity** between two spaces.
+- magnitude, **magnitude weights and magnitude functions** across varying resolutions
+- magnitude dimension profiles and the **magnitude dimension** to estimate **intrinsic dimensionality**
+- an **automated scale-finding** procedure to find suitable evaluation scales
+- **MagArea** the area under a magnitude function, a multi-scale measure of the **intrinsic diversity** of a space
+- **MagDiff** the area between two magnitude functions to measure the **difference in diversity** between two spaces
 
 
 # Dependencies
