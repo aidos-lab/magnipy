@@ -81,7 +81,6 @@ def weights_scipy(Z):
     w = solve(Z, np.ones(Z.shape[0]), assume_a = "pos")
     return w
 
-
 def weights_scipy_sym(Z):
     """
     Compute the magnitude weight vector from a similarity matrix by solving for 
