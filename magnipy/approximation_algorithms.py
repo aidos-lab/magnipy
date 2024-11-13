@@ -3,43 +3,48 @@ import numpy as np
 from scipy.spatial import distance_matrix
 import networkx as nx
 
-def dominatingSet(X,epsilon=0.1):
+
+def dominatingSet(X, epsilon=0.1):
     "Dominating dataset of X with a given labels y and representativeness factor epsilon."
-    ady = distance_matrix(X,X)
-    g = nx.from_numpy_array(ady<epsilon)
+    ady = distance_matrix(X, X)
+    g = nx.from_numpy_array(ady < epsilon)
     dom = nx.dominating_set(g)
     return np.array(list(dom))
 
-#---------------- ITERATIVE ALGORITHMS ----------------------------------
+
+# ---------------- ITERATIVE ALGORITHMS ----------------------------------
 
 
-def add_and_normalize_asvec(S,h):
+def add_and_normalize_asvec(S, h):
     W = torch.eye(S.shape[0]).to(S.device)
-    for iterations in range(h): 
+    for iterations in range(h):
         W = S @ W
         b = torch.sum(W, dim=1)
-        W = W.diag()/b
+        W = W.diag() / b
         W = W.diag()
     return W
 
-def add_and_normalize(S,h):
+
+def add_and_normalize(S, h):
     W = torch.eye(S.shape[0]).to(S.device)
-    for iterations in range(h): 
-        V=torch.diagonal(W).diag()
+    for iterations in range(h):
+        V = torch.diagonal(W).diag()
         W = S @ V
         b = torch.sum(W, dim=1)
-        c = (1/b).diag()
+        c = (1 / b).diag()
         W = c @ W
     return W
 
-def add_and_normalize_points(points,h):
+
+def add_and_normalize_points(points, h):
     S = similarity_matrix(points)
     return add_and_normalize(S, h)
 
 
-def add_and_normalize_points_asvec(points,h):
+def add_and_normalize_points_asvec(points, h):
     S = similarity_matrix(points)
     return add_and_normalize_asvec(S, h)
+
 
 class Model(torch.nn.Module):
     def __init__(self, S, device):
@@ -48,17 +53,18 @@ class Model(torch.nn.Module):
         self.S = S.to(device)
         self.weights = torch.nn.Parameter(torch.ones(S.shape[0]).to(device))
 
-    def forward(self): 
-        V=self.weights.diag()
+    def forward(self):
+        V = self.weights.diag()
         W = self.S @ V
         return torch.sum(W, dim=1)
 
-def magnitude_by_SGD(S, h, lr=0.01, device='cpu'): 
+
+def magnitude_by_SGD(S, h, lr=0.01, device="cpu"):
     model = Model(S, device)
     optimizer = torch.optim.SGD(model.parameters(), lr=lr)
     target = torch.ones(S.shape[0]).to(device)
     loss_fn = torch.nn.MSELoss()
-    for i in range(h): 
+    for i in range(h):
         optimizer.zero_grad()
         output = model.forward()
         loss_val = loss_fn(output, target)
@@ -66,19 +72,22 @@ def magnitude_by_SGD(S, h, lr=0.01, device='cpu'):
         optimizer.step()
     return model.weights
 
-def magnitude_by_SGD_points(points, h, lr=0.01, device='cpu'):
+
+def magnitude_by_SGD_points(points, h, lr=0.01, device="cpu"):
     S = similarity_matrix(points)
     return magnitude_by_SGD(S, h, lr, device)
 
-def magnitude_by_batch_SGD(S, num_epochs=100, batch_size=1, lr=0.01, device='cpu'): 
+
+def magnitude_by_batch_SGD(S, num_epochs=100, batch_size=1, lr=0.01, device="cpu"):
     model = Model(S, device)
     optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=0.9)
     target = torch.ones(S.shape[0]).to(device)
     loss_fn = torch.nn.MSELoss()
 
-    data_iter = torch.utils.data.DataLoader(torch.utils.data.TensorDataset(model.weights, target), 
-                                            batch_size, shuffle=True)
-    
+    data_iter = torch.utils.data.DataLoader(
+        torch.utils.data.TensorDataset(model.weights, target), batch_size, shuffle=True
+    )
+
     for epoch in range(num_epochs):
         for batch_id, (X, y) in enumerate(data_iter):
 
@@ -87,11 +96,15 @@ def magnitude_by_batch_SGD(S, num_epochs=100, batch_size=1, lr=0.01, device='cpu
             loss_val = loss_fn(output, target)
             loss_val.backward()
             optimizer.step()
-    return model.weights 
+    return model.weights
 
-def magnitude_by_batch_SGD_points(points, num_epochs=100, batch_size=1, lr=0.01, device='cpu'):
+
+def magnitude_by_batch_SGD_points(
+    points, num_epochs=100, batch_size=1, lr=0.01, device="cpu"
+):
     S = similarity_matrix(points)
     return magnitude_by_batch_SGD(S, num_epochs, batch_size, lr, device)
+
 
 def similarity_matrix(points):
     # Compute the pairwise distance matrix
@@ -109,11 +122,14 @@ def magnitude(S, device):
     inverse = torch.inverse(S)
     return torch.sum(inverse)
 
+
 def magnitudeof_points(points, device):
     S = similarity_matrix(points).to(device)
     return magnitude(S, device)
 
+
 # Numpy inversion (where GPU is not available)
+
 
 def compute_magnitude_no_gpu(W, t):
     dist_mtx = distance_matrix(W, W)
@@ -122,8 +138,10 @@ def compute_magnitude_no_gpu(W, t):
     magnitude = Z.sum()
     return magnitude
 
+
 # -------------SUBSET SELECTION ----------------------------
 # 1. Discrete Centers
+
 
 def discrete_center_hierarchy(S):
     # first pass: create the centre hierarchy
@@ -154,9 +172,11 @@ def discrete_center_hierarchy(S):
         for point in centres:
             dominating_sets.append(current_centres[point])
 
-        device = 'cuda'
+        device = "cuda"
         # speed up the magnitude computation using tensors
-        magnitude_of_dominating_set_tensor = magnitudeof_points(torch.from_numpy(np.array(dominating_sets)), device)
+        magnitude_of_dominating_set_tensor = magnitudeof_points(
+            torch.from_numpy(np.array(dominating_sets)), device
+        )
         magnitude_of_dominating_set = magnitude_of_dominating_set_tensor.item()
         current_centres = dominating_sets
         # centres has the indexing information
@@ -174,6 +194,7 @@ def discrete_center_hierarchy(S):
 
 
 # 2. Greedy Mazimization
+
 
 def greedy_maximization(S, tolerance_parameter=0.01, no_gpu=True):
     best_magnitude_array = []
@@ -203,8 +224,10 @@ def greedy_maximization(S, tolerance_parameter=0.01, no_gpu=True):
         # print('the incremental magnitude is,', incremental_magnitude)
 
         # speed up the magnitude computation using tensors
-        device = 'cuda'
-        incremental_magnitude_tensor = magnitudeof_points(torch.from_numpy(np.array(new_set)), device)
+        device = "cuda"
+        incremental_magnitude_tensor = magnitudeof_points(
+            torch.from_numpy(np.array(new_set)), device
+        )
         incremental_magnitude = incremental_magnitude_tensor.item()
 
         if best_magnitude == 0:
@@ -241,8 +264,10 @@ def greedy_maximization(S, tolerance_parameter=0.01, no_gpu=True):
                 incremental_magnitude = compute_magnitude_no_gpu(np.array(new_set), 1)
             else:
                 # speed up the magnitude computation using tensors
-                device = 'cuda'
-                incremental_magnitude_tensor = magnitudeof_points(torch.from_numpy(np.array(new_set)), device)
+                device = "cuda"
+                incremental_magnitude_tensor = magnitudeof_points(
+                    torch.from_numpy(np.array(new_set)), device
+                )
                 incremental_magnitude = incremental_magnitude_tensor.item()
 
             if best_magnitude == 0:
@@ -269,16 +294,11 @@ def greedy_maximization(S, tolerance_parameter=0.01, no_gpu=True):
             set_of_points.append(maximising_element)
             best_magnitude_array.append(best_magnitude)
         if len(set_of_points) >= len(X):
-            print('We should break the while loop, we have reached the cardinality of the set')
+            print(
+                "We should break the while loop, we have reached the cardinality of the set"
+            )
             break
 
         j += 1
         converging_number_of_points = len(set_of_points)
     return best_magnitude_array
-
-
-
-
-
-
-

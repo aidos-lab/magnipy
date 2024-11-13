@@ -5,6 +5,7 @@ from magnipy.magnitude import magnitude_from_distances
 from matplotlib import pyplot as plt
 import seaborn as sns
 
+
 def cut_ts(ts, t_cut):
     """
     Cut off a magnitude function at a specified cut-off scale.
@@ -13,7 +14,16 @@ def cut_ts(ts, t_cut):
     ts_new = np.concatenate((ts[:index_cut], [t_cut]))
     return ts_new
 
-def cut_until_scale(ts, magnitude, t_cut, D=None, method="cholesky", kind = 'linear', magnitude_from_distances=magnitude_from_distances):
+
+def cut_until_scale(
+    ts,
+    magnitude,
+    t_cut,
+    D=None,
+    method="cholesky",
+    kind="linear",
+    magnitude_from_distances=magnitude_from_distances,
+):
     """
     Cut off a magnitude function at a specified cut-off scale.
 
@@ -39,8 +49,8 @@ def cut_until_scale(ts, magnitude, t_cut, D=None, method="cholesky", kind = 'lin
     ts_new : array_like, shape (`n_ts_new`, )
         The new evaluation scales cut off at the cut-off scale.
     """
-    x_values=ts
-    y_values=magnitude
+    x_values = ts
+    y_values = magnitude
 
     sorted_indices = np.argsort(x_values)
     x_sorted = x_values[sorted_indices]
@@ -51,16 +61,19 @@ def cut_until_scale(ts, magnitude, t_cut, D=None, method="cholesky", kind = 'lin
 
     if D is None:
         # Perform linear interpolation to find f(x_cut)
-        f_x_cut = interp1d(x_sorted, y_sorted, kind=kind, fill_value='extrapolate')(t_cut)
+        f_x_cut = interp1d(x_sorted, y_sorted, kind=kind, fill_value="extrapolate")(
+            t_cut
+        )
     else:
         f_x_cut = magnitude_from_distances(D, [t_cut], method)[0]
-    
+
     # Create new vectors up to and including t_cut
     ts = np.concatenate((x_sorted[:index_cut], [t_cut]))
     magnitude = np.concatenate((y_sorted[:index_cut], [f_x_cut]))
     return magnitude, ts
 
-def interpolate_functions(mag, ts,  mag2, ts2, kind='linear'):
+
+def interpolate_functions(mag, ts, mag2, ts2, kind="linear"):
     """
     Interpolate two magnitude functions across the same scales.
 
@@ -98,14 +111,26 @@ def interpolate_functions(mag, ts,  mag2, ts2, kind='linear'):
 
     # Initialize an array to store the sum of interpolated vectors
     # sum_of_interpolated_vectors = np.zeros(common_length)
-    
-    inter1 = interp1d(ts, mag, kind=kind, fill_value=(1, np.max(mag)), bounds_error=False) #kind='quadratic'
-    inter2 = interp1d(ts2, mag2, kind=kind, fill_value=(1, np.max(mag2)), bounds_error=False)
+
+    inter1 = interp1d(
+        ts, mag, kind=kind, fill_value=(1, np.max(mag)), bounds_error=False
+    )  # kind='quadratic'
+    inter2 = interp1d(
+        ts2, mag2, kind=kind, fill_value=(1, np.max(mag2)), bounds_error=False
+    )
     interpolated = inter1(xs_list)
     interpolated2 = inter2(xs_list)
     return interpolated, interpolated2, xs_list
 
-def get_reevaluated_function(mag, ts, ts2, D, method="cholesky", magnitude_from_distances=magnitude_from_distances):
+
+def get_reevaluated_function(
+    mag,
+    ts,
+    ts2,
+    D,
+    method="cholesky",
+    magnitude_from_distances=magnitude_from_distances,
+):
     """
     Re-evaluate a magnitude function across more scales.
 
@@ -129,16 +154,26 @@ def get_reevaluated_function(mag, ts, ts2, D, method="cholesky", magnitude_from_
     ts_combined : array_like, shape (`n_ts_new`, )
         The union of the evaluation scales.
     """
-    ts_diff = np.setdiff1d(ts2, ts) # t in ts2 but not in ts
+    ts_diff = np.setdiff1d(ts2, ts)  # t in ts2 but not in ts
     mag_new = magnitude_from_distances(D, ts_diff, method=method)
-    new_ts = np.concatenate((ts_diff,ts))
-    new_mags = np.concatenate((mag_new,mag))
+    new_ts = np.concatenate((ts_diff, ts))
+    new_mags = np.concatenate((mag_new, mag))
     ind = new_ts.argsort()
     new_ts = new_ts[ind]
     new_mags = new_mags[ind]
     return new_mags, new_ts
 
-def reevaluate_functions(mag, ts, D, mag2, ts2, D2, method="cholesky", magnitude_from_distances=magnitude_from_distances):
+
+def reevaluate_functions(
+    mag,
+    ts,
+    D,
+    mag2,
+    ts2,
+    D2,
+    method="cholesky",
+    magnitude_from_distances=magnitude_from_distances,
+):
     """
     Re-evaluate two magnitude functions across the same scales.
 
@@ -168,11 +203,38 @@ def reevaluate_functions(mag, ts, D, mag2, ts2, D2, method="cholesky", magnitude
     ts_combined : array_like, shape (`n_ts_new`, )
         The union of the evaluation scales of both functions.
     """
-    new_mags, new_ts = get_reevaluated_function(mag, ts, ts2, D, method=method,  magnitude_from_distances=magnitude_from_distances)
-    new_mags2, new_ts2 = get_reevaluated_function(mag2, ts2, ts, D2, method=method,  magnitude_from_distances=magnitude_from_distances)
+    new_mags, new_ts = get_reevaluated_function(
+        mag,
+        ts,
+        ts2,
+        D,
+        method=method,
+        magnitude_from_distances=magnitude_from_distances,
+    )
+    new_mags2, new_ts2 = get_reevaluated_function(
+        mag2,
+        ts2,
+        ts,
+        D2,
+        method=method,
+        magnitude_from_distances=magnitude_from_distances,
+    )
     return new_mags, new_mags2, new_ts
 
-def combine_functions(mag, ts, D, mag2, ts2, D2, method="cholesky", exact=False, t_cut=None, addition=False, magnitude_from_distances=magnitude_from_distances):
+
+def combine_functions(
+    mag,
+    ts,
+    D,
+    mag2,
+    ts2,
+    D2,
+    method="cholesky",
+    exact=False,
+    t_cut=None,
+    addition=False,
+    magnitude_from_distances=magnitude_from_distances,
+):
     """
     Add or substract two magnitude functions.
 
@@ -193,7 +255,7 @@ def combine_functions(mag, ts, D, mag2, ts2, D2, method="cholesky", exact=False,
     method : str
         The method used to compute magnitude.
     exact : bool
-        If True and both D and D2 are not None re-compute the two magnitude functions 
+        If True and both D and D2 are not None re-compute the two magnitude functions
         across the union of their evaluation scales. Else use interpolation.
     t_cut : None or float
         The evaluation scale until which to estimate the integral.
@@ -209,56 +271,126 @@ def combine_functions(mag, ts, D, mag2, ts2, D2, method="cholesky", exact=False,
         The union of the evaluation scales of both functions.
     """
     if t_cut is not None:
-        mag, ts = cut_until_scale(ts, mag, t_cut, D=D, method=method,  magnitude_from_distances=magnitude_from_distances)
-        mag2, ts2 = cut_until_scale(ts2, mag2, t_cut, D=D2, method=method, magnitude_from_distances=magnitude_from_distances)
-    
+        mag, ts = cut_until_scale(
+            ts,
+            mag,
+            t_cut,
+            D=D,
+            method=method,
+            magnitude_from_distances=magnitude_from_distances,
+        )
+        mag2, ts2 = cut_until_scale(
+            ts2,
+            mag2,
+            t_cut,
+            D=D2,
+            method=method,
+            magnitude_from_distances=magnitude_from_distances,
+        )
+
     if ts is ts2:
-        interpolated=mag
-        interpolated2=mag2
-        xs_list=ts
+        interpolated = mag
+        interpolated2 = mag2
+        xs_list = ts
     else:
-        if ((exact) | (D is None) | (D2 is None)):
+        if (exact) | (D is None) | (D2 is None):
             try:
-                interpolated, interpolated2, xs_list = interpolate_functions(mag, ts,  mag2, ts2, kind="quadratic")
+                interpolated, interpolated2, xs_list = interpolate_functions(
+                    mag, ts, mag2, ts2, kind="quadratic"
+                )
             except Exception as e:
-                #print(e)
-                interpolated, interpolated2, xs_list = interpolate_functions(mag, ts,  mag2, ts2, kind="linear")
-            #interpolated, interpolated2, xs_list = reevaluate_functions(mag, ts, D, mag2, ts2, D2, method=method)
+                # print(e)
+                interpolated, interpolated2, xs_list = interpolate_functions(
+                    mag, ts, mag2, ts2, kind="linear"
+                )
+            # interpolated, interpolated2, xs_list = reevaluate_functions(mag, ts, D, mag2, ts2, D2, method=method)
         else:
-            interpolated, interpolated2, xs_list = reevaluate_functions(mag, ts, D, mag2, ts2, D2, method=method)
+            interpolated, interpolated2, xs_list = reevaluate_functions(
+                mag, ts, D, mag2, ts2, D2, method=method
+            )
 
     if addition:
-        sum_of_interpolated_vectors = interpolated+interpolated2
+        sum_of_interpolated_vectors = interpolated + interpolated2
     else:
-        sum_of_interpolated_vectors = interpolated-interpolated2
+        sum_of_interpolated_vectors = interpolated - interpolated2
     return sum_of_interpolated_vectors, xs_list
 
-def diff_of_functions(mag, ts, D, mag2, ts2, D2, exact=False, method="cholesky", t_cut=None, magnitude_from_distances=magnitude_from_distances):
+
+def diff_of_functions(
+    mag,
+    ts,
+    D,
+    mag2,
+    ts2,
+    D2,
+    exact=False,
+    method="cholesky",
+    t_cut=None,
+    magnitude_from_distances=magnitude_from_distances,
+):
     """
     Substract two magnitude functions.
     """
-    return combine_functions(mag, ts, D, mag2, ts2, D2, exact=exact, method=method, t_cut=t_cut, addition=False, magnitude_from_distances=magnitude_from_distances)
+    return combine_functions(
+        mag,
+        ts,
+        D,
+        mag2,
+        ts2,
+        D2,
+        exact=exact,
+        method=method,
+        t_cut=t_cut,
+        addition=False,
+        magnitude_from_distances=magnitude_from_distances,
+    )
 
-def sum_of_functions(mag, ts, D, mag2, ts2, D2, exact=False, method="cholesky", t_cut=None, magnitude_from_distances=magnitude_from_distances):
+
+def sum_of_functions(
+    mag,
+    ts,
+    D,
+    mag2,
+    ts2,
+    D2,
+    exact=False,
+    method="cholesky",
+    t_cut=None,
+    magnitude_from_distances=magnitude_from_distances,
+):
     """
     Add two magnitude functions.
     """
-    return combine_functions(mag, ts, D, mag2, ts2, D2, exact=exact, method=method, t_cut=t_cut, addition=True, magnitude_from_distances=magnitude_from_distances)
+    return combine_functions(
+        mag,
+        ts,
+        D,
+        mag2,
+        ts2,
+        D2,
+        exact=exact,
+        method=method,
+        t_cut=t_cut,
+        addition=True,
+        magnitude_from_distances=magnitude_from_distances,
+    )
+
 
 def plot_magnitude_function(mag, ts, name=""):
     """
     Plot a magnitude function.
     """
-    plt.plot(mag, ts, label="magnitude function "+name)
+    plt.plot(mag, ts, label="magnitude function " + name)
     plt.xlabel("t")
     plt.ylabel("magnitude function")
     sns.despine()
+
 
 def plot_magnitude_dimension_profile(mag_dim, ts, log_scale=False, name=""):
     """
     Plot a magnitude dimension profile.
     """
-    plt.plot(ts, mag_dim, label="magnitude dimension profile "+name)
+    plt.plot(ts, mag_dim, label="magnitude dimension profile " + name)
     if log_scale:
         plt.xlabel("log(t)")
     else:
