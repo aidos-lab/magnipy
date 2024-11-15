@@ -90,7 +90,6 @@ def magnitude_by_batch_SGD(S, num_epochs=100, batch_size=1, lr=0.01, device="cpu
 
     for epoch in range(num_epochs):
         for batch_id, (X, y) in enumerate(data_iter):
-
             optimizer.zero_grad()
             output = model.forward()
             loss_val = loss_fn(output, target)

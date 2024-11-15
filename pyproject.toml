@@ -20,7 +20,7 @@ numba = "^0.59.1"
 numexpr = "^2.10.1"
 torch = "^2.4.1"
 seaborn = "^0.13.2"
-black = "^24.10.0"
+black = "^23.0"
 
 [tool.pytest.ini_options]
 filterwarnings = [
