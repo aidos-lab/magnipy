@@ -78,7 +78,7 @@ def magnitude_from_distances(
             raise Exception(
                 "The computation method must be one of 'cholesky', 'scipy', 'scipy_sym', 'inv', 'pinv', 'conjugate_gradient_iteration', 'cg', 'naive', 'spread'."
             )
-        
+
         weights = magnitude_weights(
             Z,
             ts,

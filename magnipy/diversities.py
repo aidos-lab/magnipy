@@ -26,7 +26,7 @@ class MagDiversity:
         ts : array_like, shape (`n_ts`,)
             The scales at which to compute the magnitude functions. If None, the scales are computed automatically.
         target_prop : float
-            The proportion of cardinality that the magnitude functon converges to. 
+            The proportion of cardinality that the magnitude functon converges to.
             Used to finding the evaluation scales across datasets.
         n_ts : int
             The number of scales at which to compute the magnitude functions.
@@ -47,7 +47,7 @@ class MagDiversity:
             The number of neighbors to use in the distance metric.
         names : list of str
             The names of the datasets.
-        
+
         Returns
         -------
         MagDiversity : object
@@ -79,11 +79,10 @@ class MagDiversity:
         self._MagAreas = None
         self._MagDiffs = None
 
-
     def get_common_scales(self, quantile=0.5):
         """
         Determine the shared evaluation interval for the magnitude functions.
-        To do this, the convergence scales of the magnitude functions are computed and 
+        To do this, the convergence scales of the magnitude functions are computed and
         the shared scales are determined as a quantile (e.g. the median) of the convergence scales for all datasets.
         """
         t_cut = np.quantile(self._t_convs, quantile)
@@ -93,12 +92,11 @@ class MagDiversity:
             log_scale=False,
             one_point_property=True,
         )
-        #self._ts = ts
+        # self._ts = ts
         self._t_cut = t_cut
         return ts
 
-
-    def change_scales(self, ts= None, t_cut=None):
+    def change_scales(self, ts=None, t_cut=None):
         """
         Change the evaluation scales of the magnitude functions.
 
@@ -124,9 +122,8 @@ class MagDiversity:
             self._ts = ts
         for Mag in self._Mags:
             Mag.change_scales(ts=self._ts)
-        #self._ts = ts
+        # self._ts = ts
         return self._Mags
-    
 
     def compute_magnitude(self):
         """
@@ -135,7 +132,7 @@ class MagDiversity:
 
         t_convs = []
         Mags = []
-        
+
         for i, X in enumerate(self._Xs):
             Mag = Magnipy(
                 X,
@@ -163,7 +160,6 @@ class MagDiversity:
         Mags = self.change_scales(ts)
         self._Mags = Mags
         return Mags
-    
 
     def get_magnitude_functions(self):
         """
@@ -183,7 +179,7 @@ class MagDiversity:
         for i, Mag in enumerate(self._Mags):
             mag_df[i, :] = Mag.get_magnitude()[0]
         return mag_df, self._ts
-    
+
     def plot_magnitude_functions(self):
         """
         Plot the magnitude functions for all datasets.
@@ -194,11 +190,9 @@ class MagDiversity:
             Mag.plot_magnitude_function()
         return None
 
-    def get_MagAreas(self,
-            integration="trapz",
-            absolute_area=True,
-            scale=True,
-            plot=False):
+    def get_MagAreas(
+        self, integration="trapz", absolute_area=True, scale=True, plot=False
+    ):
         """
         Compute the areas under the magnitude functions for all datasets.
 
@@ -212,7 +206,7 @@ class MagDiversity:
             Whether to scale the magnitude function to the interval [0, 1].
         plot : bool
             Whether to plot the magnitude functions.
-        
+
         Returns
         -------
         areas : list of float
@@ -223,19 +217,23 @@ class MagDiversity:
         areas = []
         for Mag in self._Mags:
             Mag._magnitude_area = None
-            areas.append(Mag.MagArea(integration=integration, absolute_area=absolute_area, 
-                                     scale=scale, plot=plot))
+            areas.append(
+                Mag.MagArea(
+                    integration=integration,
+                    absolute_area=absolute_area,
+                    scale=scale,
+                    plot=plot,
+                )
+            )
         self._MagAreas = areas
         return areas
-    
-    def get_MagDiffs(self,
-            integration="trapz",
-            absolute_area=True,
-            scale=True,
-            plot=False):
+
+    def get_MagDiffs(
+        self, integration="trapz", absolute_area=True, scale=True, plot=False
+    ):
         """
         Compute the pairwise differences between the magnitude functions for all datasets.
-        
+
         Parameters
         ----------
         integration : str
@@ -246,7 +244,7 @@ class MagDiversity:
             Whether to scale the magnitude functions to the interval [0, 1].
         plot : bool
             Whether to plot the magnitude function differences.
-        
+
         Returns
         -------
         diffs : ndarray, shape (`n_datasets`, `n_datasets`)
@@ -256,13 +254,18 @@ class MagDiversity:
             self.compute_magnitude()
         diffs = np.zeros((len(self._Mags), len(self._Mags)))
         for i, Mag in enumerate(self._Mags):
-            for j in range(i+1, len(self._Mags)):
-                diffs[i,j] = Mag.MagDiff(self._Mags[j], integration=integration, absolute_area=absolute_area, 
-                                        scale=scale, plot=plot)
+            for j in range(i + 1, len(self._Mags)):
+                diffs[i, j] = Mag.MagDiff(
+                    self._Mags[j],
+                    integration=integration,
+                    absolute_area=absolute_area,
+                    scale=scale,
+                    plot=plot,
+                )
         diffs = diffs + diffs.T
         self._MagDiffs = diffs
         return diffs
-    
+
     def plot_MagDiffs_heatmap(self):
         """
         Plot the pairwise differences between the magnitude functions for all datasets.
@@ -272,9 +275,8 @@ class MagDiversity:
         import seaborn as sns
         import matplotlib.pyplot as plt
         import pandas as pd
+
         df = pd.DataFrame(self._MagDiffs, columns=self._names, index=self._names)
         sns.heatmap(df, annot=False)
         plt.show()
         return None
-
-

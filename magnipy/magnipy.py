@@ -140,8 +140,18 @@ class Magnipy:
             raise Exception(
                 "The scale finding method must be either 'scattered' or 'convergence'."
             )
-        
-        if method not in ["cholesky", "scipy", "scipy_sym", "inv", "pinv", "conjugate_gradient_iteration", "cg", "spread", "naive"]:
+
+        if method not in [
+            "cholesky",
+            "scipy",
+            "scipy_sym",
+            "inv",
+            "pinv",
+            "conjugate_gradient_iteration",
+            "cg",
+            "spread",
+            "naive",
+        ]:
             raise Exception(
                 "The computation method must be one of 'cholesky', 'scipy', 'scipy_sym', 'inv', 'pinv', 'conjugate_gradient_iteration', 'cg', 'naive', 'spread'."
             )
