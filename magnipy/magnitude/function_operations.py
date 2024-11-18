@@ -226,7 +226,7 @@ def combine_functions(
     magnitude_from_distances=magnitude_from_distances,
 ):
     """
-    Add or substract two magnitude functions.
+    Add or subtract two magnitude functions.
 
     Parameters
     ----------
@@ -251,7 +251,7 @@ def combine_functions(
         The evaluation scale until which to estimate the integral.
         If None evaluate across all pre-defined scales.
     addition : bool
-        If True add the functions. Else substract the second from the first function.
+        If True add the functions. Else subtract the second from the first function.
 
     Returns
     -------
@@ -319,7 +319,7 @@ def diff_of_functions(
     magnitude_from_distances=magnitude_from_distances,
 ):
     """
-    Substract two magnitude functions.
+    Subtract two magnitude functions.
     """
     return combine_functions(
         mag,
