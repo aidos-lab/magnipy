@@ -3,36 +3,54 @@ import numpy as np
 from magnipy.magnitude.scales import get_scales
 
 
-class MagDiversity:
+class Diversipy:
     def __init__(
         self,
+        # Input data parameters:
         Xs,
+
+        # Parameters for the evaluation scales:
         ts=None,
-        target_prop=0.95,
         n_ts=30,
+        target_prop=0.95,
+        q=0.5,
+        ref_space=None,
+
+        # Parameters for the distance metric:
         metric="euclidean",
         method=None,
         p=2,
         n_neighbors=12,
+
+        # Other parameters:
         names=None,
-        q=0.5,
     ):
         """
         Compute the magnitude functions for multiple datasets / spaces and compare their diversity.
 
         Parameters
         ----------
+        Input data parameters:
         Xs : list of array_like, shape (`n_obs`, `n_vars`)
             A list of datasets whose rows are observations and columns are features.
-            We assume that all datasets are subsets of the same space, so that 
+            We assume that all datasets are subsets of the same space, so that
             their distances and magnitude functions can be directly compared.
+        
+        Parameters for the evaluation scales:
         ts : array_like, shape (`n_ts`,)
             The scales at which to compute the magnitude functions. If None, the scales are computed automatically.
+        n_ts : int
+            The number of scales at which to compute the magnitude functions.
         target_prop : float
             The proportion of cardinality that the magnitude functon converges to.
             Used to finding the evaluation scales across datasets.
-        n_ts : int
-            The number of scales at which to compute the magnitude functions.
+        q : float
+            The quantile to use for determining the common scales. By default 0.5 (median convergence scale). 
+            Only used if ts is None and ref_space is None.
+        ref_space : int
+            The index of the reference dataset to use for computing the common scales.
+        
+        Parameters for the distance metric:
         metric : str
             The distance metric to use. The distance function can be
             'Lp', 'isomap',
@@ -41,13 +59,17 @@ class MagDiversity:
             'kulczynski1', 'mahalanobis', 'matching', 'minkowski',
             'rogerstanimoto', 'russellrao', 'seuclidean', 'sokalmichener',
             'sokalsneath', 'sqeuclidean', 'yule'.
-        method : str
-            The method to use to compute the magnitude functions.
-            One of 'cholesky', 'scipy', 'scipy_sym', 'inv', 'pinv', 'conjugate_gradient_iteration', 'cg'.
         p : float
             Parameter for the Minkowski metric.
         n_neighbors : int
             The number of neighbors to use in the distance metric.
+        
+        Parameters for the magnitude function computation:
+        method : str
+            The method to use to compute the magnitude functions.
+            One of 'cholesky', 'scipy', 'scipy_sym', 'inv', 'pinv', 'conjugate_gradient_iteration', 'cg'.
+
+        Other parameters:
         names : list of str
             The names of the datasets.
 
@@ -78,10 +100,15 @@ class MagDiversity:
         self._n_neighbors = n_neighbors
         self._target_prop = target_prop
         self._Mags = None
+        self._ref_space = ref_space
         self._t_convs = None
         self._MagAreas = None
         self._MagDiffs = None
         self._q = q
+
+    #  ╭──────────────────────────────────────────────────────────╮
+    #  │ Find the Evaluation Scales                               │
+    #  ╰──────────────────────────────────────────────────────────╯
 
     def get_common_scales(self, quantile=0.5):
         """
@@ -89,11 +116,15 @@ class MagDiversity:
         To do this, the convergence scales of the magnitude functions are computed and
         the shared scales are determined as a quantile (e.g. the median) of the convergence scales for all datasets.
         """
-        if self._q is None:
-            quantile = 0.5
+
+        if self._ref_space is not None:
+            t_cut = self._Mags[self._ref_space].get_t_conv()
         else:
-            quantile = self._q
-        t_cut = np.quantile(self._t_convs, quantile)
+            if self._q is None:
+                quantile = 0.5
+            else:
+                quantile = self._q
+            t_cut = np.quantile(self._t_convs, quantile)
         ts = get_scales(
             t_cut,
             self._n_ts,
@@ -132,8 +163,12 @@ class MagDiversity:
             Mag.change_scales(ts=self._ts)
         # self._ts = ts
         return self._Mags
+    
+    #  ╭──────────────────────────────────────────────────────────╮
+    #  │ Compute Magnitude Functions                              │
+    #  ╰──────────────────────────────────────────────────────────╯
 
-    def compute_magnitude(self):
+    def _compute_magnitude(self):
         """
         Compute the magnitude functions for all datasets.
         """
@@ -182,23 +217,17 @@ class MagDiversity:
         """
 
         if self._Mags is None:
-            self.compute_magnitude()
+            self._compute_magnitude()
         mag_df = np.zeros((len(self._Mags), len(self._ts)))
         for i, Mag in enumerate(self._Mags):
             mag_df[i, :] = Mag.get_magnitude()[0]
         return mag_df, self._ts
+    
+    #  ╭──────────────────────────────────────────────────────────╮
+    #  │ Diversity Summaries                                      │
+    #  ╰──────────────────────────────────────────────────────────╯
 
-    def plot_magnitude_functions(self):
-        """
-        Plot the magnitude functions for all datasets.
-        """
-        if self._Mags is None:
-            self.compute_magnitude()
-        for Mag in self._Mags:
-            Mag.plot_magnitude_function()
-        return None
-
-    def get_MagAreas(
+    def MagAreas(
         self, integration="trapz", absolute_area=True, scale=True, plot=False
     ):
         """
@@ -221,7 +250,7 @@ class MagDiversity:
             The areas under the magnitude functions for all datasets.
         """
         if self._Mags is None:
-            self.compute_magnitude()
+            self._compute_magnitude()
         areas = []
         for Mag in self._Mags:
             Mag._magnitude_area = None
@@ -236,14 +265,16 @@ class MagDiversity:
         self._MagAreas = areas
         return areas
 
-    def get_MagDiffs(
-        self, integration="trapz", absolute_area=True, scale=True, plot=False
+    def MagDiffs(
+        self, integration="trapz", absolute_area=True, scale=True, plot=False, pairwise=True
     ):
         """
         Compute the pairwise differences between the magnitude functions for all datasets.
 
         Parameters
         ----------
+        ind_ref : int
+            The index of the reference dataset to compare the magnitude functions to.
         integration : str
             The integration method to use. One of 'trapz', 'simps'.
         absolute_area : bool
@@ -252,34 +283,71 @@ class MagDiversity:
             Whether to scale the magnitude functions to the interval [0, 1].
         plot : bool
             Whether to plot the magnitude function differences.
+        pairwise : bool
+            Whether to compute the pairwise differences between all datasets.
+            If False, the differences are computed to the reference dataset.
+            If True, the differences are computed for all datasets.
 
         Returns
         -------
-        diffs : ndarray, shape (`n_datasets`, `n_datasets`)
-            The pairwise differences between the magnitude functions for all datasets.
+        diffs : ndarray, shape (`n_datasets`, `n_datasets`) OR ndarray, shape (`n_datasets`, )
+            The pairwise differences between the magnitude functions for all datasets OR 
+            the differences to the reference dataset.
         """
         if self._Mags is None:
-            self.compute_magnitude()
-        diffs = np.zeros((len(self._Mags), len(self._Mags)))
-        for i, Mag in enumerate(self._Mags):
-            for j in range(i + 1, len(self._Mags)):
-                diffs[i, j] = Mag.MagDiff(
-                    self._Mags[j],
+            self._compute_magnitude()
+        #if self._ref_space is not None:
+            
+        if pairwise:
+            diffs = np.zeros((len(self._Mags), len(self._Mags)))
+            for i, Mag in enumerate(self._Mags):
+                for j in range(i + 1, len(self._Mags)):
+                    diffs[i, j] = Mag.MagDiff(
+                        self._Mags[j],
+                        integration=integration,
+                        absolute_area=absolute_area,
+                        scale=scale,
+                        plot=plot,
+                    )
+            diffs = diffs + diffs.T
+            self._MagDiffs = diffs
+        else:
+            if self._ref_space is None:
+                raise Exception(
+                    "A reference space needs to be specified to compute the reference-based differences between the magnitude functions!"
+                )
+            Mag_ref = self._Mags[self._ref_space].copy()
+            diffs = np.zeros(len(self._Mags))
+            for i, Mag in enumerate(self._Mags):
+                diffs[i] = Mag_ref.MagDiff(
+                    Mag,
                     integration=integration,
                     absolute_area=absolute_area,
                     scale=scale,
                     plot=plot,
                 )
-        diffs = diffs + diffs.T
-        self._MagDiffs = diffs
         return diffs
+
+    #  ╭──────────────────────────────────────────────────────────╮
+    #  │ Plots                                                    │
+    #  ╰──────────────────────────────────────────────────────────╯
+
+    def plot_magnitude_functions(self):
+        """
+        Plot the magnitude functions for all datasets.
+        """
+        if self._Mags is None:
+            self._compute_magnitude()
+        for Mag in self._Mags:
+            Mag.plot_magnitude_function()
+        return None
 
     def plot_MagDiffs_heatmap(self):
         """
         Plot the pairwise differences between the magnitude functions for all datasets.
         """
         if self._MagDiffs is None:
-            self.get_MagDiffs()
+            self.MagDiffs()
         import seaborn as sns
         import matplotlib.pyplot as plt
         import pandas as pd

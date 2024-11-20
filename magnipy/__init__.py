@@ -8,4 +8,4 @@ from .magnitude.convergence import *
 from .magnitude.dimension import *
 from .magnitude.function_operations import *
 from .magnipy import Magnipy
-from .diversities import MagDiversity
+from .diversipy import Diversipy

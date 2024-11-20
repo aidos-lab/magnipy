@@ -298,9 +298,15 @@ def combine_functions(
             # interpolated, interpolated2, xs_list = reevaluate_functions(mag, ts, D, mag2, ts2, D2, method=method)
         else:
             interpolated, interpolated2, xs_list = reevaluate_functions(
-                mag, ts, D, mag2, ts2, D2, method=method, 
+                mag,
+                ts,
+                D,
+                mag2,
+                ts2,
+                D2,
+                method=method,
                 magnitude_from_distances=magnitude_from_distances,
-                magnitude_from_distances2=magnitude_from_distances2
+                magnitude_from_distances2=magnitude_from_distances2,
             )
 
     if addition:

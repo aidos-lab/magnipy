@@ -37,44 +37,57 @@ import copy
 class Magnipy:
     def __init__(
         self,
+        # Input data parameters
         X,
+
+        # Parameters for the evaluation scales
         ts=None,
-        scale_finding="convergence",
-        target_prop=0.95,
         n_ts=30,
         log_scale=False,
-        method="cholesky",
+        return_log_scale=False,
+        scale_finding="convergence",
+        target_prop=0.95,
+
+        # Parameters for the distance matrix
         metric="euclidean",
         p=2,
         Adj=None,
-        one_point_property=True,
         n_neighbors=12,
-        return_log_scale=False,
+
+        # Parameters for the computation of magnitude
+        method="cholesky",
+        one_point_property=True,
         perturb_singularities=True,
+        positive_magnitude=False,
+
+        # Other parameters
         recompute=False,
         name="",
-        positive_magnitude=False,
     ):
         """
         Initialises a Magnipy object.
 
         Parameters
         ----------
+        Input data parameters:
         X : array_like, shape (`n_obs`, `n_vars`)
             A dataset whose rows are observations and columns are features.
+        
+        Parameters for the evaluation scales:
         ts : array_like, shape (`n_ts`, )
             The scales at which to evaluate the magnitude functions. If None, the scales are computed automatically.
-        scale_finding : str
-            The method to use to find the scale at which to evaluate the magnitude functions. Either 'scattered' or 'convergence'.
-        target_prop : float
-            The proportion of points that are scattered OR the proportion of cardinality that the magnitude functon converges to.
         n_ts : int
             The number of scales at which to evaluate the magnitude functions.
         log_scale : bool
             Whether to use a log-scale for the evaluation scales.
-        method : str
-            The method to use to compute the magnitude functions.
-            One of 'cholesky', 'scipy', 'scipy_sym', 'inv', 'pinv', 'conjugate_gradient_iteration', 'cg'.
+        return_log_scale : bool
+            Whether to return the scales on log-scale when computing the magnitude dimension profile.
+        scale_finding : str
+            The method to use to find the scale at which to evaluate the magnitude functions. Either 'scattered' or 'convergence'.
+        target_prop : float
+            The proportion of points that are scattered OR the proportion of cardinality that the magnitude functon converges to.
+        
+        Parameters for the distance matrix:
         metric : str
             The distance metric to use. The distance function can be
             'Lp', 'isomap',
@@ -89,18 +102,21 @@ class Magnipy:
             An adjacency matrix used to compute geodesic distances. If None, all points are adjacent.
         n_neighbors : int
             The number of nearest neighbours used to compute geodesic distances. Only used if the metric is "isomap".
-        return_log_scale : bool
-            Whether to return the scales on log-scale when computing the magnitude dimension profile.
+        
+        Parameters for the computation of magnitude:
+        method : str
+            The method to use to compute the magnitude functions.
+            One of 'cholesky', 'scipy', 'scipy_sym', 'inv', 'pinv', 'conjugate_gradient_iteration', 'cg'.
         one_point_property : bool
             Whether to enforce the one-point property.
         perturb_singularities : bool
             Whether to perturb the simularity matrix whenever singularities in the magnitude function occure.
+        positive_magnitude : bool
+            Whether to compute positive magnitude, by taking only the sum of the positive weights.
         recompute : bool
             Whether to recompute the magnitude functions if they have already been computed.
         name : str
             The name of the Magnipy object.
-        positive_magnitude : bool
-            Whether to compute positive magnitude, by taking only the sum of the positive weights.
 
         Returns
         -------
@@ -532,10 +548,7 @@ class Magnipy:
         if self._X is None:
             self._X = X_new
             self._Adj = Adj_new
-            self._D = self._get_dist(
-                self._X,
-                Adj=self._Adj
-            )
+            self._D = self._get_dist(self._X, Adj=self._Adj)
             self._n = self._D.shape[0]
             self._Z = similarity_matrix(self._D)
         else:
@@ -625,8 +638,12 @@ class Magnipy:
         """
         if self._magnitude is not None:
             self._magnitude, self._ts = cut_until_scale(
-                self._ts, self._magnitude, t_cut=t_cut, D=self._Z, 
-                method=self._method, magnitude_from_distances=self._compute_mag
+                self._ts,
+                self._magnitude,
+                t_cut=t_cut,
+                D=self._Z,
+                method=self._method,
+                magnitude_from_distances=self._compute_mag,
             )
         elif self._ts is not None:
             self._ts = cut_ts(self._ts, t_cut)
@@ -683,7 +700,7 @@ class Magnipy:
             exact=exact,
             t_cut=t_cut,
             magnitude_from_distances=self._compute_mag,
-            magnitude_from_distances2=other._compute_mag
+            magnitude_from_distances2=other._compute_mag,
         )
         combined._n_ts = len(combined._ts)
         return combined
@@ -722,7 +739,7 @@ class Magnipy:
             exact=exact,
             t_cut=t_cut,
             magnitude_from_distances=self._compute_mag,
-            magnitude_from_distances2=other._compute_mag
+            magnitude_from_distances2=other._compute_mag,
         )
         combined._n_ts = len(combined._ts)
         return combined
