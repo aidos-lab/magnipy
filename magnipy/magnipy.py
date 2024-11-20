@@ -532,13 +532,9 @@ class Magnipy:
         if self._X is None:
             self._X = X_new
             self._Adj = Adj_new
-            self._D = get_dist(
+            self._D = self._get_dist(
                 self._X,
-                Adj=self._Adj,
-                p=self._p,
-                metric=self._metric,
-                normalise_by_diameter=False,
-                n_neighbors=self._n_neighbors,
+                Adj=self._Adj
             )
             self._n = self._D.shape[0]
             self._Z = similarity_matrix(self._D)
@@ -546,13 +542,9 @@ class Magnipy:
             X = np.concatenate((self._X, X_new), axis=0)
             self._X = X
             self._Adj = Adj_new
-            self._D = get_dist(
+            self._D = self._get_dist(
                 self._X,
                 Adj=self._Adj,
-                p=self._p,
-                metric=self._metric,
-                normalise_by_diameter=False,
-                n_neighbors=self._n_neighbors,
             )
             self._Z = similarity_matrix(self._D)
             self._n = self._D.shape[0]
@@ -597,14 +589,9 @@ class Magnipy:
                 if self._Adj is not None:
                     self._Adj = np.delete(self._Adj, ind_delete, axis=0)
                     self._Adj = np.delete(self._Adj, ind_delete, axis=1)
-                D = get_dist(
+                D = self._get_dist(
                     self._X,
                     Adj=self._Adj,
-                    p=self._p,
-                    metric=self._metric,
-                    normalise_by_diameter=False,
-                    n_neighbors=self._n_neighbors,
-                    check_for_duplicates=False,
                 )
             else:
                 D = np.delete(self._D, ind_delete, axis=0)
@@ -638,7 +625,8 @@ class Magnipy:
         """
         if self._magnitude is not None:
             self._magnitude, self._ts = cut_until_scale(
-                self._ts, self._magnitude, t_cut=t_cut, D=self._D, method=self._method
+                self._ts, self._magnitude, t_cut=t_cut, D=self._Z, 
+                method=self._method, magnitude_from_distances=self._compute_mag
             )
         elif self._ts is not None:
             self._ts = cut_ts(self._ts, t_cut)
@@ -687,13 +675,15 @@ class Magnipy:
         combined._magnitude, combined._ts = diff_of_functions(
             self._magnitude,
             self._ts,
-            self._D,
+            self._Z,
             other._magnitude,
             other._ts,
-            other._D,
+            other._Z,
             method=self._method,
             exact=exact,
             t_cut=t_cut,
+            magnitude_from_distances=self._compute_mag,
+            magnitude_from_distances2=other._compute_mag
         )
         combined._n_ts = len(combined._ts)
         return combined
@@ -724,13 +714,15 @@ class Magnipy:
         combined._magnitude, combined._ts = sum_of_functions(
             self._magnitude,
             self._ts,
-            self._D,
+            self._Z,
             other._magnitude,
             other._ts,
-            other._D,
+            other._Z,
             method=self._method,
             exact=exact,
             t_cut=t_cut,
+            magnitude_from_distances=self._compute_mag,
+            magnitude_from_distances2=other._compute_mag
         )
         combined._n_ts = len(combined._ts)
         return combined

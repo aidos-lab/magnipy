@@ -15,14 +15,17 @@ class MagDiversity:
         p=2,
         n_neighbors=12,
         names=None,
+        q=0.5,
     ):
         """
-        Compute the magnitude functions for a set of datasets / spaces and compare their diversity.
+        Compute the magnitude functions for multiple datasets / spaces and compare their diversity.
 
         Parameters
         ----------
         Xs : list of array_like, shape (`n_obs`, `n_vars`)
             A list of datasets whose rows are observations and columns are features.
+            We assume that all datasets are subsets of the same space, so that 
+            their distances and magnitude functions can be directly compared.
         ts : array_like, shape (`n_ts`,)
             The scales at which to compute the magnitude functions. If None, the scales are computed automatically.
         target_prop : float
@@ -78,6 +81,7 @@ class MagDiversity:
         self._t_convs = None
         self._MagAreas = None
         self._MagDiffs = None
+        self._q = q
 
     def get_common_scales(self, quantile=0.5):
         """
@@ -85,6 +89,10 @@ class MagDiversity:
         To do this, the convergence scales of the magnitude functions are computed and
         the shared scales are determined as a quantile (e.g. the median) of the convergence scales for all datasets.
         """
+        if self._q is None:
+            quantile = 0.5
+        else:
+            quantile = self._q
         t_cut = np.quantile(self._t_convs, quantile)
         ts = get_scales(
             t_cut,

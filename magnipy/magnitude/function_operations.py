@@ -163,6 +163,7 @@ def reevaluate_functions(
     D2,
     method="cholesky",
     magnitude_from_distances=magnitude_from_distances,
+    magnitude_from_distances2=magnitude_from_distances,
 ):
     """
     Re-evaluate two magnitude functions across the same scales.
@@ -207,7 +208,7 @@ def reevaluate_functions(
         ts,
         D2,
         method=method,
-        magnitude_from_distances=magnitude_from_distances,
+        magnitude_from_distances=magnitude_from_distances2,
     )
     return new_mags, new_mags2, new_ts
 
@@ -224,6 +225,7 @@ def combine_functions(
     t_cut=None,
     addition=False,
     magnitude_from_distances=magnitude_from_distances,
+    magnitude_from_distances2=magnitude_from_distances,
 ):
     """
     Add or subtract two magnitude functions.
@@ -275,7 +277,7 @@ def combine_functions(
             t_cut,
             D=D2,
             method=method,
-            magnitude_from_distances=magnitude_from_distances,
+            magnitude_from_distances=magnitude_from_distances2,
         )
 
     if ts is ts2:
@@ -296,7 +298,9 @@ def combine_functions(
             # interpolated, interpolated2, xs_list = reevaluate_functions(mag, ts, D, mag2, ts2, D2, method=method)
         else:
             interpolated, interpolated2, xs_list = reevaluate_functions(
-                mag, ts, D, mag2, ts2, D2, method=method
+                mag, ts, D, mag2, ts2, D2, method=method, 
+                magnitude_from_distances=magnitude_from_distances,
+                magnitude_from_distances2=magnitude_from_distances2
             )
 
     if addition:
@@ -317,6 +321,7 @@ def diff_of_functions(
     method="cholesky",
     t_cut=None,
     magnitude_from_distances=magnitude_from_distances,
+    magnitude_from_distances2=magnitude_from_distances,
 ):
     """
     Subtract two magnitude functions.
@@ -333,6 +338,7 @@ def diff_of_functions(
         t_cut=t_cut,
         addition=False,
         magnitude_from_distances=magnitude_from_distances,
+        magnitude_from_distances2=magnitude_from_distances2,
     )
 
 
@@ -347,6 +353,7 @@ def sum_of_functions(
     method="cholesky",
     t_cut=None,
     magnitude_from_distances=magnitude_from_distances,
+    magnitude_from_distances2=magnitude_from_distances,
 ):
     """
     Add two magnitude functions.
@@ -363,6 +370,7 @@ def sum_of_functions(
         t_cut=t_cut,
         addition=True,
         magnitude_from_distances=magnitude_from_distances,
+        magnitude_from_distances2=magnitude_from_distances2,
     )
 
 
