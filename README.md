@@ -9,6 +9,11 @@ This is a repository for computing the **magnitude of a metric space**, which en
 - **MagArea** the area under a magnitude function, a multi-scale measure of the **intrinsic diversity** of a space
 - **MagDiff** the area between two magnitude functions to measure the **difference in diversity** between two spaces
 
+`Diversipy` enables the comparison of multiple spaces by:
+- computing the **magnitude functions** across a set of input datasets
+- automatically choosing **shared evaluation scales**
+- computing **MagDiffs** in comparison with a **reference space** or computing all **pairwise MagDiffs**
+- computing **MagAreas** across the same resolutions for all spaces
 
 # Dependencies
 
