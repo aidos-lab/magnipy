@@ -1,24 +1,45 @@
 # magnipy: Metric Space Magnitude Computations
 
-This is a repository for computing the **magnitude of a metric space**, which encodes the **effective size, diversity and geometry** of a metric space. Given a dataset or distance matrix, magnitude measures the effective number of distinct points in the space at a scale of dissimilarity between observations.
+This is a repository for computing the **_magnitude of a metric space_**, which encodes the **effective size, diversity, and geometry** of a metric space.  
 
-`Magnipy` enables the computation of:
+Given a dataset or distance matrix, **_magnitude_** measures the **effective number of distinct points** in the space at a scale of dissimilarity between observations.
+
+This is the official repository for the NeurIPS 2024 paper: [Metric Space Magnitude for Evaluating the Diversity of Latent Representations](https://arxiv.org/abs/2311.16054).
+
+## Dependencies
+
+Dependencies are managed using the [`poetry`](https://python-poetry.org) package manager.
+
+With poetry installed and an active virtual environment, run the following command from the main directory to download the necessary dependencies:
+
+```python
+$ poetry install
+```
+
+## Usage
+
+We introduce two classes to aid in the computation and comparison of the magnitude of metric spaces:
+
+### 1. `Magnipy`: For in-depth magnitude computations on a single metric space.
+
+Core functionalities of `Magnipy` include computation of:  
 - magnitude, **magnitude weights and magnitude functions** across varying resolutions
 - magnitude dimension profiles and the **magnitude dimension** to estimate **intrinsic dimensionality**
 - an **automated scale-finding** procedure to find suitable evaluation scales
 - **MagArea** the area under a magnitude function, a multi-scale measure of the **intrinsic diversity** of a space
 - **MagDiff** the area between two magnitude functions to measure the **difference in diversity** between two spaces
 
+### 2. `Diversipy`: For comparing magnitude (& thus diversity) across different metric spaces.
 
-# Dependencies
+Core functionalities of `Diversipy` include: 
+- TODO
 
-Dependencies are managed using `poetry.` To setup the environment,
-please run `poetry install` from the main directory.
 
-# Running magnipy
+## Tutorials
 
-All main implementations for computing magnitude are collected in the `Magnipy` class.
-`tutorial_magnipy.ipynb` demonstrates how to set up and use this class to compute magnitude functions and magnitude dimension profiles.
+Separate tutorials for the `Magnipy` and `Diversipy` classes can be found under the `notebooks` folder.
+
+Each tutorial demonstrates how to initialize and utiltize its corresponding class to execute core functionalities.
 
 # Citation
 Please consider citing our work!
