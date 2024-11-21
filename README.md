@@ -4,7 +4,7 @@ This is a repository for computing the **_magnitude of a metric space_**, which 
 
 Given a dataset or distance matrix, **_magnitude_** measures the **effective number of distinct points** in the space at a scale of dissimilarity between observations.
 
-This is the official repository for the NeurIPS 2024 paper: [Metric Space Magnitude for Evaluating the Diversity of Latent Representations](https://arxiv.org/abs/2311.16054).
+This repository supports the NeurIPS 2024 paper: [Metric Space Magnitude for Evaluating the Diversity of Latent Representations](https://arxiv.org/abs/2311.16054).
 
 ## Dependencies
 
