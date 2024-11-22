@@ -54,9 +54,11 @@ def hawkes_process(lam, alpha):
     while next < total_so_far:
         next_X = X[next]  # select the next point
         N_children = np.random.poisson(alpha)
-        new_X = np.tile(next_X, (N_children, 1)) + sigma * np.random.rand(N_children, 2)
+        new_X = np.tile(next_X, (N_children, 1)) + sigma * np.random.rand(
+            N_children, 2
+        )
         # update the next rows of X with the coordinates of the children
-        X[total_so_far:total_so_far + N_children, :] = new_X
+        X[total_so_far : total_so_far + N_children, :] = new_X
         total_so_far += N_children
         next += 1
     X_cut = X[:total_so_far]
@@ -71,7 +73,7 @@ def sample_points_gaussian(mean, cov, n):
 
 def sample_points_gaussian_2(mean, cov, n):
     points = np.random.multivariate_normal(mean, cov, n)
-    #points = np.clip(points, 0, 2)  # Clip values to [0, 1] range
+    # points = np.clip(points, 0, 2)  # Clip values to [0, 1] range
     return points
 
 
