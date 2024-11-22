@@ -11,8 +11,8 @@ methods = [
     "pinv",
     "conjugate_gradient_iteration",
     "cg",
-    "spread"
-    #"krylov",
+    "spread",
+    # "krylov",
 ]
 tss = [[1], np.linspace(0.01, 1, 100), None]
 
@@ -45,9 +45,9 @@ def test_graph_function():
 
                 if method == "spread":
                     analytic.append(
-                        2/(1+2*q**2+q+q**3) + 
-                        2/(1+3*q+q**2) + 
-                        1/(1 + 2*q**2 + 2* q)
+                        2 / (1 + 2 * q**2 + q + q**3)
+                        + 2 / (1 + 3 * q + q**2)
+                        + 1 / (1 + 2 * q**2 + 2 * q)
                     )
                 else:
                     analytic.append(
