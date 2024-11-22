@@ -8,20 +8,18 @@ class Diversipy:
         self,
         # Input data parameters:
         Xs,
-
         # Parameters for the evaluation scales:
         ts=None,
         n_ts=30,
         target_prop=0.95,
         q=0.5,
         ref_space=None,
-
         # Parameters for the distance metric:
         metric="euclidean",
-        method=None,
         p=2,
         n_neighbors=12,
-
+        # Parameters for the magnitude function computation:
+        method=None,
         # Other parameters:
         names=None,
     ):
@@ -35,7 +33,7 @@ class Diversipy:
             A list of datasets whose rows are observations and columns are features.
             We assume that all datasets are subsets of the same space, so that
             their distances and magnitude functions can be directly compared.
-        
+
         Parameters for the evaluation scales:
         ts : array_like, shape (`n_ts`,)
             The scales at which to compute the magnitude functions. If None, the scales are computed automatically.
@@ -45,11 +43,11 @@ class Diversipy:
             The proportion of cardinality that the magnitude functon converges to.
             Used to finding the evaluation scales across datasets.
         q : float
-            The quantile to use for determining the common scales. By default 0.5 (median convergence scale). 
+            The quantile to use for determining the common scales. By default 0.5 (median convergence scale).
             Only used if ts is None and ref_space is None.
         ref_space : int
             The index of the reference dataset to use for computing the common scales.
-        
+
         Parameters for the distance metric:
         metric : str
             The distance metric to use. The distance function can be
@@ -63,7 +61,7 @@ class Diversipy:
             Parameter for the Minkowski metric.
         n_neighbors : int
             The number of neighbors to use in the distance metric.
-        
+
         Parameters for the magnitude function computation:
         method : str
             The method to use to compute the magnitude functions.
@@ -109,6 +107,18 @@ class Diversipy:
     #  ╭──────────────────────────────────────────────────────────╮
     #  │ Find the Evaluation Scales                               │
     #  ╰──────────────────────────────────────────────────────────╯
+
+    def set_ref_space(self, ref_space):
+        """
+        Set the reference space to use for computing the common scales.
+
+        Parameters
+        ----------
+        ref_space : int
+            The index of the reference dataset to use for computing the common scales.
+        """
+        self._ref_space = ref_space
+        return None
 
     def get_common_scales(self, quantile=0.5):
         """
@@ -163,7 +173,7 @@ class Diversipy:
             Mag.change_scales(ts=self._ts)
         # self._ts = ts
         return self._Mags
-    
+
     #  ╭──────────────────────────────────────────────────────────╮
     #  │ Compute Magnitude Functions                              │
     #  ╰──────────────────────────────────────────────────────────╯
@@ -222,7 +232,7 @@ class Diversipy:
         for i, Mag in enumerate(self._Mags):
             mag_df[i, :] = Mag.get_magnitude()[0]
         return mag_df, self._ts
-    
+
     #  ╭──────────────────────────────────────────────────────────╮
     #  │ Diversity Summaries                                      │
     #  ╰──────────────────────────────────────────────────────────╯
@@ -266,7 +276,12 @@ class Diversipy:
         return areas
 
     def MagDiffs(
-        self, integration="trapz", absolute_area=True, scale=True, plot=False, pairwise=True
+        self,
+        integration="trapz",
+        absolute_area=True,
+        scale=True,
+        plot=False,
+        pairwise=True,
     ):
         """
         Compute the pairwise differences between the magnitude functions for all datasets.
@@ -291,13 +306,13 @@ class Diversipy:
         Returns
         -------
         diffs : ndarray, shape (`n_datasets`, `n_datasets`) OR ndarray, shape (`n_datasets`, )
-            The pairwise differences between the magnitude functions for all datasets OR 
+            The pairwise differences between the magnitude functions for all datasets OR
             the differences to the reference dataset.
         """
         if self._Mags is None:
             self._compute_magnitude()
-        #if self._ref_space is not None:
-            
+        # if self._ref_space is not None:
+
         if pairwise:
             diffs = np.zeros((len(self._Mags), len(self._Mags)))
             for i, Mag in enumerate(self._Mags):
@@ -352,7 +367,9 @@ class Diversipy:
         import matplotlib.pyplot as plt
         import pandas as pd
 
-        df = pd.DataFrame(self._MagDiffs, columns=self._names, index=self._names)
+        df = pd.DataFrame(
+            self._MagDiffs, columns=self._names, index=self._names
+        )
         sns.heatmap(df, annot=False)
         plt.show()
         return None

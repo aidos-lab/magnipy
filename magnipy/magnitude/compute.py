@@ -164,7 +164,10 @@ def compute_magnitude_until_convergence(
             positive_magnitude=positive_magnitude,
         )
         ts = get_scales(
-            t_conv, n_ts, log_scale=log_scale, one_point_property=one_point_property
+            t_conv,
+            n_ts,
+            log_scale=log_scale,
+            one_point_property=one_point_property,
         )
         # print(f"Evaluate magnitude at {self._n_ts} scales between 0 and the approximate convergence scale {self._t_conv}")
     return (
@@ -277,7 +280,11 @@ def compute_magnitude(
 
 
 def compute_t_conv(
-    D, target_value, method="cholesky", positive_magnitude=False, input_distances=True
+    D,
+    target_value,
+    method="cholesky",
+    positive_magnitude=False,
+    input_distances=True,
 ):
     """
     Compute the scale at which the magnitude function has reached a certain target value
@@ -307,7 +314,9 @@ def compute_t_conv(
         arXiv preprint arXiv:2311.16054.
     """
     if D.shape[0] == 1:
-        raise Exception("We cannot find the convergence scale for a one point space!")
+        raise Exception(
+            "We cannot find the convergence scale for a one point space!"
+        )
 
     def comp_mag(X, ts):
         return magnitude_from_distances(

@@ -24,7 +24,9 @@ def get_scales(t_conv, n_ts=10, log_scale=False, one_point_property=True):
     """
     if one_point_property:
         if log_scale:
-            ts_log = np.geomspace(t_conv / n_ts, t_conv, n_ts - 1)  # np.log(t_conv)
+            ts_log = np.geomspace(
+                t_conv / n_ts, t_conv, n_ts - 1
+            )  # np.log(t_conv)
             ts = [0] + [i for i in ts_log]
             ts = np.array(ts)
         else:

@@ -52,7 +52,12 @@ def compute_magnitude_dimension_profile(
         )
     else:
         magnitude, ts_mag = compute_magnitude_until_convergence(
-            D, ts=ts, n_ts=n_ts, method=method, log_scale=log_scale, get_weights=False
+            D,
+            ts=ts,
+            n_ts=n_ts,
+            method=method,
+            log_scale=log_scale,
+            get_weights=False,
         )
         slopes, ts = magitude_dimension_profile(
             magnitude,
