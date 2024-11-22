@@ -40,7 +40,9 @@ def test_graph_function():
             analytic = []
             for t in ts:
                 q = np.exp(-t)
-                analytic.append((5 + 5 * q - 4 * q**2) / ((1 + q) * (1 + 2 * q)))
+                analytic.append(
+                    (5 + 5 * q - 4 * q**2) / ((1 + q) * (1 + 2 * q))
+                )
             analytic = np.array(analytic)
 
             assert np.allclose(mag, analytic), (

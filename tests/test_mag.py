@@ -25,7 +25,9 @@ def test_fun():
     for ts in tss:
         # ts = np.linspace(0, 1, 100)
         for method in methods:
-            Mag = Magnipy(X=np.array([[0], [1]]), ts=ts, method=method, n_ts=100)
+            Mag = Magnipy(
+                X=np.array([[0], [1]]), ts=ts, method=method, n_ts=100
+            )
 
             mag, ts = Mag.get_magnitude()
 
