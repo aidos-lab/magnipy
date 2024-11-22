@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 from sklearn.datasets import make_swiss_roll, make_blobs
+from sklearn.preprocessing import MinMaxScaler
 from magnipy.utils.datasets import (
     sample_points_gaussian,
     sample_points_gaussian_2,
@@ -12,6 +13,9 @@ from magnipy.utils.datasets import (
     hawkes_process,
 )
 from magnipy.utils.plots import plot_points
+
+# from matplotlib import mpl_toolkits
+# from mpl_toolkits.mplot3d import Axes3D
 
 
 def get_Xs():
@@ -42,7 +46,7 @@ def plot_spaces(X1, X2, X3, X4):
 
     datasets = [X1, X2, X3, X4]
 
-    colors = ["#ee3377", "#ee7733", "#009988", "#0077BB"]
+    colors = ["C0", "C1", "C2", "C3"]
     texts = ["X1", "X2", "X3", "X4"]
     names = [
         "X1 random pattern",
@@ -72,5 +76,63 @@ def plot_spaces(X1, X2, X3, X4):
         ax.set_yticklabels([])
 
     plt.subplots_adjust(wspace=0.05, hspace=0.05)
+    plt.tight_layout()
+    plt.show()
+
+
+def normalize(data):
+    scaler = MinMaxScaler()
+    # Normalize the data
+    normalized_data = scaler.fit_transform(data)
+    return normalized_data
+
+
+def get_random(n=1000):
+    np.random.seed(0)
+    rando = np.random.uniform(0, 10, size=(n, 3)), 3
+    rando_data = rando[0]
+    rando_df = pd.DataFrame(normalize(rando_data), columns=["x", "y", "z"])
+    return rando_data, rando_df
+
+
+def get_clusters(n=1000):
+    # Clusters/blobs
+    np.random.seed(54)
+    blobs = make_blobs(n, centers=5, n_features=3)[0], 3
+    blobs_data = blobs[0]
+    blobs_df = pd.DataFrame(normalize(blobs_data), columns=["x", "y", "z"])
+    return blobs_data, blobs_df
+
+
+def get_swiss_roll(n=1000):
+    # Swiss roll
+    sr = make_swiss_roll(n)[0], 2
+    sr_data = sr[0]
+    sr_df = pd.DataFrame(normalize(sr_data), columns=["x", "y", "z"])
+    return sr_data, sr_df
+
+
+def plot_df(df, title):
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection="3d")
+    ax.scatter(df["x"], df["y"], df["z"], c=df["z"], cmap="viridis", marker="o", s=5)
+    plt.title(title)
+    plt.show()
+
+
+def plot_dfs(dfs, titles):
+    n = len(dfs)
+
+    # Create a figure with 1 row and n columns of 3D subplots
+    fig, axes = plt.subplots(1, n, figsize=(18, 6), subplot_kw={"projection": "3d"})
+
+    for idx in range(0, n):
+        df = dfs[idx]
+        title = titles[idx]
+        color = "C" + str(idx)
+        axes[idx].scatter(df["x"], df["y"], df["z"], color=color)
+        axes[idx].set_title(title)
+
+    # Adjust layout and show the figure
     plt.tight_layout()
     plt.show()
