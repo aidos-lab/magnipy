@@ -39,7 +39,6 @@ class Magnipy:
         self,
         # Input data parameters
         X,
-
         # Parameters for the evaluation scales
         ts=None,
         n_ts=30,
@@ -47,19 +46,16 @@ class Magnipy:
         return_log_scale=False,
         scale_finding="convergence",
         target_prop=0.95,
-
         # Parameters for the distance matrix
         metric="euclidean",
         p=2,
         Adj=None,
         n_neighbors=12,
-
         # Parameters for the computation of magnitude
         method="cholesky",
         one_point_property=True,
         perturb_singularities=True,
         positive_magnitude=False,
-
         # Other parameters
         recompute=False,
         name="",
@@ -72,7 +68,7 @@ class Magnipy:
         Input data parameters:
         X : array_like, shape (`n_obs`, `n_vars`)
             A dataset whose rows are observations and columns are features.
-        
+
         Parameters for the evaluation scales:
         ts : array_like, shape (`n_ts`, )
             The scales at which to evaluate the magnitude functions. If None, the scales are computed automatically.
@@ -86,7 +82,7 @@ class Magnipy:
             The method to use to find the scale at which to evaluate the magnitude functions. Either 'scattered' or 'convergence'.
         target_prop : float
             The proportion of points that are scattered OR the proportion of cardinality that the magnitude functon converges to.
-        
+
         Parameters for the distance matrix:
         metric : str
             The distance metric to use. The distance function can be
@@ -102,7 +98,7 @@ class Magnipy:
             An adjacency matrix used to compute geodesic distances. If None, all points are adjacent.
         n_neighbors : int
             The number of nearest neighbours used to compute geodesic distances. Only used if the metric is "isomap".
-        
+
         Parameters for the computation of magnitude:
         method : str
             The method to use to compute the magnitude functions.
