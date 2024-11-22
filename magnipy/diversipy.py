@@ -16,9 +16,10 @@ class Diversipy:
         ref_space=None,
         # Parameters for the distance metric:
         metric="euclidean",
-        method=None,
         p=2,
         n_neighbors=12,
+        # Parameters for the magnitude function computation:
+        method=None,
         # Other parameters:
         names=None,
     ):
@@ -106,6 +107,18 @@ class Diversipy:
     #  ╭──────────────────────────────────────────────────────────╮
     #  │ Find the Evaluation Scales                               │
     #  ╰──────────────────────────────────────────────────────────╯
+
+    def set_ref_space(self, ref_space):
+        """
+        Set the reference space to use for computing the common scales.
+
+        Parameters
+        ----------
+        ref_space : int
+            The index of the reference dataset to use for computing the common scales.
+        """
+        self._ref_space = ref_space
+        return None
 
     def get_common_scales(self, quantile=0.5):
         """
