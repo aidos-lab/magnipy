@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.integrate import simpson, trapz
 from scipy.interpolate import interp1d
-from magnipy.magnitude.compute import magnitude_from_distances
+from magnipy.magnitude.compute import compute_magnitude_from_distances
 from matplotlib import pyplot as plt
 
 
@@ -12,7 +12,7 @@ def cut_until_scale(
     D=None,
     method="cholesky",
     kind="linear",
-    magnitude_from_distances=magnitude_from_distances,
+    magnitude_from_distances=compute_magnitude_from_distances,
 ):
     """
     Cut off a magnitude function at a specified cut-off scale.
@@ -119,7 +119,7 @@ def get_reevaluated_function(
     ts2,
     D,
     method="cholesky",
-    magnitude_from_distances=magnitude_from_distances,
+    magnitude_from_distances=compute_magnitude_from_distances,
 ):
     """
     Re-evaluate a magnitude function across more scales.
@@ -162,8 +162,8 @@ def reevaluate_functions(
     ts2,
     D2,
     method="cholesky",
-    magnitude_from_distances=magnitude_from_distances,
-    magnitude_from_distances2=magnitude_from_distances,
+    magnitude_from_distances=compute_magnitude_from_distances,
+    magnitude_from_distances2=compute_magnitude_from_distances,
 ):
     """
     Re-evaluate two magnitude functions across the same scales.
@@ -224,8 +224,8 @@ def combine_functions(
     exact=False,
     t_cut=None,
     addition=False,
-    magnitude_from_distances=magnitude_from_distances,
-    magnitude_from_distances2=magnitude_from_distances,
+    magnitude_from_distances=compute_magnitude_from_distances,
+    magnitude_from_distances2=compute_magnitude_from_distances,
 ):
     """
     Add or subtract two magnitude functions.
@@ -326,8 +326,8 @@ def diff_of_functions(
     exact=False,
     method="cholesky",
     t_cut=None,
-    magnitude_from_distances=magnitude_from_distances,
-    magnitude_from_distances2=magnitude_from_distances,
+    magnitude_from_distances=compute_magnitude_from_distances,
+    magnitude_from_distances2=compute_magnitude_from_distances,
 ):
     """
     Subtract two magnitude functions.
@@ -358,8 +358,8 @@ def sum_of_functions(
     exact=False,
     method="cholesky",
     t_cut=None,
-    magnitude_from_distances=magnitude_from_distances,
-    magnitude_from_distances2=magnitude_from_distances,
+    magnitude_from_distances=compute_magnitude_from_distances,
+    magnitude_from_distances2=compute_magnitude_from_distances,
 ):
     """
     Add two magnitude functions.

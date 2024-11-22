@@ -14,7 +14,7 @@ from magnipy.magnitude.compute import (
     compute_t_conv,
 )
 from magnipy.magnitude.dimension import (
-    magitude_dimension_profile,
+    magitude_dimension_profile_interp,
     magnitude_dimension,
     magnitude_dimension_profile_exact,
 )
@@ -483,7 +483,7 @@ class Magnipy:
                 (
                     self._magnitude_dimension_profile,
                     self._ts_dim,
-                ) = magitude_dimension_profile(
+                ) = magitude_dimension_profile_interp(
                     mag=self._magnitude,
                     ts=self._ts,
                     return_log_scale=self._return_log_scale,
