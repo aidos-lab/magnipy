@@ -78,14 +78,18 @@ def magnitude_by_SGD_points(points, h, lr=0.01, device="cpu"):
     return magnitude_by_SGD(S, h, lr, device)
 
 
-def magnitude_by_batch_SGD(S, num_epochs=100, batch_size=1, lr=0.01, device="cpu"):
+def magnitude_by_batch_SGD(
+    S, num_epochs=100, batch_size=1, lr=0.01, device="cpu"
+):
     model = Model(S, device)
     optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=0.9)
     target = torch.ones(S.shape[0]).to(device)
     loss_fn = torch.nn.MSELoss()
 
     data_iter = torch.utils.data.DataLoader(
-        torch.utils.data.TensorDataset(model.weights, target), batch_size, shuffle=True
+        torch.utils.data.TensorDataset(model.weights, target),
+        batch_size,
+        shuffle=True,
     )
 
     for epoch in range(num_epochs):
@@ -248,7 +252,10 @@ def greedy_maximization(S, tolerance_parameter=0.01, no_gpu=True):
 
     # the next line assumes that the series of magnitude is increasing
     while True:
-        if abs(best_magnitude_array[j] - best_magnitude_array[j - 1]) <= tolerance:
+        if (
+            abs(best_magnitude_array[j] - best_magnitude_array[j - 1])
+            <= tolerance
+        ):
             break
         best_magnitude = 0
         best_i = 0
@@ -260,7 +267,9 @@ def greedy_maximization(S, tolerance_parameter=0.01, no_gpu=True):
 
             if no_gpu == True:
                 # version without tensors:
-                incremental_magnitude = compute_magnitude_no_gpu(np.array(new_set), 1)
+                incremental_magnitude = compute_magnitude_no_gpu(
+                    np.array(new_set), 1
+                )
             else:
                 # speed up the magnitude computation using tensors
                 device = "cuda"
