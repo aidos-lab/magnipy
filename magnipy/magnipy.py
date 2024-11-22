@@ -102,7 +102,7 @@ class Magnipy:
         Parameters for the computation of magnitude:
         method : str
             The method to use to compute the magnitude functions.
-            One of 'cholesky', 'scipy', 'scipy_sym', 'inv', 'pinv', 'conjugate_gradient_iteration', 'cg'.
+            One of 'cholesky', 'scipy', 'scipy_sym', 'naive', 'pinv', 'conjugate_gradient_iteration', 'cg'.
         one_point_property : bool
             Whether to enforce the one-point property.
         perturb_singularities : bool
@@ -157,15 +157,14 @@ class Magnipy:
             "cholesky",
             "scipy",
             "scipy_sym",
-            "inv",
+            "naive",
             "pinv",
             "conjugate_gradient_iteration",
             "cg",
-            "spread",
-            "naive",
+            "spread"
         ]:
             raise Exception(
-                "The computation method must be one of 'cholesky', 'scipy', 'scipy_sym', 'inv', 'pinv', 'conjugate_gradient_iteration', 'cg', 'naive', 'spread'."
+                "The computation method must be one of 'cholesky', 'scipy', 'scipy_sym', 'naive', 'pinv', 'conjugate_gradient_iteration', 'cg', 'spread'."
             )
 
         def compute_mag(Z, ts, n_ts=n_ts, get_weights=False):

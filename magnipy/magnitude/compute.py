@@ -76,7 +76,7 @@ def magnitude_from_distances(
             mag_fn = weights_naive
         else:
             raise Exception(
-                "The computation method must be one of 'cholesky', 'scipy', 'scipy_sym', 'inv', 'pinv', 'conjugate_gradient_iteration', 'cg', 'naive', 'spread'."
+                "The computation method must be one of 'cholesky', 'scipy', 'scipy_sym', 'pinv', 'conjugate_gradient_iteration', 'cg', 'naive', 'spread'."
             )
 
         weights = magnitude_weights(

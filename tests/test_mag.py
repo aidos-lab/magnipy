@@ -6,10 +6,11 @@ methods = [
     "cholesky",
     "scipy",
     "scipy_sym",
-    "inv",
+    "naive",
     "pinv",
     "conjugate_gradient_iteration",
     "cg",
+    "spread",
 ]  # , "krylov"]
 tss = [[1], np.linspace(0.01, 1, 100), None]
 
