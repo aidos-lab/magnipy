@@ -136,3 +136,20 @@ def plot_dfs(dfs, titles):
     # Adjust layout and show the figure
     plt.tight_layout()
     plt.show()
+
+
+def plot_matrices(matrices, titles):
+    n = len(matrices)
+
+    # Create a figure with 1 row and n columns of 3D subplots
+    fig, axes = plt.subplots(1, n, figsize=(12, 4))
+
+    for idx in range(0, n):
+        matrix = matrices[idx]
+        title = titles[idx]
+        axes[idx].imshow(matrix, cmap="viridis", interpolation="nearest")
+        axes[idx].set_title(title)
+
+    # Adjust layout and show the figure
+    plt.tight_layout()
+    plt.show()
