@@ -1,14 +1,14 @@
 import numpy as np
-from magnipy.magnitude import (
+from magnipy.magnitude.compute import (
     compute_t_conv,
-    get_scales,
-    magnitude_from_distances,
+    compute_magnitude_from_distances,
     compute_magnitude_until_convergence,
 )
-from magnipy.distances import get_dist
+from magnipy.magnitude.scales import get_scales
+from magnipy.magnitude.distances import get_dist
 
 
-def compute_magnitude_dimension_profile(
+def magnitude_dimension_profile(
     X,
     ts=None,
     h=None,
@@ -21,19 +21,23 @@ def compute_magnitude_dimension_profile(
     normalise_by_diameter=False,
     one_point_property=False,
     n_neighbors=12,
-    exact=False,
+    exact=False,  ### TODO: rename
     return_log_scale=False,
+    input_distances=True,
 ):
     """
     Compute the magnitude dimension profile of a dataset X.
     """
-    D = get_dist(
-        X,
-        p=p,
-        metric=metric,
-        normalise_by_diameter=normalise_by_diameter,
-        n_neighbors=n_neighbors,
-    )
+    if input_distances:
+        D = X
+    else:
+        D = get_dist(
+            X,
+            p=p,
+            metric=metric,
+            normalise_by_diameter=normalise_by_diameter,
+            n_neighbors=n_neighbors,
+        )
     if exact:
         slopes, ts = magnitude_dimension_profile_exact(
             D,
@@ -48,9 +52,14 @@ def compute_magnitude_dimension_profile(
         )
     else:
         magnitude, ts_mag = compute_magnitude_until_convergence(
-            D, ts=ts, n_ts=n_ts, method=method, log_scale=log_scale, get_weights=False
+            D,
+            ts=ts,
+            n_ts=n_ts,
+            method=method,
+            log_scale=log_scale,
+            get_weights=False,
         )
-        slopes, ts = magitude_dimension_profile(
+        slopes, ts = magitude_dimension_profile_interp(
             magnitude,
             ts_mag,
             return_log_scale=return_log_scale,
@@ -100,10 +109,14 @@ def magnitude_dimension_profile_exact(
     lower_ts = np.exp(log_ts - h)
     upper_ts = np.exp(log_ts + h)
     lower = np.log(
-        magnitude_from_distances(D, lower_ts, method=method, get_weights=False)
+        compute_magnitude_from_distances(
+            D, lower_ts, method=method, get_weights=False
+        )
     )
     upper = np.log(
-        magnitude_from_distances(D, upper_ts, method=method, get_weights=False)
+        compute_magnitude_from_distances(
+            D, upper_ts, method=method, get_weights=False
+        )
     )
     slopes = (upper - lower) / (2 * h)
     if return_log_scale:
@@ -115,7 +128,7 @@ def magnitude_dimension_profile_exact(
         return slopes, ts
 
 
-def magitude_dimension_profile(
+def magitude_dimension_profile_interp(
     mag, ts, return_log_scale=False, one_point_property=True
 ):
     """

@@ -7,16 +7,18 @@ methods = [
     "cholesky",
     "scipy",
     "scipy_sym",
-    "inv",
+    "naive",
     "pinv",
     "conjugate_gradient_iteration",
     "cg",
-    "krylov",
+    "spread",
+    # "krylov",
 ]
 tss = [[1], np.linspace(0.01, 1, 100), None]
 
 
 def test_graph_function():
+    ## K3,2 has a singularity at t=log(sqrt(2))
     for ts in tss:
         for method in methods:
             Mag = Magnipy(
@@ -40,7 +42,18 @@ def test_graph_function():
             analytic = []
             for t in ts:
                 q = np.exp(-t)
-                analytic.append((5 + 5 * q - 4 * q**2) / ((1 + q) * (1 + 2 * q)))
+
+                if method == "spread":
+                    analytic.append(
+                        2 / (1 + 2 * q**2 + q + q**3)
+                        + 2 / (1 + 3 * q + q**2)
+                        + 1 / (1 + 2 * q**2 + 2 * q)
+                    )
+                else:
+                    analytic.append(
+                        (5 + 5 * q - 4 * q**2) / ((1 + q) * (1 + 2 * q))
+                    )
+
             analytic = np.array(analytic)
 
             assert np.allclose(mag, analytic), (

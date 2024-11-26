@@ -61,6 +61,7 @@ def distances_geodesic(X, X2, Adj, p=2, metric="euclidean"):
     ----------
     .. [1] https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.distance.cdist.html
     """
+    ## todo add check if X, X2, Adj have matching dimensions
 
     if X is None:
         weighted_adjacency = Adj
