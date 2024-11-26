@@ -77,6 +77,11 @@ class Diversipy:
             An object that can be used to compute and compare the magnitude functions of multiple spaces.
         """
 
+        if not isinstance(Xs, list):
+            raise Exception(
+                "Xs needs to be a list of one or multiple datasets."
+            )
+
         self._Xs = Xs
 
         if method is None:
@@ -97,8 +102,21 @@ class Diversipy:
         self._p = p
         self._n_neighbors = n_neighbors
         self._target_prop = target_prop
-        self._Mags = None
+
+        if ref_space is not None:
+            if not isinstance(ref_space, int):
+                raise Exception(
+                    "ref_space needs to be an integer index corresponding to the index of the reference dataset in the list of input datasets."
+                )
+            else:
+                if ref_space >= len(Xs):
+                    raise Exception(
+                        "ref_space needs to be an integer index corresponding to the index of the reference dataset in the list of input datasets."
+                    )
+
         self._ref_space = ref_space
+
+        self._Mags = None
         self._t_convs = None
         self._MagAreas = None
         self._MagDiffs = None
@@ -120,15 +138,58 @@ class Diversipy:
         self._ref_space = ref_space
         return None
 
+    def get_t_convs(self):
+        """
+        Get the approximate convergence scales for all datasets.
+        """
+        t_convs = []
+        for i, X in enumerate(self._Xs):
+            if self._Mags is not None:
+                Mag = self._Mags[i]
+            else:
+                Mag = Magnipy(
+                    X,
+                    ts=self._ts,
+                    scale_finding="convergence",
+                    target_prop=self._target_prop,
+                    n_ts=2,
+                    log_scale=False,
+                    method=self._method,
+                    metric=self._metric,
+                    p=self._p,
+                    one_point_property=True,
+                    return_log_scale=False,
+                    perturb_singularities=True,
+                    recompute=False,
+                    name=self._names[i],
+                    positive_magnitude=False,
+                )
+            t_convs.append(Mag.get_t_conv())
+            # Mags.append(Mag)
+        # self._Mags = Mags
+        self._t_convs = t_convs
+        return t_convs
+
     def get_common_scales(self, quantile=0.5):
         """
         Determine the shared evaluation interval for the magnitude functions.
-        To do this, the convergence scales of the magnitude functions are computed and
-        the shared scales are determined as a quantile (e.g. the median) of the convergence scales for all datasets.
+        To do this, the approximate convergence scale of the reference dataset is computed
+        and used as the common cutoff scale to define the evaluation interval.
+        Otherwise, if no reference space is set the convergence scales of all magnitude
+        functions are computed and the shared evaluation scales are determined as a
+        quantile (e.g. the median) of the convergence scales for all datasets.
+
+        Parameters
+        ----------
+        quantile : float
+            The quantile to use for determining the common scales.
+            By default 0.5 (median convergence scale).
         """
+        if self._t_convs is None:
+            t_convs = self.get_t_convs()
 
         if self._ref_space is not None:
-            t_cut = self._Mags[self._ref_space].get_t_conv()
+            t_cut = self._t_convs[self._ref_space]
         else:
             if self._q is None:
                 quantile = 0.5
@@ -141,13 +202,13 @@ class Diversipy:
             log_scale=False,
             one_point_property=True,
         )
-        # self._ts = ts
         self._t_cut = t_cut
         return ts
 
     def change_scales(self, ts=None, t_cut=None):
         """
         Change the evaluation scales of the magnitude functions.
+        If no scales are given, the evaluation interval is reset to None.
 
         Parameters
         ----------
@@ -178,22 +239,23 @@ class Diversipy:
     #  │ Compute Magnitude Functions                              │
     #  ╰──────────────────────────────────────────────────────────╯
 
-    def _compute_magnitude(self):
+    def _compute_magnitude(self, quantile=0.5):
         """
         Compute the magnitude functions for all datasets.
         """
 
-        t_convs = []
-        Mags = []
+        if self._ts is None:
+            t_convs = self.get_t_convs()
+            ts = self.get_common_scales(quantile=quantile)
+            self._ts = ts
 
+        Mags = []
         for i, X in enumerate(self._Xs):
             Mag = Magnipy(
                 X,
-                ts=self._ts,
+                ts=ts,
                 scale_finding="convergence",
                 target_prop=self._target_prop,
-                n_ts=2,
-                log_scale=False,
                 method=self._method,
                 metric=self._metric,
                 p=self._p,
@@ -204,13 +266,7 @@ class Diversipy:
                 name=self._names[i],
                 positive_magnitude=False,
             )
-            t_convs.append(Mag.get_t_conv())
             Mags.append(Mag)
-        self._Mags = Mags
-        self._t_convs = t_convs
-
-        ts = self.get_common_scales()
-        Mags = self.change_scales(ts)
         self._Mags = Mags
         return Mags
 
