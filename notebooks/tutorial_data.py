@@ -138,16 +138,42 @@ def plot_dfs(dfs, titles):
     plt.show()
 
 
+def normalize_viridis(matrix):
+    scaler = MinMaxScaler(feature_range=(0, 15))
+    # Normalize the data
+    normalized_data = scaler.fit_transform(matrix)
+    return normalized_data
+
+
 def plot_matrices(matrices, titles):
     n = len(matrices)
-
-    # Create a figure with 1 row and n columns of 3D subplots
     fig, axes = plt.subplots(1, n, figsize=(12, 4))
 
     for idx in range(0, n):
+        # normalizing
+        # matrix = normalize_viridis(matrices[idx])
+        # print(np.max(matrix))
         matrix = matrices[idx]
         title = titles[idx]
         axes[idx].imshow(matrix, cmap="viridis", interpolation="nearest")
+        axes[idx].set_title(title)
+
+    # Adjust layout and show the figure
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_magnitude_weights(data, weights, titles):
+    n = len(data)
+
+    # Create a figure with 1 row and n columns of 3D subplots
+    fig, axes = plt.subplots(1, n, figsize=(18, 6), subplot_kw={"projection": "3d"})
+
+    for idx in range(0, n):
+        df = data[idx]
+        weight = weights[idx]
+        title = titles[idx]
+        axes[idx].scatter(df["x"], df["y"], df["z"], c=weight, cmap="viridis")
         axes[idx].set_title(title)
 
     # Adjust layout and show the figure
