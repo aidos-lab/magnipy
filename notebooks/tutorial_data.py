@@ -111,6 +111,18 @@ def get_swiss_roll(n=1000):
     return sr_data, sr_df
 
 
+def show_magnitude_function(df, ts):
+    print(f"t \tX1 \tX2 \tX3 \tX4")
+    x1 = df[0]
+    x2 = df[1]
+    x3 = df[2]
+    x4 = df[3]
+    for idx in range(0, len(ts)):
+        print(
+            f"{ts[idx]:.2f} \t{x1[idx]:.2f} \t{x2[idx]:.2f} \t{x3[idx]:.2f} \t{x4[idx]:.2f}"
+        )
+
+
 def plot_df(df, title):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection="3d")
