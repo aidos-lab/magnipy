@@ -17,7 +17,7 @@ def weights_cholesky(Z):
     Returns
     -------
     magnitude : array_like, shape (`n_ts`, )
-        The magnitue weight vector.
+        The magnitude weight vector.
     """
     c, lower = cho_factor(Z)
     x = solve_triangular(c, np.ones(Z.shape[0]), trans=1)
