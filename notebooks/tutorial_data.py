@@ -164,60 +164,6 @@ def plot_matrices(matrices, titles):
     plt.show()
 
 
-def plot_weights(dfs, weights, titles):
-    # scaling colorbar
-    vmin = min(weights[0][:, 0].min(), weights[1][:, 0].min(), weights[2][:, 0].min())
-    vmax = max(
-        weights[0][:, -1].max(), weights[1][:, -1].max(), weights[2][:, -1].max()
-    )
-
-    n = len(dfs)
-    fig, axes = plt.subplots(
-        n, 3, figsize=(18, 16), subplot_kw={"projection": "3d"}, constrained_layout=True
-    )
-
-    t_idxs = [0, 14, 29]
-
-    for idx in range(0, n):
-        df = dfs[idx]
-        title = titles[idx]
-        weight_vals = weights[idx]
-        for t_idx in range(0, 3):
-            t = t_idxs[t_idx]
-            weights_at_t = weight_vals[:, t]
-            plot = axes[idx, t_idx].scatter(
-                df["x"],
-                df["y"],
-                df["z"],
-                c=weights_at_t,
-                cmap="viridis",
-                vmin=vmin,
-                vmax=vmax,
-            )
-            if t_idx == 0:
-                axes[idx, t_idx].text(
-                    0,
-                    0,
-                    1.7,
-                    f"{title}",
-                    fontsize=14,
-                )
-            if idx == 0:
-                if t_idx == 0:
-                    axes[idx, t_idx].set_title(f"t = 0")
-                elif t_idx == 1:
-                    axes[idx, t_idx].set_title(f"t = half of convergence scale")
-                else:
-                    axes[idx, t_idx].set_title(f"t = convergence scale")
-
-    # Adjust layout and show the figure
-    cbar = fig.colorbar(
-        plot, ax=axes, aspect=50, shrink=0.8, orientation="horizontal", location="top"
-    )
-    cbar.set_label("Magnitude Weights", fontsize=20)
-    plt.show()
-
-
 def plot_matrix_heatmaps(matrices, distance=True):
     fig, axs = plt.subplots(1, 3, figsize=(10, 5), constrained_layout=True)
     if distance:
@@ -246,4 +192,63 @@ def plot_matrix_heatmaps(matrices, distance=True):
         location="bottom",
         label=label,
     )
+    plt.show()
+
+
+def plot_weights(dfs, weights, titles):
+    # scaling colorbar
+    vmin = min(weights[0][:, 0].min(), weights[1][:, 0].min(), weights[2][:, 0].min())
+    vmax = max(
+        weights[0][:, -1].max(), weights[1][:, -1].max(), weights[2][:, -1].max()
+    )
+
+    n = len(dfs)
+    fig, axes = plt.subplots(
+        n, 3, figsize=(18, 16), subplot_kw={"projection": "3d"}, constrained_layout=True
+    )
+
+    # Assuming 30 t values
+    t_idxs = [1, 14, 29]
+
+    for idx in range(0, n):
+        df = dfs[idx]
+        title = titles[idx]
+        weight_vals = weights[idx]
+        for t_idx in range(0, 3):
+            t = t_idxs[t_idx]
+            weights_at_t = weight_vals[:, t]
+            plot = axes[idx, t_idx].scatter(
+                df["x"],
+                df["y"],
+                df["z"],
+                c=weights_at_t,
+                cmap="viridis",
+                vmin=vmin,
+                vmax=vmax,
+            )
+            if t_idx == 0:
+                axes[idx, t_idx].text(
+                    0,
+                    0,
+                    1.7,
+                    f"{title}",
+                    fontsize=14,
+                )
+            if idx == 0:
+                if t_idx == 0:
+                    axes[idx, t_idx].set_title(
+                        "$t=min({{t values}} > 0)$ \nSmallest Nonzero Distance Scale"
+                    )
+                elif t_idx == 1:
+                    axes[idx, t_idx].set_title(
+                        "$t=1/2 * t_{{conv}}$ \nHalf the Convergence Scale"
+                    )
+                else:
+                    axes[idx, t_idx].set_title("$t=t_{{conv}}$ \nConvergence Scale")
+
+    # Adjust layout and show the figure
+    cbar = fig.colorbar(
+        plot, ax=axes, aspect=50, shrink=0.8, orientation="horizontal", location="top"
+    )
+    cbar.set_label("Magnitude Weights", fontsize=20)
     plt.show()
