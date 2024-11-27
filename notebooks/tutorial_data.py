@@ -13,6 +13,7 @@ from magnipy.utils.datasets import (
     hawkes_process,
 )
 from magnipy.utils.plots import plot_points
+from magnipy import Magnipy
 
 # from matplotlib import mpl_toolkits
 # from mpl_toolkits.mplot3d import Axes3D
@@ -163,19 +164,86 @@ def plot_matrices(matrices, titles):
     plt.show()
 
 
-def plot_magnitude_weights(data, weights, titles):
-    n = len(data)
+def plot_weights(dfs, weights, titles):
+    # scaling colorbar
+    vmin = min(weights[0][:, 0].min(), weights[1][:, 0].min(), weights[2][:, 0].min())
+    vmax = max(
+        weights[0][:, -1].max(), weights[1][:, -1].max(), weights[2][:, -1].max()
+    )
 
-    # Create a figure with 1 row and n columns of 3D subplots
-    fig, axes = plt.subplots(1, n, figsize=(18, 6), subplot_kw={"projection": "3d"})
+    n = len(dfs)
+    fig, axes = plt.subplots(
+        n, 3, figsize=(18, 16), subplot_kw={"projection": "3d"}, constrained_layout=True
+    )
+
+    t_idxs = [0, 14, 29]
 
     for idx in range(0, n):
-        df = data[idx]
-        weight = weights[idx]
+        df = dfs[idx]
         title = titles[idx]
-        axes[idx].scatter(df["x"], df["y"], df["z"], c=weight, cmap="viridis")
-        axes[idx].set_title(title)
+        weight_vals = weights[idx]
+        for t_idx in range(0, 3):
+            t = t_idxs[t_idx]
+            weights_at_t = weight_vals[:, t]
+            plot = axes[idx, t_idx].scatter(
+                df["x"],
+                df["y"],
+                df["z"],
+                c=weights_at_t,
+                cmap="viridis",
+                vmin=vmin,
+                vmax=vmax,
+            )
+            if t_idx == 0:
+                axes[idx, t_idx].text(
+                    0,
+                    0,
+                    1.7,
+                    f"{title}",
+                    fontsize=14,
+                )
+            if idx == 0:
+                if t_idx == 0:
+                    axes[idx, t_idx].set_title(f"t = 0")
+                elif t_idx == 1:
+                    axes[idx, t_idx].set_title(f"t = half of convergence scale")
+                else:
+                    axes[idx, t_idx].set_title(f"t = convergence scale")
 
     # Adjust layout and show the figure
-    plt.tight_layout()
+    cbar = fig.colorbar(
+        plot, ax=axes, aspect=50, shrink=0.8, orientation="horizontal", location="top"
+    )
+    cbar.set_label("Magnitude Weights", fontsize=20)
+    plt.show()
+
+
+def plot_matrix_heatmaps(matrices, distance=True):
+    fig, axs = plt.subplots(1, 3, figsize=(10, 5), constrained_layout=True)
+    if distance:
+        fig.suptitle("Distance Matrices")
+        label = "Euclidean Distance"
+    else:
+        fig.suptitle("Similarity Matrices")
+        label = "Similarity"
+
+    # Find the global min and max across all datasets
+    vmin = min(matrices[0].min(), matrices[1].min(), matrices[2].min())
+    vmax = max(matrices[0].max(), matrices[1].max(), matrices[2].max())
+
+    rando_heatmap = axs[0].imshow(matrices[0], cmap="viridis", vmin=vmin, vmax=vmax)
+    axs[0].set_title("Random")
+    axs[0].set_ylabel("Index of Datapoint")
+    blob_heatmap = axs[1].imshow(matrices[1], cmap="viridis", vmin=vmin, vmax=vmax)
+    axs[1].set_title("Blobs / Clusters")
+    swiss_heatmap = axs[2].imshow(matrices[2], cmap="viridis", vmin=vmin, vmax=vmax)
+    axs[2].set_title("Swiss Roll")
+
+    fig.colorbar(
+        rando_heatmap,
+        ax=axs,
+        orientation="horizontal",
+        location="bottom",
+        label=label,
+    )
     plt.show()
