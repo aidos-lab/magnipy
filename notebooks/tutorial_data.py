@@ -14,9 +14,7 @@ from magnipy.utils.datasets import (
 )
 from magnipy.utils.plots import plot_points
 from magnipy import Magnipy
-
-# from matplotlib import mpl_toolkits
-# from mpl_toolkits.mplot3d import Axes3D
+import bisect
 
 
 def get_Xs():
@@ -139,13 +137,6 @@ def plot_dfs(dfs, titles):
     plt.show()
 
 
-def normalize_viridis(matrix):
-    scaler = MinMaxScaler(feature_range=(0, 15))
-    # Normalize the data
-    normalized_data = scaler.fit_transform(matrix)
-    return normalized_data
-
-
 def plot_matrices(matrices, titles):
     n = len(matrices)
     fig, axes = plt.subplots(1, n, figsize=(12, 4))
@@ -195,28 +186,38 @@ def plot_matrix_heatmaps(matrices, distance=True):
     plt.show()
 
 
-def plot_weights(dfs, weights, titles):
+def plot_weights(dfs, ts, weights, titles):
     # scaling colorbar
     vmin = min(weights[0][:, 0].min(), weights[1][:, 0].min(), weights[2][:, 0].min())
     vmax = max(
         weights[0][:, -1].max(), weights[1][:, -1].max(), weights[2][:, -1].max()
     )
 
+    # initialize figure
     n = len(dfs)
     fig, axes = plt.subplots(
         n, 3, figsize=(18, 16), subplot_kw={"projection": "3d"}, constrained_layout=True
     )
 
-    # Assuming 30 t values
-    t_idxs = [1, 14, 29]
-
     for idx in range(0, n):
         df = dfs[idx]
         title = titles[idx]
         weight_vals = weights[idx]
+
+        # determining t values to plot
+        t = ts[idx]
+        t_conv = t[-1]
+        quarter_conv_val = 0.25 * t_conv
+        quarter_conv_idx = find_closest_index(t, quarter_conv_val)
+        half_conv_val = 0.5 * t_conv
+        half_conv_idx = find_closest_index(t, half_conv_val)
+        t_idxs = [quarter_conv_idx, half_conv_idx, -1]
+
         for t_idx in range(0, 3):
-            t = t_idxs[t_idx]
-            weights_at_t = weight_vals[:, t]
+            t_val = t_idxs[t_idx]
+            print([quarter_conv_idx, half_conv_idx, -1])
+            weights_at_t = weight_vals[:, t_val]
+
             plot = axes[idx, t_idx].scatter(
                 df["x"],
                 df["y"],
@@ -226,6 +227,7 @@ def plot_weights(dfs, weights, titles):
                 vmin=vmin,
                 vmax=vmax,
             )
+            # labeling each row
             if t_idx == 0:
                 axes[idx, t_idx].text(
                     0,
@@ -234,14 +236,15 @@ def plot_weights(dfs, weights, titles):
                     f"{title}",
                     fontsize=14,
                 )
+            # labeling each column
             if idx == 0:
                 if t_idx == 0:
                     axes[idx, t_idx].set_title(
-                        "$t=min({{t values}} > 0)$ \nSmallest Nonzero Distance Scale"
+                        "$t=1/4 * t_{{conv}}$ \n1/4 of the Convergence Scale"
                     )
                 elif t_idx == 1:
                     axes[idx, t_idx].set_title(
-                        "$t=1/2 * t_{{conv}}$ \nHalf the Convergence Scale"
+                        "$t=1/2 * t_{{conv}}$ \n1/2 of the Convergence Scale"
                     )
                 else:
                     axes[idx, t_idx].set_title("$t=t_{{conv}}$ \nConvergence Scale")
@@ -252,3 +255,35 @@ def plot_weights(dfs, weights, titles):
     )
     cbar.set_label("Magnitude Weights", fontsize=20)
     plt.show()
+
+
+def find_closest_index(sorted_list, target):
+    # Find the position to insert `target` in the sorted list
+    pos = bisect.bisect_left(sorted_list, target)
+
+    # Check the left and right neighbors for the closest value
+    if pos == 0:
+        return 0  # Closest is the first element
+    elif pos == len(sorted_list):
+        return len(sorted_list) - 1  # Closest is the last element
+
+    # Get the closest between the two neighboring indices
+    before = pos - 1
+    after = pos
+    if abs(sorted_list[before] - target) <= abs(sorted_list[after] - target):
+        return before
+    else:
+        return after
+
+
+def show_magnitude_table(magnitudes, t_vals):
+    random, random_t = magnitudes[0], t_vals[0]
+    blobs, blobs_t = magnitudes[1], t_vals[1]
+    swiss, swiss_t = magnitudes[2], t_vals[2]
+    print(f"Random Dataset \t\tBlobs Dataset \t\t\tSwiss Roll Dataset")
+    print(f"t \t Magnitude \tt \t Magnitude \tt \t Magnitude")
+    for i in range(0, len(magnitudes[0])):
+        print(
+            f"{random_t[i]:.2f} \t {random[i]:.2f}    \t{blobs_t[i]:.2f} \t {blobs[i]:.2f}     \t {swiss_t[i]:.2f} \t {swiss[i]:.2f}"
+        )
+    return None
