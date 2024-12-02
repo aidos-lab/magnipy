@@ -8,9 +8,17 @@ This repository supports the NeurIPS 2024 paper: [Metric Space Magnitude for Eva
 
 ## Dependencies
 
-Dependencies are managed using the [`poetry`](https://python-poetry.org) package manager.
+To get started,
+1. Clone this repository into a directory of your choosing
+2. Create and activate a new Python virtual environment
 
-With poetry installed and an active virtual environment, run the following command from the main directory to download the necessary dependencies:
+Our dependencies are managed using the [`poetry`](https://python-poetry.org) package manager. Using your activated virtual environment, run the following to install poetry:
+
+```python
+$ pip install poetry
+```
+
+With poetry installed, run the following command from the main directory to download the necessary dependencies:
 
 ```python
 $ poetry install
