@@ -29,7 +29,9 @@ def get_Xs():
     # Sample 100 points each from Gaussians at (0.5, 0.5) and (1.5, 1.5)
     mean2 = [[0.5, 0.5], [1.5, 1.5]]
     cov2 = np.eye(2) * 0.02
-    X3 = np.concatenate([sample_points_gaussian(mean, cov2, 100) for mean in mean2])
+    X3 = np.concatenate(
+        [sample_points_gaussian(mean, cov2, 100) for mean in mean2]
+    )
 
     # Sample 200 points from a Gaussian centered at (0, 0.5)
     mean1 = [0.5, 0.5]
@@ -126,7 +128,9 @@ def show_magnitude_function(df, ts):
 def plot_df(df, title):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection="3d")
-    ax.scatter(df["x"], df["y"], df["z"], c=df["z"], cmap="viridis", marker="o", s=5)
+    ax.scatter(
+        df["x"], df["y"], df["z"], c=df["z"], cmap="viridis", marker="o", s=5
+    )
     plt.title(title)
     plt.show()
 
@@ -135,7 +139,9 @@ def plot_dfs(dfs, titles):
     n = len(dfs)
 
     # Create a figure with 1 row and n columns of 3D subplots
-    fig, axes = plt.subplots(1, n, figsize=(18, 6), subplot_kw={"projection": "3d"})
+    fig, axes = plt.subplots(
+        1, n, figsize=(18, 6), subplot_kw={"projection": "3d"}
+    )
 
     for idx in range(0, n):
         df = dfs[idx]
@@ -180,12 +186,18 @@ def plot_matrix_heatmaps(matrices, distance=True):
     vmin = min(matrices[0].min(), matrices[1].min(), matrices[2].min())
     vmax = max(matrices[0].max(), matrices[1].max(), matrices[2].max())
 
-    rando_heatmap = axs[0].imshow(matrices[0], cmap="viridis", vmin=vmin, vmax=vmax)
+    rando_heatmap = axs[0].imshow(
+        matrices[0], cmap="viridis", vmin=vmin, vmax=vmax
+    )
     axs[0].set_title("Random")
     axs[0].set_ylabel("Index of Datapoint")
-    blob_heatmap = axs[1].imshow(matrices[1], cmap="viridis", vmin=vmin, vmax=vmax)
+    blob_heatmap = axs[1].imshow(
+        matrices[1], cmap="viridis", vmin=vmin, vmax=vmax
+    )
     axs[1].set_title("Blobs / Clusters")
-    swiss_heatmap = axs[2].imshow(matrices[2], cmap="viridis", vmin=vmin, vmax=vmax)
+    swiss_heatmap = axs[2].imshow(
+        matrices[2], cmap="viridis", vmin=vmin, vmax=vmax
+    )
     axs[2].set_title("Swiss Roll")
 
     fig.colorbar(
@@ -200,15 +212,23 @@ def plot_matrix_heatmaps(matrices, distance=True):
 
 def plot_weights(dfs, ts, weights, titles):
     # scaling colorbar
-    vmin = min(weights[0][:, 0].min(), weights[1][:, 0].min(), weights[2][:, 0].min())
+    vmin = min(
+        weights[0][:, 0].min(), weights[1][:, 0].min(), weights[2][:, 0].min()
+    )
     vmax = max(
-        weights[0][:, -1].max(), weights[1][:, -1].max(), weights[2][:, -1].max()
+        weights[0][:, -1].max(),
+        weights[1][:, -1].max(),
+        weights[2][:, -1].max(),
     )
 
     # initialize figure
     n = len(dfs)
     fig, axes = plt.subplots(
-        n, 3, figsize=(18, 16), subplot_kw={"projection": "3d"}, constrained_layout=True
+        n,
+        3,
+        figsize=(18, 16),
+        subplot_kw={"projection": "3d"},
+        constrained_layout=True,
     )
 
     for idx in range(0, n):
@@ -259,11 +279,18 @@ def plot_weights(dfs, ts, weights, titles):
                         "$t=1/2 * t_{{conv}}$ \n1/2 of the Convergence Scale"
                     )
                 else:
-                    axes[idx, t_idx].set_title("$t=t_{{conv}}$ \nConvergence Scale")
+                    axes[idx, t_idx].set_title(
+                        "$t=t_{{conv}}$ \nConvergence Scale"
+                    )
 
     # Adjust layout and show the figure
     cbar = fig.colorbar(
-        plot, ax=axes, aspect=50, shrink=0.8, orientation="horizontal", location="top"
+        plot,
+        ax=axes,
+        aspect=50,
+        shrink=0.8,
+        orientation="horizontal",
+        location="top",
     )
     cbar.set_label("Magnitude Weights", fontsize=20)
     plt.show()
