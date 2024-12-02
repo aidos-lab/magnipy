@@ -20,24 +20,29 @@ $ poetry install
 
 We introduce two classes to aid in the computation and comparison of the magnitude of metric spaces:
 
-### 1. `Magnipy`: For in-depth magnitude computations on a single metric space.
+### 1. `Diversipy`: For comparing magnitude (& thus diversity) across different metric spaces.
 
-Core functionalities of `Magnipy` include computation of:  
-- magnitude, **magnitude weights and magnitude functions** across varying resolutions
-- magnitude dimension profiles and the **magnitude dimension** to estimate **intrinsic dimensionality**
-- an **automated scale-finding** procedure to find suitable evaluation scales
-- **MagArea** the area under a magnitude function, a multi-scale measure of the **intrinsic diversity** of a space
-- **MagDiff** the area between two magnitude functions to measure the **difference in diversity** between two spaces
+Core functionalities of `Diversipy` for a list of metric spaces include: 
+- Executing an **automated scale-finding** procedure and the determining a **common evaluation interval across metric spaces**
+- Computing **magnitude functions** across varying distance scales
+- Calculating **MagArea**: the area under a magnitude function, a multi-scale measure of the **intrinsic diversity** of a space
+- Calculating **MagDiff**: the area between two magnitude functions to measure the **difference in diversity** between two spaces
 
-### 2. `Diversipy`: For comparing magnitude (& thus diversity) across different metric spaces.
 
-Core functionalities of `Diversipy` include: 
-- TODO
+### 2. `Magnipy`: For in-depth magnitude computations on a single metric space.
+
+Core functionalities of `Magnipy` for an individual metric space include:  
+- Computing the metric space's **distance matrix**
+- Creating the related **similarity matrix**
+- Executing an **automated scale-finding** procedure to find a suitable evaluation scale
+- Finding the **magnitude weight** of each point across distance scales
+- Defining **magnitude functions** across varying resolutions
+- Creation of magnitude dimension profiles and the **magnitude dimension** to estimate **intrinsic dimensionality**
 
 
 ## Tutorials
 
-Separate tutorials for the `Magnipy` and `Diversipy` classes can be found under the `notebooks` folder.
+Separate tutorials for the `Diversipy` and `Magnipy` classes can be found under the `notebooks` folder (`diversipy_tutorial.ipynb` and `magnipy_tutorial.ipynb` respectively), and are aided by the `tutorial_data.py` script.
 
 Each tutorial demonstrates how to initialize and utiltize its corresponding class to execute core functionalities.
 
