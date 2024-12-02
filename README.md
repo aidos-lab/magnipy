@@ -9,7 +9,7 @@ This repository supports the NeurIPS 2024 paper: [Metric Space Magnitude for Eva
 ## Dependencies
 
 To get started,
-1. Clone this repository into a directory of your choosing
+1. Clone this repository locally into a directory of your choosing
 2. Create and activate a new Python virtual environment
 
 Our dependencies are managed using the [`poetry`](https://python-poetry.org) package manager. Using your activated virtual environment, run the following to install poetry:
@@ -35,6 +35,7 @@ Core functionalities of `Diversipy` for a list of metric spaces include:
 - Computing **magnitude functions** across varying distance scales
 - Calculating **MagArea**: the area under a magnitude function, a multi-scale measure of the **intrinsic diversity** of a space
 - Calculating **MagDiff**: the area between two magnitude functions to measure the **difference in diversity** between two spaces
+- Detecting **mode dropping** and **mode collapse** in generative models
 
 
 ### 2. `Magnipy`: For in-depth magnitude computations on a single metric space.
