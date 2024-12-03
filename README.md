@@ -1,10 +1,14 @@
-# magnipy: Metric Space Magnitude Computations
+# magnipy: Metric Space Magnitude Computations 🔎
 
 This is a repository for computing the **_magnitude of a metric space_**, which encodes the **effective size, diversity, and geometry** of a metric space.  
 
 Given a dataset or distance matrix, **_magnitude_** measures the **effective number of distinct points** in the space at a scale of dissimilarity between observations.
 
 This repository supports the NeurIPS 2024 paper: [Metric Space Magnitude for Evaluating the Diversity of Latent Representations](https://arxiv.org/abs/2311.16054).
+
+The core pipeline supported by the `magnipy` package is outlined below:
+![Magnipy Package Pipeline](assets/magnipy-pipeline.png)
+Figure from *[Metric Space Magnitude for Evaluating the Diversity of Latent Representations](https://arxiv.org/abs/2311.16054)*
 
 ## Dependencies
 
