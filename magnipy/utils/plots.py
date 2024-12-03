@@ -23,3 +23,16 @@ def plot_magnitude_dimension_profile(mag_dim, ts, log_scale=False, name=""):
         plt.xlabel("t")
     plt.ylabel("magnitude dimension profile")
     sns.despine()
+
+
+def plot_points(ax, points, color, label, s=30, alpha=0.8, marker="o"):
+    x_values, y_values = zip(*points)
+    ax.scatter(
+        x_values,
+        y_values,
+        s=s,
+        alpha=alpha,
+        c=color,
+        label=label,
+        marker=marker,
+    )
