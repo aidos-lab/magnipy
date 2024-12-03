@@ -35,7 +35,6 @@ Core functionalities of `Diversipy` for a list of metric spaces include:
 - Computing **magnitude functions** across varying distance scales
 - Calculating **MagArea**: the area under a magnitude function, a multi-scale measure of the **intrinsic diversity** of a space
 - Calculating **MagDiff**: the area between two magnitude functions to measure the **difference in diversity** between two spaces
-- Detecting **mode dropping** and **mode collapse** in generative models
 
 
 ### 2. `Magnipy`: For in-depth magnitude computations on a single metric space.
@@ -51,9 +50,15 @@ Core functionalities of `Magnipy` for an individual metric space include:
 
 ## Tutorials
 
-Separate tutorials for the `Diversipy` and `Magnipy` classes can be found under the `notebooks` folder (`diversipy_tutorial.ipynb` and `magnipy_tutorial.ipynb` respectively), and are aided by the `tutorial_data.py` script.
+Separate tutorials for the Diversipy and Magnipy classes can be found under the `notebooks` folder (`diversipy_tutorial.ipynb` and `magnipy_tutorial.ipynb` respectively), and are aided by the `tutorial_data.py` script.
 
 Each tutorial demonstrates how to initialize and utiltize its corresponding class to execute core functionalities.
+
+### Supplementary Demos
+
+The following supplementary demos are also provided:
+- Using MagDiff as a metric for **detecting mode dropping / mode collapse** (`notebooks/mode_dropping.ipynb`).
+- (Coming soon...) Using Magnipy to calculate the **magnitude dimension** of a metric space
 
 # Citation
 Please consider citing our work!
