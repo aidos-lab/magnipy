@@ -334,7 +334,7 @@ def sample_points_gaussian(mean, cov, n):
     return points
 
 
-def simulate_mode_dropping(is_normalized):
+def simulate_mode_dropping(is_normalised):
     """Creates a mode-dropping simulation, creating a gif as output."""
 
     # Setting hyperparameters
@@ -395,7 +395,7 @@ def simulate_mode_dropping(is_normalized):
         mag_area = mag_new.MagArea(scale=True)
         mag_diff = mag_start.MagDiff(mag_new, scale=True)
 
-        if is_normalized:
+        if is_normalised:
             mag_diffs.append(mag_diff / mag_area0)
         else:
             mag_diffs.append(-mag_diff)
@@ -429,7 +429,7 @@ def simulate_mode_dropping(is_normalized):
         ax1.scatter(new_x, new_y, c=new_colors, cmap="viridis", alpha=0.6)
         ax1.set_axis_off()
 
-        if is_normalized:
+        if is_normalised:
             ax2 = fig.add_subplot(
                 122,
                 aspect="equal",
@@ -440,7 +440,7 @@ def simulate_mode_dropping(is_normalized):
             ax2.plot(
                 [r * 2 for r in range(frame)],
                 mag_diffs[:frame],
-                label="Normalized MagDiff (MagDiff / Original MagArea)",
+                label="Normalised MagDiff (MagDiff / Original MagArea)",
                 color="black",
             )
         else:
@@ -467,9 +467,9 @@ def simulate_mode_dropping(is_normalized):
     ani = FuncAnimation(
         fig, update, frames=size, repeat=False, interval=int(500 / 1 * size)
     )
-    if is_normalized:
+    if is_normalised:
         ani.save("./assets/mode_dropping_normalised.gif", fps=10)
     else:
         ani.save("./assets/mode_dropping.gif", fps=10)
 
-    plt.show()
+    #plt.show()
