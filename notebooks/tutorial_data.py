@@ -335,7 +335,7 @@ def sample_points_gaussian(mean, cov, n):
     return points
 
 
-def get_perturbed_datasets():
+def get_mode_dropping_datasets():
     # Setting hyperparameters
     np.random.seed(4)
     mean1 = [5, 6]
@@ -384,12 +384,61 @@ def get_perturbed_datasets():
     return Xs, colors
 
 
+def get_mode_collapse_datasets():
+    # Setting hyperparameters
+    np.random.seed(4)
+    mean1 = [5, 6]
+    cov1 = np.eye(2) * 1.1
+    size = 50
+
+    # Sampling data
+    points1 = sample_points_gaussian(mean1, cov1, size)
+    points2 = sample_points_gaussian([0, 0], cov1, size)
+    points3 = sample_points_gaussian([10, 0], cov1, size)
+
+    # Replacement points in purple mode sampled from Gaussian with smaller convariance
+    new_cov = np.eye(2) * 0.3
+    mode_collapse_pts = sample_points_gaussian(mean1, new_cov, size * 2)
+
+    Xs_collapse = []
+    colors_collapse = []
+    for frame in range(size):
+        # Replacing points from modes 2 and 3 with points from mode 1 Gaussian
+        X_new = np.concatenate(
+            [
+                points1[: (size - (frame))],
+                points2,
+                points3,
+                mode_collapse_pts[:frame],
+            ],
+        )
+        # Updating color mapping
+        new_colors = np.array(
+            np.concatenate(
+                [
+                    np.zeros(size - (frame)),
+                    np.ones(size),
+                    np.ones(size) * 2,
+                    np.zeros((frame)),
+                ]
+            )
+        )
+        # Adding to ongoing simulation data
+        Xs_collapse.append(X_new)
+        colors_collapse.append(new_colors)
+    return Xs_collapse, colors_collapse
+
+
 def plot_simulation_progression(Xs, colors, size):
     midway_idx = size // 2
+    x_int = (-3, 15)
+    y_int = (-3, 10)
 
     fig, ax = plt.subplots(1, 3, figsize=(15, 5))
 
     ax[0].scatter(Xs[0][:, 0], Xs[0][:, 1], c=colors[0], cmap="viridis", alpha=0.6)
+    ax[0].set_xlim(x_int)
+    ax[0].set_ylim(y_int)
     ax[0].set_title("Beginning of Simulation (X0)")
     ax[1].scatter(
         Xs[midway_idx][:, 0],
@@ -399,8 +448,12 @@ def plot_simulation_progression(Xs, colors, size):
         alpha=0.6,
     )
     ax[1].set_title("Midway Through Simulation")
+    ax[1].set_xlim(x_int)
+    ax[1].set_ylim(y_int)
     ax[2].scatter(Xs[-1][:, 0], Xs[-1][:, 1], c=colors[-1], cmap="viridis", alpha=0.6)
     ax[2].set_title("End of Simulation")
+    ax[2].set_xlim(x_int)
+    ax[2].set_ylim(y_int)
 
 
 def plot_diversity_measures(mag_areas, mag_diffs, mag_diffs_normalised, size):
@@ -420,11 +473,15 @@ def plot_diversity_measures(mag_areas, mag_diffs, mag_diffs_normalised, size):
     fig.show()
 
 
-def create_mode_dropping_animation(metric):
-    """Creates a mode-dropping simulation, creating a gif in the assets forder as output.
+def create_animation(is_dropping: bool, metric="magdiff"):
+    """Creates a mode-dropping or mode-collapse simulation, creating a gif in the assets folder as output.
+    If is_dropping is True, does a mode dropping simulation. Otherwise, mode collapse.
     Metric is one of: "magarea", "magdiff", "normalised_magdiff"
     """
-    Xs, colors = get_perturbed_datasets()
+    if is_dropping:
+        Xs, colors = get_mode_dropping_datasets()
+    else:
+        Xs, colors = get_mode_collapse_datasets()
     size = len(Xs)
 
     # Intializing Diversipy object with our simulated datasets, such that X0 is our reference space (idx=0)
@@ -510,21 +567,30 @@ def create_mode_dropping_animation(metric):
     ani = FuncAnimation(
         fig, update, frames=range(0, size), repeat=False, interval=int(500 / 1 * size)
     )
-    if metric == "normalised_magdiff":
-        ani.save("./assets/mode_dropping/normalised.gif", fps=10)
-    elif metric == "magdiff":
-        ani.save("./assets/mode_dropping/magdiff.gif", fps=10)
+    if is_dropping:
+        if metric == "normalised_magdiff":
+            ani.save("./assets/mode_dropping/normalised.gif", fps=10)
+        elif metric == "magdiff":
+            ani.save("./assets/mode_dropping/magdiff.gif", fps=10)
+        else:
+            ani.save("./assets/mode_dropping/magarea.gif", fps=10)
     else:
-        ani.save("./assets/mode_dropping/magarea.gif", fps=10)
-
-    # plt.show()
+        if metric == "normalised_magdiff":
+            ani.save("./assets/mode_collapse/normalised.gif", fps=10)
+        elif metric == "magdiff":
+            ani.save("./assets/mode_collapse/magdiff.gif", fps=10)
+        else:
+            ani.save("./assets/mode_collapse/magarea.gif", fps=10)
 
 
 def create_all_animations():
     """Calls create_mode_dropping animation and saves them in assets folder for all metrics: magarea, magdiff, normalised_magdiff."""
-    create_mode_dropping_animation(metric="magarea")
-    create_mode_dropping_animation(metric="magdiff")
-    create_mode_dropping_animation(metric="normalised_magdiff")
+    create_animation(is_dropping=True, metric="magarea")
+    create_animation(is_dropping=True, metric="magdiff")
+    create_animation(is_dropping=True, metric="normalised_magdiff")
+    create_animation(is_dropping=False, metric="magarea")
+    create_animation(is_dropping=False, metric="magdiff")
+    create_animation(is_dropping=False, metric="normalised_magdiff")
 
 
 # create_all_animations()
