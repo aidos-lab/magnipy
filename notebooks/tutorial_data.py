@@ -16,6 +16,7 @@ from magnipy.utils.plots import plot_points
 from magnipy import Magnipy
 import bisect
 from matplotlib.animation import FuncAnimation
+from magnipy.diversipy import Diversipy
 
 
 #  ╭──────────────────────────────────────────────────────────╮
@@ -334,9 +335,7 @@ def sample_points_gaussian(mean, cov, n):
     return points
 
 
-def simulate_mode_dropping(is_normalised):
-    """Creates a mode-dropping simulation, creating a gif as output."""
-
+def get_perturbed_datasets():
     # Setting hyperparameters
     np.random.seed(4)
     mean1 = [5, 6]
@@ -347,29 +346,19 @@ def simulate_mode_dropping(is_normalised):
     points1 = sample_points_gaussian(mean1, cov1, size)
     points2 = sample_points_gaussian([0, 0], cov1, size)
     points3 = sample_points_gaussian([10, 0], cov1, size)
-    make_blobs = np.concatenate([points1, points2, points3], axis=0)
-    x = make_blobs[:, 0]
-    y = make_blobs[:, 1]
+    initial_X = np.concatenate([points1, points2, points3], axis=0)
 
     # Replacement points in purple mode
     more_points1 = sample_points_gaussian(mean1, cov1, size * 2)
-
-    # Plot
     colors = np.array(
         np.concatenate([np.zeros(size), np.ones(size), np.ones(size) * 2])
     )
 
-    fig, ax = plt.subplots(figsize=(10, 5))
-    scat = ax.scatter(x, y, c=colors, cmap="viridis", alpha=0.6)
-
-    mag_start = Magnipy(make_blobs, n_ts=100)
-    ts = mag_start.get_scales()
-    mag_ref, tss = mag_start.get_magnitude()
-
-    mag_area0 = mag_start.MagArea(scale=True)
-
-    mag_diffs = []
+    # Get datasets that simulate gradual mode dropping
+    Xs = []
+    colors = []
     for frame in range(size):
+        # Replacing points from modes 2 and 3 with points from mode 1 Gaussian
         X_new = np.concatenate(
             [
                 points1,
@@ -379,47 +368,84 @@ def simulate_mode_dropping(is_normalised):
             ],
             axis=0,
         )
-        new_colors = np.concatenate(
-            [
-                np.zeros(size),
-                np.ones(size - frame),
-                np.ones(size - frame) * 2,
-                np.zeros(2 * (frame)),
-            ]
+        # Updating color mapping
+        new_colors = np.array(
+            np.concatenate(
+                [
+                    np.zeros(size),
+                    np.ones(size - frame),
+                    np.ones(size - frame) * 2,
+                    np.zeros(2 * (frame)),
+                ]
+            )
         )
-        new_x = X_new[:, 0]
-        new_y = X_new[:, 1]
+        Xs.append(X_new)
+        colors.append(new_colors)
+    return Xs, colors
 
-        mag_new = Magnipy(X_new, ts=ts)
-        mag, tss = mag_new.get_magnitude()
-        mag_area = mag_new.MagArea(scale=True)
-        mag_diff = mag_start.MagDiff(mag_new, scale=True)
 
-        if is_normalised:
-            mag_diffs.append(mag_diff / mag_area0)
-        else:
-            mag_diffs.append(-mag_diff)
+def plot_simulation_progression(Xs, colors, size):
+    midway_idx = size // 2
+
+    fig, ax = plt.subplots(1, 3, figsize=(15, 5))
+
+    ax[0].scatter(Xs[0][:, 0], Xs[0][:, 1], c=colors[0], cmap="viridis", alpha=0.6)
+    ax[0].set_title("Beginning of Simulation (X0)")
+    ax[1].scatter(
+        Xs[midway_idx][:, 0],
+        Xs[midway_idx][:, 1],
+        c=colors[midway_idx],
+        cmap="viridis",
+        alpha=0.6,
+    )
+    ax[1].set_title("Midway Through Simulation")
+    ax[2].scatter(Xs[-1][:, 0], Xs[-1][:, 1], c=colors[-1], cmap="viridis", alpha=0.6)
+    ax[2].set_title("End of Simulation")
+
+
+def plot_diversity_measures(mag_areas, mag_diffs, mag_diffs_normalised, size):
+    fig, ax = plt.subplots(1, 3, figsize=(15, 5))
+    xs = range(0, size)
+    ax[0].plot(xs, mag_areas)
+    ax[0].set_xlabel("Dropping Simulation Iteration")
+    ax[0].set_title("MagArea")
+    ax[0].axhline(y=mag_areas[0], color="red", label="MagArea of X0")
+    ax[0].legend(loc="upper right")
+    ax[1].plot(xs, mag_diffs)
+    ax[1].set_xlabel("Dropping Simulation Iteration")
+    ax[1].set_title("MagDiff with respect to X0")
+    ax[2].plot(xs, mag_diffs_normalised)
+    ax[2].set_xlabel("Dropping Simulation Iteration")
+    ax[2].set_title("Normalised MagDiff with respect to X0")
+    fig.show()
+
+
+def create_mode_dropping_animation(metric):
+    """Creates a mode-dropping simulation, creating a gif in the assets forder as output.
+    Metric is one of: "magarea", "magdiff", "normalised_magdiff"
+    """
+    Xs, colors = get_perturbed_datasets()
+    size = len(Xs)
+
+    # Intializing Diversipy object with our simulated datasets, such that X0 is our reference space (idx=0)
+    div = Diversipy(Xs=Xs, ref_space=0)
+
+    # Calculating intrinsic diversity (MagArea) for all datasets
+    mag_areas = div.MagAreas(scale=True)
+    # Calculating difference in diversity with respect to X0 (MagDiff) for all datasets
+    mag_diffs = div.MagDiffs(scale=True, pairwise=False)
+    # Calculating normalised MagDiff for all datasets
+    mag_diffs_normalised = mag_diffs / mag_areas[0]
+
+    # Initial figure
+    fig, ax = plt.subplots(figsize=(10, 5))
+    scat = ax.scatter(Xs[0][:, 0], Xs[0][:, 1], c=colors[0], cmap="viridis", alpha=0.6)
 
     def update(frame):
         fig.clear()
-        # Remove one point at a time
-        X_new = np.concatenate(
-            [
-                points1,
-                points2[: (size - frame)],
-                points3[: (size - frame)],
-                more_points1[: (2 * (frame))],
-            ],
-            axis=0,
-        )
-        new_colors = np.concatenate(
-            [
-                np.zeros(size),
-                np.ones(size - frame),
-                np.ones(size - frame) * 2,
-                np.zeros(2 * (frame)),
-            ]
-        )
+
+        X_new = Xs[frame]
+        new_colors = colors[frame]
         new_x = X_new[:, 0]
         new_y = X_new[:, 1]
 
@@ -429,7 +455,22 @@ def simulate_mode_dropping(is_normalised):
         ax1.scatter(new_x, new_y, c=new_colors, cmap="viridis", alpha=0.6)
         ax1.set_axis_off()
 
-        if is_normalised:
+        if metric == "normalised_magdiff":
+            ax2 = fig.add_subplot(
+                122,
+                aspect="equal",
+                autoscale_on=True,
+                xlim=(0, size * 2),
+                ylim=(min(mag_diffs_normalised), max(mag_diffs_normalised)),
+            )
+            ax2.plot(
+                [r * 2 for r in range(frame)],
+                mag_diffs_normalised[:frame],
+                label="Normalised MagDiff (MagDiff / Original MagArea)",
+                color="black",
+            )
+            ax2.set_title("Normalised MagDiff (MagDiff / Original MagArea)")
+        elif metric == "magdiff":
             ax2 = fig.add_subplot(
                 122,
                 aspect="equal",
@@ -440,36 +481,50 @@ def simulate_mode_dropping(is_normalised):
             ax2.plot(
                 [r * 2 for r in range(frame)],
                 mag_diffs[:frame],
-                label="Normalised MagDiff (MagDiff / Original MagArea)",
+                label="MagDiff",
                 color="black",
             )
+            ax2.set_title("MagDiff")
         else:
             ax2 = fig.add_subplot(
                 122,
                 aspect="equal",
                 autoscale_on=True,
                 xlim=(0, size * 2),
-                ylim=(-30, 0),
+                ylim=(min(mag_areas), max(mag_areas)),
             )
             ax2.plot(
                 [r * 2 for r in range(frame)],
-                mag_diffs[:frame],
-                label="-MagDiff",
+                mag_areas[:frame],
+                label="MagArea",
                 color="black",
             )
+            ax2.set_title("MagArea")
         ax2.set_aspect(aspect="auto")
         ax2.spines["right"].set_visible(False)
         ax2.spines["top"].set_visible(False)
         ax2.set_xlabel("Number of points dropped")
-        ax2.set_ylabel("MagDiff")
-        plt.subplots_adjust(wspace=0.1)
+
+        # plt.subplots_adjust(wspace=0.1)
 
     ani = FuncAnimation(
-        fig, update, frames=size, repeat=False, interval=int(500 / 1 * size)
+        fig, update, frames=range(0, size), repeat=False, interval=int(500 / 1 * size)
     )
-    if is_normalised:
-        ani.save("./assets/mode_dropping_normalised.gif", fps=10)
+    if metric == "normalised_magdiff":
+        ani.save("./assets/mode_dropping/normalised.gif", fps=10)
+    elif metric == "magdiff":
+        ani.save("./assets/mode_dropping/magdiff.gif", fps=10)
     else:
-        ani.save("./assets/mode_dropping.gif", fps=10)
+        ani.save("./assets/mode_dropping/magarea.gif", fps=10)
 
-    #plt.show()
+    # plt.show()
+
+
+def create_all_animations():
+    """Calls create_mode_dropping animation and saves them in assets folder for all metrics: magarea, magdiff, normalised_magdiff."""
+    create_mode_dropping_animation(metric="magarea")
+    create_mode_dropping_animation(metric="magdiff")
+    create_mode_dropping_animation(metric="normalised_magdiff")
+
+
+# create_all_animations()
