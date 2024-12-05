@@ -178,11 +178,11 @@ def plot_matrices(matrices, titles):
     plt.show()
 
 
-def plot_matrix_heatmaps(matrices, distance=True):
+def plot_matrix_heatmaps(matrices, distance=True, metric="Euclidean Distance"):
     fig, axs = plt.subplots(1, 3, figsize=(10, 5), constrained_layout=True)
     if distance:
         fig.suptitle("Distance Matrices")
-        label = "Euclidean Distance"
+        label = metric
     else:
         fig.suptitle("Similarity Matrices")
         label = "Similarity"
@@ -244,7 +244,7 @@ def plot_weights(dfs, ts, weights, titles):
 
         for t_idx in range(0, 3):
             t_val = t_idxs[t_idx]
-            print([quarter_conv_idx, half_conv_idx, -1])
+            #print([quarter_conv_idx, half_conv_idx, -1])
             weights_at_t = weight_vals[:, t_val]
 
             plot = axes[idx, t_idx].scatter(
