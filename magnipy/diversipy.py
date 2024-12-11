@@ -209,8 +209,9 @@ class Diversipy:
         self._Mags = Mags
         self._t_convs = t_convs
 
-        ts = self.get_common_scales()
-        Mags = self.change_scales(ts)
+        if self._ts is None:
+            ts = self.get_common_scales()
+            Mags = self.change_scales(ts)
         self._Mags = Mags
         return Mags
 
