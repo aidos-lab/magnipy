@@ -245,7 +245,6 @@ def plot_weights(dfs, ts, weights, titles):
 
         for t_idx in range(0, 3):
             t_val = t_idxs[t_idx]
-            #print([quarter_conv_idx, half_conv_idx, -1])
             weights_at_t = weight_vals[:, t_val]
 
             plot = axes[idx, t_idx].scatter(
