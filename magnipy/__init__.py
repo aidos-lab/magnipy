@@ -9,3 +9,4 @@ from .utils.plots import *
 from .utils.datasets import *
 from .magnipy import Magnipy
 from .diversipy import Diversipy
+from .utils.tutorial_data import *

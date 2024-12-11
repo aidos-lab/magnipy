@@ -1,6 +1,5 @@
 """File for creating example datasets for user tutorials."""
 
-from importlib import reload
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
@@ -8,12 +7,10 @@ from sklearn.datasets import make_swiss_roll, make_blobs
 from sklearn.preprocessing import MinMaxScaler
 from magnipy.utils.datasets import (
     sample_points_gaussian,
-    sample_points_gaussian_2,
     sample_points_square,
     hawkes_process,
 )
 from magnipy.utils.plots import plot_points
-from magnipy import Magnipy
 import bisect
 from matplotlib.animation import FuncAnimation
 from magnipy.diversipy import Diversipy
