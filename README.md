@@ -1,14 +1,27 @@
 # magnipy: Metric Space Magnitude Computations 🔎
 
-This is a repository for computing the **_magnitude of a metric space_**, which encodes the **effective size, diversity, and geometry** of a metric space.  
+This is a repository for computing the **_magnitude of a metric space_**, which encodes the **effective size, diversity, and geometry** of a metric space. Given a dataset or distance matrix, **_magnitude_** measures the **effective number of distinct points** in the space at a scale of dissimilarity between observations.
+We introduce the following codebase to compute and compare the magnitude of metric spaces.
 
-Given a dataset or distance matrix, **_magnitude_** measures the **effective number of distinct points** in the space at a scale of dissimilarity between observations.
+## Main Functionalities and Classes
 
-This repository supports the NeurIPS 2024 paper: [Metric Space Magnitude for Evaluating the Diversity of Latent Representations](https://arxiv.org/abs/2311.16054).
+### `Magnipy`: For in-depth magnitude computations on a single metric space.
 
-The core pipeline supported by the `magnipy` package is outlined below:
-![Magnipy Package Pipeline](assets/magnipy-pipeline.png)
-Figure from *[Metric Space Magnitude for Evaluating the Diversity of Latent Representations](https://arxiv.org/abs/2311.16054)*
+The functionalities of `Magnipy` for an individual metric space include:  
+- Computing the metric space's **distance matrix**
+- Calculating the **similarity matrix** from the distances
+- Executing an **automated scale-finding** procedure to find suitable evaluation scales
+- Computing the **magnitude weight** of each point across multiple distance scales
+- Evaluating and plotting **magnitude functions** across varying distance scales
+- Estimating magnitude dimension profiles and calculating the **magnitude dimension** to quantify **intrinsic dimensionality**
+
+### `Diversipy`: For comparing magnitude (and thus diversity) across multiple datasets.
+
+The functionalities of `Diversipy` for a list of spaces (that share the same distance metric) include: 
+- Executing an **automated scale-finding** procedure and the determining a **common evaluation interval across datasets**
+- Computing **magnitude functions** across varying distance scales
+- Calculating **MagArea**, the area under a magnitude function, a multi-scale measure of the **intrinsic diversity** of a dataset
+- Calculating **MagDiff**, the area between magnitude functions, to measure the **difference in diversity** between datasets
 
 ## Dependencies
 
@@ -16,55 +29,31 @@ To get started,
 1. Clone this repository locally into a directory of your choosing
 2. Create and activate a new Python virtual environment
 
-Our dependencies are managed using the [`poetry`](https://python-poetry.org) package manager. Using your activated virtual environment, run the following to install poetry:
+Our dependencies are managed using the [`poetry`](https://python-poetry.org) package manager. Using your activated virtual environment, run the following to install `poetry`:
 
 ```python
 $ pip install poetry
 ```
 
-With poetry installed, run the following command from the main directory to download the necessary dependencies:
+With `poetry` installed, run the following command from the main directory to download the necessary dependencies:
 
 ```python
 $ poetry install
 ```
 
-## Usage
-
-We introduce two classes to aid in the computation and comparison of the magnitude of metric spaces:
-
-### 1. `Diversipy`: For comparing magnitude (& thus diversity) across different metric spaces.
-
-Core functionalities of `Diversipy` for a list of metric spaces include: 
-- Executing an **automated scale-finding** procedure and the determining a **common evaluation interval across metric spaces**
-- Computing **magnitude functions** across varying distance scales
-- Calculating **MagArea**: the area under a magnitude function, a multi-scale measure of the **intrinsic diversity** of a space
-- Calculating **MagDiff**: the area between two magnitude functions to measure the **difference in diversity** between two spaces
-
-
-### 2. `Magnipy`: For in-depth magnitude computations on a single metric space.
-
-Core functionalities of `Magnipy` for an individual metric space include:  
-- Computing the metric space's **distance matrix**
-- Creating the related **similarity matrix**
-- Executing an **automated scale-finding** procedure to find a suitable evaluation scale
-- Finding the **magnitude weight** of each point across distance scales
-- Defining **magnitude functions** across varying resolutions
-- Creation of magnitude dimension profiles and the **magnitude dimension** to estimate **intrinsic dimensionality**
-
-
 ## Tutorials
 
-Separate tutorials for the Diversipy and Magnipy classes can be found under the `notebooks` folder (`diversipy_tutorial.ipynb` and `magnipy_tutorial.ipynb` respectively), and are aided by the `tutorial_data.py` script.
+Tutorials demonstrating the main functionalities can be found under the `notebooks` folder.
 
-Each tutorial demonstrates how to initialize and utiltize its corresponding class to execute core functionalities.
-
-### Supplementary Demos
+The following tutorials demonstrate how to initialize and utiltize the corresponding classes:
+- `magnipy_tutorial.ipynb`:  Using `Magnipy` for computing the magnitude of one metric space
+- `diversipy_tutorial.ipynb`: Using `Diversipy` for comparing the magnitude of multiple metric spaces
 
 The following supplementary demos are also provided:
-- Using MagDiff as a metric for **detecting mode dropping / mode collapse** (`notebooks/mode_dropping.ipynb`).
-- (Coming soon...) Using Magnipy to calculate the **magnitude dimension** of a metric space
+- `mode_dropping.ipynb`: Using `MagDiff` for detecting mode dropping / mode collapse
 
-# Citation
+
+## Citation
 Please consider citing our work!
 
 ```bibtex
