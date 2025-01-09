@@ -2,19 +2,18 @@
 
 import numpy as np
 import pandas as pd
+import seaborn as sns
 from matplotlib import pyplot as plt
 from sklearn.datasets import make_swiss_roll, make_blobs
 from sklearn.preprocessing import MinMaxScaler
-from magnipy.utils.datasets import (
+from .datasets import (
     sample_points_gaussian,
     sample_points_square,
     hawkes_process,
 )
-from magnipy.utils.plots import plot_points
+from .plots import plot_points
 import bisect
 from matplotlib.animation import FuncAnimation
-from magnipy.diversipy import Diversipy
-
 
 #  ╭──────────────────────────────────────────────────────────╮
 #  │ Diversipy Tutorial                                       │
@@ -33,9 +32,7 @@ def get_Xs():
     # Sample 100 points each from Gaussians at (0.5, 0.5) and (1.5, 1.5)
     mean2 = [[0.5, 0.5], [1.5, 1.5]]
     cov2 = np.eye(2) * 0.02
-    X3 = np.concatenate(
-        [sample_points_gaussian(mean, cov2, 100) for mean in mean2]
-    )
+    X3 = np.concatenate([sample_points_gaussian(mean, cov2, 100) for mean in mean2])
 
     # Sample 200 points from a Gaussian centered at (0, 0.5)
     mean1 = [0.5, 0.5]
@@ -137,9 +134,7 @@ def show_magnitude_function(df, ts):
 def plot_df(df, title):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection="3d")
-    ax.scatter(
-        df["x"], df["y"], df["z"], c=df["z"], cmap="viridis", marker="o", s=5
-    )
+    ax.scatter(df["x"], df["y"], df["z"], c=df["z"], cmap="viridis", marker="o", s=5)
     plt.title(title)
     plt.show()
 
@@ -148,9 +143,7 @@ def plot_dfs(dfs, titles):
     n = len(dfs)
 
     # Create a figure with 1 row and n columns of 3D subplots
-    fig, axes = plt.subplots(
-        1, n, figsize=(18, 6), subplot_kw={"projection": "3d"}
-    )
+    fig, axes = plt.subplots(1, n, figsize=(18, 6), subplot_kw={"projection": "3d"})
 
     for idx in range(0, n):
         df = dfs[idx]
@@ -195,18 +188,12 @@ def plot_matrix_heatmaps(matrices, distance=True, metric="Euclidean Distance"):
     vmin = min(matrices[0].min(), matrices[1].min(), matrices[2].min())
     vmax = max(matrices[0].max(), matrices[1].max(), matrices[2].max())
 
-    rando_heatmap = axs[0].imshow(
-        matrices[0], cmap="viridis", vmin=vmin, vmax=vmax
-    )
+    rando_heatmap = axs[0].imshow(matrices[0], cmap="viridis", vmin=vmin, vmax=vmax)
     axs[0].set_title("Random")
     axs[0].set_ylabel("Index of Datapoint")
-    blob_heatmap = axs[1].imshow(
-        matrices[1], cmap="viridis", vmin=vmin, vmax=vmax
-    )
+    blob_heatmap = axs[1].imshow(matrices[1], cmap="viridis", vmin=vmin, vmax=vmax)
     axs[1].set_title("Blobs / Clusters")
-    swiss_heatmap = axs[2].imshow(
-        matrices[2], cmap="viridis", vmin=vmin, vmax=vmax
-    )
+    swiss_heatmap = axs[2].imshow(matrices[2], cmap="viridis", vmin=vmin, vmax=vmax)
     axs[2].set_title("Swiss Roll")
 
     fig.colorbar(
@@ -221,9 +208,7 @@ def plot_matrix_heatmaps(matrices, distance=True, metric="Euclidean Distance"):
 
 def plot_weights(dfs, ts, weights, titles):
     # scaling colorbar
-    vmin = min(
-        weights[0][:, 0].min(), weights[1][:, 0].min(), weights[2][:, 0].min()
-    )
+    vmin = min(weights[0][:, 0].min(), weights[1][:, 0].min(), weights[2][:, 0].min())
     vmax = max(
         weights[0][:, -1].max(),
         weights[1][:, -1].max(),
@@ -287,9 +272,7 @@ def plot_weights(dfs, ts, weights, titles):
                         "$t=1/2 * t_{{conv}}$ \n1/2 of the Convergence Scale"
                     )
                 else:
-                    axes[idx, t_idx].set_title(
-                        "$t=t_{{conv}}$ \nConvergence Scale"
-                    )
+                    axes[idx, t_idx].set_title("$t=t_{{conv}}$ \nConvergence Scale")
 
     # Adjust layout and show the figure
     cbar = fig.colorbar(
@@ -402,14 +385,13 @@ def get_mode_collapse_datasets():
     mean1 = [5, 6]
     cov1 = np.eye(2) * 1.1
     size = 50
-
     # Sampling data
     points1 = sample_points_gaussian(mean1, cov1, size)
     points2 = sample_points_gaussian([0, 0], cov1, size)
     points3 = sample_points_gaussian([10, 0], cov1, size)
 
     # Replacement points in purple mode sampled from Gaussian with smaller convariance
-    new_cov = np.eye(2) * 0.3
+    new_cov = np.eye(2) * 0.1
     mode_collapse_pts = sample_points_gaussian(mean1, new_cov, size * 2)
 
     Xs_collapse = []
@@ -448,9 +430,7 @@ def plot_simulation_progression(Xs, colors, size):
 
     fig, ax = plt.subplots(1, 3, figsize=(15, 5))
 
-    ax[0].scatter(
-        Xs[0][:, 0], Xs[0][:, 1], c=colors[0], cmap="viridis", alpha=0.6
-    )
+    ax[0].scatter(Xs[0][:, 0], Xs[0][:, 1], c=colors[0], cmap="viridis", alpha=0.6)
     ax[0].set_xlim(x_int)
     ax[0].set_ylim(y_int)
     ax[0].set_title("Beginning of Simulation (X0)")
@@ -464,9 +444,7 @@ def plot_simulation_progression(Xs, colors, size):
     ax[1].set_title("Midway Through Simulation")
     ax[1].set_xlim(x_int)
     ax[1].set_ylim(y_int)
-    ax[2].scatter(
-        Xs[-1][:, 0], Xs[-1][:, 1], c=colors[-1], cmap="viridis", alpha=0.6
-    )
+    ax[2].scatter(Xs[-1][:, 0], Xs[-1][:, 1], c=colors[-1], cmap="viridis", alpha=0.6)
     ax[2].set_title("End of Simulation")
     ax[2].set_xlim(x_int)
     ax[2].set_ylim(y_int)
@@ -489,20 +467,12 @@ def plot_diversity_measures(mag_areas, mag_diffs, mag_diffs_normalised, size):
     fig.show()
 
 
-def create_animation(is_dropping: bool, metric="magdiff"):
+def create_animation(Xs, colors, div, is_dropping: bool, metric="magdiff"):
     """Creates a mode-dropping or mode-collapse simulation, creating a gif in the assets folder as output.
     If is_dropping is True, does a mode dropping simulation. Otherwise, mode collapse.
     Metric is one of: "magarea", "magdiff", "normalised_magdiff"
     """
-    if is_dropping:
-        Xs, colors = get_mode_dropping_datasets()
-    else:
-        Xs, colors = get_mode_collapse_datasets()
     size = len(Xs)
-
-    # Intializing Diversipy object with our simulated datasets, such that X0 is our reference space (idx=0)
-    div = Diversipy(Xs=Xs, ref_space=0)
-
     # Calculating intrinsic diversity (MagArea) for all datasets
     mag_areas = div.MagAreas(scale=True)
     # Calculating difference in diversity with respect to X0 (MagDiff) for all datasets
@@ -512,9 +482,7 @@ def create_animation(is_dropping: bool, metric="magdiff"):
 
     # Initial figure
     fig, ax = plt.subplots(figsize=(10, 5))
-    scat = ax.scatter(
-        Xs[0][:, 0], Xs[0][:, 1], c=colors[0], cmap="viridis", alpha=0.6
-    )
+    scat = ax.scatter(Xs[0][:, 0], Xs[0][:, 1], c=colors[0], cmap="viridis", alpha=0.6)
 
     def update(frame):
         fig.clear()
@@ -607,6 +575,7 @@ def create_animation(is_dropping: bool, metric="magdiff"):
             ani.save("./assets/mode_collapse/magdiff.gif", fps=10)
         else:
             ani.save("./assets/mode_collapse/magarea.gif", fps=10)
+    plt.close()
 
 
 def create_all_animations():
