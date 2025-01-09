@@ -238,7 +238,9 @@ class Diversipy:
     #  │ Diversity Summaries                                      │
     #  ╰──────────────────────────────────────────────────────────╯
 
-    def MagAreas(self, integration="trapz", absolute_area=True, scale=True, plot=False):
+    def MagAreas(
+        self, integration="trapz", absolute_area=True, scale=True, plot=False
+    ):
         """
         Compute the areas under the magnitude functions for all datasets.
 
@@ -366,7 +368,9 @@ class Diversipy:
         import matplotlib.pyplot as plt
         import pandas as pd
 
-        df = pd.DataFrame(self._MagDiffs, columns=self._names, index=self._names)
+        df = pd.DataFrame(
+            self._MagDiffs, columns=self._names, index=self._names
+        )
         sns.heatmap(df, annot=False, cmap="rocket_r")
         plt.show()
         return None
