@@ -57,13 +57,12 @@ The following supplementary demos are also provided:
 Please consider citing our work!
 
 ```bibtex
-@misc{limbeck2023metric,
+@inproceedings{limbeck2024metric,
   title         = {Metric Space Magnitude for Evaluating the Diversity of Latent Representations}, 
   author        = {Katharina Limbeck and Rayna Andreeva and Rik Sarkar and Bastian Rieck},
-  year          = {2023},
-  eprint        = {2311.16054},
-  archivePrefix = {arXiv},
-  primaryClass  = {cs.LG}
+  booktitle     = {Advances in Neural Information Processing Systems},
+  volume        = {37},
+  year          = {2024}
 }
 
 @inproceedings{andreeva2023metric,
