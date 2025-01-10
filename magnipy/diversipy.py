@@ -268,6 +268,12 @@ class Diversipy:
             )
             Mags.append(Mag)
         self._Mags = Mags
+        self._t_convs = t_convs
+
+        if self._ts is None:
+            ts = self.get_common_scales()
+            Mags = self.change_scales(ts)
+        self._Mags = Mags
         return Mags
 
     def get_magnitude_functions(self):
@@ -426,6 +432,6 @@ class Diversipy:
         df = pd.DataFrame(
             self._MagDiffs, columns=self._names, index=self._names
         )
-        sns.heatmap(df, annot=False)
+        sns.heatmap(df, annot=False, cmap="rocket_r")
         plt.show()
         return None
