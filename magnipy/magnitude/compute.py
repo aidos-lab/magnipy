@@ -6,7 +6,7 @@ from magnipy.magnitude.scales import get_scales
 from magnipy.magnitude.convergence import guess_convergence_scale
 
 
-def magnitude_from_distances(
+def compute_magnitude_from_distances(
     D,
     ts=np.arange(0.01, 5, 0.01),
     method="cholesky",
@@ -76,7 +76,7 @@ def magnitude_from_distances(
             mag_fn = weights_naive
         else:
             raise Exception(
-                "The computation method must be one of 'cholesky', 'scipy', 'scipy_sym', 'inv', 'pinv', 'conjugate_gradient_iteration', 'cg', 'naive', 'spread'."
+                "The computation method must be one of 'cholesky', 'scipy', 'scipy_sym', 'pinv', 'conjugate_gradient_iteration', 'cg', 'naive', 'spread'."
             )
 
         weights = magnitude_weights(
@@ -171,7 +171,7 @@ def compute_magnitude_until_convergence(
         )
         # print(f"Evaluate magnitude at {self._n_ts} scales between 0 and the approximate convergence scale {self._t_conv}")
     return (
-        magnitude_from_distances(
+        compute_magnitude_from_distances(
             Z,
             ts,
             method=method,
@@ -319,7 +319,7 @@ def compute_t_conv(
         )
 
     def comp_mag(X, ts):
-        return magnitude_from_distances(
+        return compute_magnitude_from_distances(
             X,
             ts,
             method=method,

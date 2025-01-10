@@ -14,7 +14,7 @@ from magnipy.magnitude.compute import (
     compute_t_conv,
 )
 from magnipy.magnitude.dimension import (
-    magitude_dimension_profile,
+    magitude_dimension_profile_interp,
     magnitude_dimension,
     magnitude_dimension_profile_exact,
 )
@@ -73,7 +73,7 @@ class Magnipy:
         ts : array_like, shape (`n_ts`, )
             The scales at which to evaluate the magnitude functions. If None, the scales are computed automatically.
         n_ts : int
-            The number of scales at which to evaluate the magnitude functions.
+            The number of scales at which to evaluate the magnitude functions. Computations are faster for fewer scales and more accurate for more scales.
         log_scale : bool
             Whether to use a log-scale for the evaluation scales.
         return_log_scale : bool
@@ -102,7 +102,7 @@ class Magnipy:
         Parameters for the computation of magnitude:
         method : str
             The method to use to compute the magnitude functions.
-            One of 'cholesky', 'scipy', 'scipy_sym', 'inv', 'pinv', 'conjugate_gradient_iteration', 'cg'.
+            One of 'cholesky', 'scipy', 'scipy_sym', 'naive', 'pinv', 'conjugate_gradient_iteration', 'cg'.
         one_point_property : bool
             Whether to enforce the one-point property.
         perturb_singularities : bool
@@ -120,7 +120,50 @@ class Magnipy:
             A Magnipy object.
         """
 
+        ### Check if the input matrix X is valid
+        if not isinstance(X, np.ndarray):
+            raise Exception("The input matrix must be a numpy array.")
+
+        ### Check if the inputs used for scale-finding are valid
+        if isinstance(target_prop, float):
+            min_mag = 1 / X.shape[0]
+            if (target_prop < min_mag) | (target_prop > 1):
+                raise Exception(
+                    f"The target proportion must be between {min_mag} and 1."
+                )
+        else:
+            raise Exception("The target proportion must be a float.")
+
+        self._proportion_scattered = target_prop
+        if (scale_finding != "scattered") & (scale_finding != "convergence"):
+            raise Exception(
+                "The scale finding method must be either 'scattered' or 'convergence'."
+            )
+        self._scale_finding = scale_finding
+
+        ### Check if the evaluation scales are valid
+        self._ts = ts
+        if not isinstance(n_ts, int):
+            raise Exception("n_ts must be an integer.")
+        self._n_ts = n_ts
+
+        ### Check if the adjacency matrix is valid
+        if Adj is not None:
+            if not isinstance(Adj, np.ndarray):
+                raise Exception("The adjacency matrix must be a numpy array.")
+            if Adj.shape[0] != X.shape[0]:
+                raise Exception(
+                    "The adjacency matrix must have the same number of rows as the dataset."
+                )
+            if Adj.shape[1] != X.shape[0]:
+                raise Exception(
+                    "The adjacency matrix must have the same number of columns as the dataset."
+                )
+
+        ### Setting up the distance computations and the similarity matrix
         self._Adj = Adj
+        self._metric = metric
+
         if metric != "precomputed":
             self._X = X
 
@@ -141,31 +184,31 @@ class Magnipy:
             self._target_value = target_prop * self._D.shape[0]
             self._Z = similarity_matrix(self._D)
         else:
+
+            if X.shape[0] != X.shape[1]:
+                raise Exception(
+                    "The precomputed distance matrix must be square."
+                )
+
             self._X = None
             self._D = X
             self._n = self._D.shape[0]
             self._Z = similarity_matrix(self._D)
             self._target_value = target_prop * self._D.shape[0]
 
-        self._proportion_scattered = target_prop
-        if (scale_finding != "scattered") & (scale_finding != "convergence"):
-            raise Exception(
-                "The scale finding method must be either 'scattered' or 'convergence'."
-            )
-
+        ### Check if the method for computing the magnitude is valid and set up the magnitude computations
         if method not in [
             "cholesky",
             "scipy",
             "scipy_sym",
-            "inv",
+            "naive",
             "pinv",
             "conjugate_gradient_iteration",
             "cg",
             "spread",
-            "naive",
         ]:
             raise Exception(
-                "The computation method must be one of 'cholesky', 'scipy', 'scipy_sym', 'inv', 'pinv', 'conjugate_gradient_iteration', 'cg', 'naive', 'spread'."
+                "The computation method must be one of 'cholesky', 'scipy', 'scipy_sym', 'naive', 'pinv', 'conjugate_gradient_iteration', 'cg', 'spread'."
             )
 
         def compute_mag(Z, ts, n_ts=n_ts, get_weights=False):
@@ -183,22 +226,34 @@ class Magnipy:
             )
 
         self._compute_mag = compute_mag
-
-        self._scale_finding = scale_finding
-        self._ts = ts
-        self._n_ts = n_ts
-        self._log_scale = log_scale
         self._method = method
-        self._metric = metric
         # self._p = p
+        # self._n_neighbors = n_neighbors
+
+        ### Check if the boolean parameters are valid
+        for k, arg in enumerate(
+            [log_scale, return_log_scale, recompute, positive_magnitude]
+        ):
+            arg_name = [
+                "log_scale",
+                "return_log_scale",
+                "recompute",
+                "positive_magnitude",
+            ][k]
+            if not isinstance(arg, bool):
+                raise Exception(f"{arg_name} must be a boolean.")
+
+        self._log_scale = log_scale
         self._one_point_property = one_point_property
         self._perturb_singularities = perturb_singularities
-        # self._n_neighbors = n_neighbors
         self._return_log_scale = return_log_scale
         self._recompute = recompute
         self._positive_magnitude = positive_magnitude
+
+        ### Set the name of the Magnipy object
         self._name = name
 
+        ### Set the other parameters
         self._magnitude = None
         self._weights = None
         self._magnitude_dimension_profile = None
@@ -484,7 +539,7 @@ class Magnipy:
                 (
                     self._magnitude_dimension_profile,
                     self._ts_dim,
-                ) = magitude_dimension_profile(
+                ) = magitude_dimension_profile_interp(
                     mag=self._magnitude,
                     ts=self._ts,
                     return_log_scale=self._return_log_scale,
