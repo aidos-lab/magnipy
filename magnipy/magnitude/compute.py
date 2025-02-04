@@ -15,6 +15,7 @@ def compute_magnitude_from_distances(
     perturb_singularities=True,
     positive_magnitude=False,
     input_distances=True,
+    **parameters
 ):
     """
     Compute the magnitude function of magnitude weights from a distance matrix
@@ -74,6 +75,52 @@ def compute_magnitude_from_distances(
             mag_fn = weights_pinv
         elif method == "naive":
             mag_fn = weights_naive
+        elif method == "spread_torch":
+            mag_fn = weights_spread_torch
+            Z = torch.tensor(Z)
+        elif method == "lstq_torch":
+            mag_fn = weights_lstq_torch
+            Z = torch.tensor(Z)
+        elif method == "naive_torch":
+            mag_fn = weights_naive_torch
+            Z = torch.tensor(Z)
+        elif method == "pinv_torch":
+            mag_fn = weights_pinv_torch
+            Z = torch.tensor(Z)
+        elif method == "cholesky_torch":
+            mag_fn = weights_cholesky_torch
+            Z = torch.tensor(Z)
+        elif method == "solve_torch":
+            Z = torch.tensor(Z)
+            mag_fn = weights_solve_torch
+        elif method == "iterative_normalization":
+            from magnipy.magnitude.approximation import add_and_normalize
+            Z = torch.tensor(Z, dtype=torch.float)
+            def mag_fn(Z):
+                return add_and_normalize(Z, h=parameters.get("h", 100))
+            #mag_fn = weights_iterative_normalization
+        elif method == "sgd":
+            from magnipy.magnitude.approximation import magnitude_by_SGD
+            Z = torch.tensor(Z, dtype=torch.float)
+            def mag_fn(Z):
+                return magnitude_by_SGD(Z, h=parameters.get("h", 100), lr=parameters.get("lr", 1e-10), device=parameters.get("device", "cpu")).detach().numpy()
+        elif method == "batch_sgd":
+            from magnipy.magnitude.approximation import magnitude_by_batch_SGD
+            Z = torch.tensor(Z, dtype=torch.float)
+            def mag_fn(Z):
+                return magnitude_by_batch_SGD(Z, h=parameters.get("h", 100), batch_size = parameters.get("batch_size", 1),
+                lr=parameters.get("lr", 1e-10), device=parameters.get("device", "cpu")).detach().numpy()
+            #mag_fn = magnitude_by_batch_SGD
+        #elif method == "greedy_maximization":
+        #    from magnipy.magnitude.approximation import greedy_maximization
+        #    Z = torch.tensor(Z, dtype=torch.float)
+        #    def mag_fn(Z):
+        #        return greedy_maximization(Z, tolerance_parameter=parameters.get("lr", 1e-10), device=parameters.get("device", "cpu"))
+        #elif method == "discrete_center":
+        #    from magnipy.magnitude.approximation import discrete_center_hierarchy
+        #    Z = torch.tensor(Z, dtype=torch.float)
+        #    def mag_fn(Z):
+        #        return discrete_center_hierarchy(Z, device=parameters.get("device", "cpu"))[1]
         else:
             raise Exception(
                 "The computation method must be one of 'cholesky', 'scipy', 'scipy_sym', 'pinv', 'conjugate_gradient_iteration', 'cg', 'naive', 'spread'."

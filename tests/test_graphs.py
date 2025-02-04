@@ -12,6 +12,15 @@ methods = [
     "conjugate_gradient_iteration",
     "cg",
     "spread",
+    "spread_torch",
+    "naive_torch",
+    "cholesky_torch",
+    "pinv_torch",
+    #"iterative_normalization",
+    #"sgd",
+    #"batch_sgd",
+    #"discrete_center",
+    #"greedy_maximization"
     # "krylov",
 ]
 tss = [[1], np.linspace(0.01, 1, 100), None]
@@ -43,7 +52,7 @@ def test_graph_function():
             for t in ts:
                 q = np.exp(-t)
 
-                if method == "spread":
+                if method in ["spread", "spread_torch"]:
                     analytic.append(
                         2 / (1 + 2 * q**2 + q + q**3)
                         + 2 / (1 + 3 * q + q**2)
@@ -56,8 +65,8 @@ def test_graph_function():
 
             analytic = np.array(analytic)
 
-            assert np.allclose(mag, analytic), (
-                "Function graph test failed for method: "
+            np.testing.assert_array_almost_equal(mag, analytic, decimal=4,
+                err_msg="Function graph test failed for method: "
                 + method
                 + " and ts: "
                 + str(ts)

@@ -197,19 +197,19 @@ class Magnipy:
             self._target_value = target_prop * self._D.shape[0]
 
         ### Check if the method for computing the magnitude is valid and set up the magnitude computations
-        if method not in [
-            "cholesky",
-            "scipy",
-            "scipy_sym",
-            "naive",
-            "pinv",
-            "conjugate_gradient_iteration",
-            "cg",
-            "spread",
-        ]:
-            raise Exception(
-                "The computation method must be one of 'cholesky', 'scipy', 'scipy_sym', 'naive', 'pinv', 'conjugate_gradient_iteration', 'cg', 'spread'."
-            )
+        #if method not in [
+        #    "cholesky",
+        #    "scipy",
+        #    "scipy_sym",
+        #    "naive",
+        #    "pinv",
+        #    "conjugate_gradient_iteration",
+        #    "cg",
+        #    "spread",
+        #]:
+        #    raise Exception(
+        #        "The computation method must be one of 'cholesky', 'scipy', 'scipy_sym', 'naive', 'pinv', 'conjugate_gradient_iteration', 'cg', 'spread'."
+        #    )
 
         def compute_mag(Z, ts, n_ts=n_ts, get_weights=False):
             return compute_magnitude_until_convergence(

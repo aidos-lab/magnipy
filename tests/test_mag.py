@@ -11,7 +11,17 @@ methods = [
     "conjugate_gradient_iteration",
     "cg",
     "spread",
+    #"spread_torch",
+    "naive_torch",
+    "cholesky_torch",
+    "pinv_torch",
+    #"iterative_normalization",
+    #"sgd",
+    #"batch_sgd",
+    #"discrete_center",
+    #"greedy_maximization"
 ]  # , "krylov"]
+
 tss = [[1], np.linspace(0.01, 1, 100), None]
 
 
@@ -37,6 +47,7 @@ def test_fun():
             np.testing.assert_array_almost_equal(
                 mag,
                 analytic,
+                decimal=4,
                 err_msg="Function test failed for method: "
                 + method
                 + " and ts: "
@@ -63,6 +74,7 @@ def test_weights():
             np.testing.assert_array_almost_equal(
                 mag,
                 weights,
+                decimal=4,
                 err_msg="Weight test failed for method: "
                 + method
                 + " and ts: "

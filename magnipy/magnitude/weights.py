@@ -3,7 +3,7 @@ from scipy.linalg import cho_factor
 from scipy.linalg import solve_triangular, solve
 from scipy.sparse.linalg import cg
 import numexpr as ne
-
+import torch
 
 def weights_cholesky(Z):
     """
@@ -24,6 +24,44 @@ def weights_cholesky(Z):
     w = solve_triangular(c, x.T, trans=0)
     return w
 
+def weights_cholesky_torch(Z):
+    """
+    Compute the magnitude weight vector from a similarity matrix using Cholesky inversion.
+
+    Parameters
+    ----------
+    Z : torch.Tensor
+        The similarity matrix. 
+
+    Returns
+    -------
+    magnitude : torch.Tensor
+        The magnitude weight vector.
+
+    """
+    L = torch.linalg.cholesky(Z)
+    x = torch.linalg.solve_triangular(L, torch.ones(Z.shape[0],1),  upper=False) ## L x = 1
+    w = torch.linalg.solve_triangular(L, x.T, upper=False, left=False)  # w L = x.T
+    return w
+
+def weights_naive_torch(Z):
+    """
+    Compute the magnitude weight vector from a similarity matrix using inversion.
+
+    Parameters
+    ----------
+    Z : torch.Tensor
+        The similarity matrix. 
+
+    Returns
+    -------
+    magnitude : torch.Tensor
+        The magnitude weight vector.
+
+    """
+    M = torch.inverse(Z)
+    w = torch.sum(M, axis=1)
+    return w
 
 def weights_naive(Z):
     """
@@ -38,11 +76,10 @@ def weights_naive(Z):
     Returns
     -------
     w : array_like, shape (`n_ts`, )
-        The magnitue weight vector.
+        The magnitude weight vector.
     """
     M = np.linalg.inv(Z)
     return M.sum(axis=1)
-
 
 def weights_pinv(Z):
     """
@@ -57,10 +94,47 @@ def weights_pinv(Z):
     Returns
     -------
     w : array_like, shape (`n_ts`, )
-        The magnitue weight vector.
+        The magnitude weight vector.
     """
-    M = np.linalg.pinv(Z)
+    M = np.linalg.pinv(Z, hermitian=True)
     return M.sum(axis=1)
+
+def weights_pinv_torch(Z):
+    """
+    Compute the magnitude weight vector from a similarity matrix by inverting
+    the whole similarity matrix using pseudo-inversion with numpy.pinv.
+
+    Parameters
+    ----------
+    Z : array_like, shape (`n_obs`, `n_obs`)
+        The similarity matrix.
+
+    Returns
+    -------
+    w : array_like, shape (`n_ts`, )
+        The magnitude weight vector.
+    """
+    Z = (Z + Z.T)/2
+    M = torch.linalg.pinv(Z, rcond = 1e-5)
+    return torch.sum(M, axis=1)
+
+def weights_lstq_torch(Z):
+    """
+    Compute the magnitude weight vector from a similarity matrix by solving
+    a linear least squares problem with numpy.linalg.lstsq.
+
+    Parameters
+    ----------
+    Z : array_like, shape (`n_obs`, `n_obs`)
+        The similarity matrix.
+
+    Returns
+    -------
+    w : array_like, shape (`n_ts`, )
+        The magnitude weight vector.
+    """
+    w = torch.linalg.lstsq(Z, torch.ones(Z.shape[0]), rcond = 1e-5).solution
+    return w
 
 
 def weights_scipy(Z):
@@ -77,11 +151,29 @@ def weights_scipy(Z):
     Returns
     -------
     w : array_like, shape (`n_ts`, )
-        The magnitue weight vector.
+        The magnitude weight vector.
     """
     w = solve(Z, np.ones(Z.shape[0]), assume_a="pos")
     return w
 
+def weights_solve_torch(Z):
+    """
+    Compute the magnitude weight vector from a similarity matrix by solving for
+    the row sums with scipy.solve assuming the similarity matrix is
+    positive definite.
+
+    Parameters
+    ----------
+    Z : array_like, shape (`n_obs`, `n_obs`)
+        The similarity matrix.
+
+    Returns
+    -------
+    w : array_like, shape (`n_ts`, )
+        The magnitude weight vector.
+    """
+    w = toch.linalg.solve(Z, torch.ones(Z.shape[0]))
+    return w
 
 def weights_scipy_sym(Z):
     """
@@ -97,11 +189,10 @@ def weights_scipy_sym(Z):
     Returns
     -------
     w : array_like, shape (`n_ts`, )
-        The magnitue weight vector.
+        The magnitude weight vector.
     """
     w = solve(Z, np.ones(Z.shape[0]), assume_a="sym")
     return w
-
 
 def weights_cg(Z):
     """
@@ -116,7 +207,7 @@ def weights_cg(Z):
     Returns
     -------
     w : array_like, shape (`n_ts`, )
-        The magnitue weight vector.
+        The magnitude weight vector.
     """
     ones = np.ones(Z.shape[0])
     w, _ = cg(Z, ones, atol=1e-3)
@@ -204,6 +295,24 @@ def weights_spread(Z):
         Computational Geometry & Applications. 2015;25(03):207-25.
     """
     return 1 / np.sum(Z, axis=0)
+
+
+def weights_spread_torch(Z):
+    """
+    Compute the spread weights from a similarity matrix.
+
+    Parameters
+    ----------
+    Z : torch.Tensor
+        The similarity matrix. 
+
+    Returns
+    -------
+    magnitude : torch.Tensor
+        The spread weight vector.
+
+    """
+    return 1 / torch.sum(Z, axis=0)
 
 
 def spread_weights(Z, ts):
@@ -341,4 +450,12 @@ def similarity_matrix(D):
     # n = D.shape[0]
     Z = np.zeros(D.shape)
     ne.evaluate("exp(-D)", out=Z)
+    return Z
+
+def similarity_matrix_torch(D):
+    Z = torch.exp(-D)
+    return Z
+
+def similarity_matrix_numpy(D):
+    Z = np.exp(-D)
     return Z
