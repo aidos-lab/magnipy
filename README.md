@@ -7,7 +7,7 @@ We introduce the following codebase to compute and compare the magnitude of metr
 <img src="assets/magnipy_logo.svg" alt="magnipy logo"  style="float: right; width: 200px; height: 200px; ">
 </p>
 
-## Main Functionalities and Classes
+## 🚀 Main Functionalities and Classes
 
 ### `Magnipy`: For in-depth magnitude computations on a single metric space.
 
@@ -27,7 +27,7 @@ The functionalities of `Diversipy` for a list of spaces (that share the same dis
 - Calculating **MagArea**, the area under a magnitude function, a multi-scale measure of the **intrinsic diversity** of a dataset
 - Calculating **MagDiff**, the area between magnitude functions, to measure the **difference in diversity** between datasets
 
-## Dependencies
+## ⚙️ Dependencies
 
 To get started,
 1. Clone this repository locally into a directory of your choosing
@@ -45,7 +45,7 @@ With `poetry` installed, run the following command from the main directory to do
 $ poetry install
 ```
 
-## Tutorials
+## 📚 Tutorials
 
 Tutorials demonstrating the main functionalities can be found under the `notebooks` folder.
 
@@ -57,7 +57,7 @@ The following supplementary demos are also provided:
 - `mode_dropping.ipynb`: Using `MagDiff` for detecting mode dropping / mode collapse
 
 
-## Citation
+## 📝 Citation
 Please consider citing our work!
 
 ```bibtex
