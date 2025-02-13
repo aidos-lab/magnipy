@@ -172,7 +172,7 @@ def weights_solve_torch(Z):
     w : array_like, shape (`n_ts`, )
         The magnitude weight vector.
     """
-    w = toch.linalg.solve(Z, torch.ones(Z.shape[0]))
+    w = torch.linalg.solve(Z, torch.ones(Z.shape[0]))
     return w
 
 def weights_scipy_sym(Z):
