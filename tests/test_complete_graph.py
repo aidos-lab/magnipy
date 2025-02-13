@@ -16,14 +16,10 @@ methods = [
     "naive_torch",
     "cholesky_torch",
     "pinv_torch",
-    #"iterative_normalization",
-    #"sgd",
-    #"batch_sgd",
-    #"discrete_center",
-    #"greedy_maximization"
     # "krylov",
 ]
 tss = [[1], np.linspace(0.01, 1, 100), None]
+
 
 def complete_graph_distance_matrix(n):
     """Generate the distance matrix for a complete graph with n vertices."""
@@ -32,6 +28,7 @@ def complete_graph_distance_matrix(n):
     # Set the diagonal to 0 (distance from a vertex to itself)
     np.fill_diagonal(D, 0)
     return D
+
 
 def test_graph_function():
     ## K3,2 has a singularity at t=log(sqrt(2))
@@ -52,20 +49,21 @@ def test_graph_function():
                 for t in ts:
                     q = np.exp(-t)
 
-                    #if method in ["spread", "spread_torch"]:
+                    # if method in ["spread", "spread_torch"]:
                     #    analytic.append(
                     #        n / (1+(n-1)*q)
                     #    )
-                    #else:
-                    analytic.append(
-                        n / (1+(n-1)*q)
-                    )
+                    # else:
+                    analytic.append(n / (1 + (n - 1) * q))
 
                 analytic = np.array(analytic)
 
-                np.testing.assert_array_almost_equal(mag, analytic, decimal=4,
+                np.testing.assert_array_almost_equal(
+                    mag,
+                    analytic,
+                    decimal=4,
                     err_msg="Function complete graph test failed for method: "
                     + method
                     + " and ts: "
-                    + str(ts)
+                    + str(ts),
                 )

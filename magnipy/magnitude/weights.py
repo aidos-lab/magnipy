@@ -5,6 +5,7 @@ from scipy.sparse.linalg import cg
 import numexpr as ne
 import torch
 
+
 def weights_cholesky(Z):
     """
     Compute the magnitude weight vector from a similarity matrix using Cholesky inversion.
@@ -24,6 +25,7 @@ def weights_cholesky(Z):
     w = solve_triangular(c, x.T, trans=0)
     return w
 
+
 def weights_cholesky_torch(Z):
     """
     Compute the magnitude weight vector from a similarity matrix using Cholesky inversion.
@@ -31,7 +33,7 @@ def weights_cholesky_torch(Z):
     Parameters
     ----------
     Z : torch.Tensor
-        The similarity matrix. 
+        The similarity matrix.
 
     Returns
     -------
@@ -40,9 +42,14 @@ def weights_cholesky_torch(Z):
 
     """
     L = torch.linalg.cholesky(Z)
-    x = torch.linalg.solve_triangular(L, torch.ones(Z.shape[0],1),  upper=False) ## L x = 1
-    w = torch.linalg.solve_triangular(L, x.T, upper=False, left=False)  # w L = x.T
+    x = torch.linalg.solve_triangular(
+        L, torch.ones(Z.shape[0], 1), upper=False
+    )  ## L x = 1
+    w = torch.linalg.solve_triangular(
+        L, x.T, upper=False, left=False
+    )  # w L = x.T
     return w
+
 
 def weights_naive_torch(Z):
     """
@@ -51,7 +58,7 @@ def weights_naive_torch(Z):
     Parameters
     ----------
     Z : torch.Tensor
-        The similarity matrix. 
+        The similarity matrix.
 
     Returns
     -------
@@ -62,6 +69,7 @@ def weights_naive_torch(Z):
     M = torch.inverse(Z)
     w = torch.sum(M, axis=1)
     return w
+
 
 def weights_naive(Z):
     """
@@ -81,6 +89,7 @@ def weights_naive(Z):
     M = np.linalg.inv(Z)
     return M.sum(axis=1)
 
+
 def weights_pinv(Z):
     """
     Compute the magnitude weight vector from a similarity matrix by inverting
@@ -99,6 +108,7 @@ def weights_pinv(Z):
     M = np.linalg.pinv(Z, hermitian=True)
     return M.sum(axis=1)
 
+
 def weights_pinv_torch(Z):
     """
     Compute the magnitude weight vector from a similarity matrix by inverting
@@ -114,9 +124,10 @@ def weights_pinv_torch(Z):
     w : array_like, shape (`n_ts`, )
         The magnitude weight vector.
     """
-    Z = (Z + Z.T)/2
-    M = torch.linalg.pinv(Z, rcond = 1e-5)
+    Z = (Z + Z.T) / 2
+    M = torch.linalg.pinv(Z, rcond=1e-5)
     return torch.sum(M, axis=1)
+
 
 def weights_lstq_torch(Z):
     """
@@ -133,7 +144,7 @@ def weights_lstq_torch(Z):
     w : array_like, shape (`n_ts`, )
         The magnitude weight vector.
     """
-    w = torch.linalg.lstsq(Z, torch.ones(Z.shape[0]), rcond = 1e-5).solution
+    w = torch.linalg.lstsq(Z, torch.ones(Z.shape[0]), rcond=1e-5).solution
     return w
 
 
@@ -156,6 +167,7 @@ def weights_scipy(Z):
     w = solve(Z, np.ones(Z.shape[0]), assume_a="pos")
     return w
 
+
 def weights_solve_torch(Z):
     """
     Compute the magnitude weight vector from a similarity matrix by solving for
@@ -175,6 +187,7 @@ def weights_solve_torch(Z):
     w = torch.linalg.solve(Z, torch.ones(Z.shape[0]))
     return w
 
+
 def weights_scipy_sym(Z):
     """
     Compute the magnitude weight vector from a similarity matrix by solving for
@@ -193,6 +206,7 @@ def weights_scipy_sym(Z):
     """
     w = solve(Z, np.ones(Z.shape[0]), assume_a="sym")
     return w
+
 
 def weights_cg(Z):
     """
@@ -304,7 +318,7 @@ def weights_spread_torch(Z):
     Parameters
     ----------
     Z : torch.Tensor
-        The similarity matrix. 
+        The similarity matrix.
 
     Returns
     -------
@@ -452,9 +466,11 @@ def similarity_matrix(D):
     ne.evaluate("exp(-D)", out=Z)
     return Z
 
+
 def similarity_matrix_torch(D):
     Z = torch.exp(-D)
     return Z
+
 
 def similarity_matrix_numpy(D):
     Z = np.exp(-D)

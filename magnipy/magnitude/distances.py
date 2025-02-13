@@ -5,6 +5,7 @@ import numpy as np
 from scipy.sparse.csgraph import shortest_path
 import torch
 
+
 def distances_isomap(X, n_neighbors=12, p=2):
     """
     Compute geodesic distances as used by Isomap.
@@ -110,9 +111,11 @@ def distances_scipy(X, X2, metric="cosine", p=2):
         dist = cdist(X, X2, metric=metric)
     return dist
 
+
 def distances_torch_cdist(X, X2, p=2):
     D = torch.cdist(X, X2, p=p)
     return D
+
 
 def distances_lp(X, X2, p=2):
     """

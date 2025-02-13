@@ -11,15 +11,10 @@ methods = [
     "conjugate_gradient_iteration",
     "cg",
     "spread",
-    #"spread_torch",
+    "spread_torch",
     "naive_torch",
     "cholesky_torch",
     "pinv_torch",
-    #"iterative_normalization",
-    #"sgd",
-    #"batch_sgd",
-    #"discrete_center",
-    #"greedy_maximization"
 ]  # , "krylov"]
 
 tss = [[1], np.linspace(0.01, 1, 100), None]

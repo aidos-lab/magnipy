@@ -211,6 +211,7 @@ class Magnipy:
             "naive_torch",
             "lstq_torch",
             "spread_torch",
+            "pinv_torch",
         ]:
             raise Exception(
                 "The computation method must be one of 'cholesky', 'scipy', 'scipy_sym', 'naive', 'pinv', 'conjugate_gradient_iteration', 'cg', 'spread'."

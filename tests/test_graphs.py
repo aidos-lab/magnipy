@@ -16,11 +16,6 @@ methods = [
     "naive_torch",
     "cholesky_torch",
     "pinv_torch",
-    #"iterative_normalization",
-    #"sgd",
-    #"batch_sgd",
-    #"discrete_center",
-    #"greedy_maximization"
     # "krylov",
 ]
 tss = [[1], np.linspace(0.01, 1, 100), None]
@@ -65,9 +60,12 @@ def test_graph_function():
 
             analytic = np.array(analytic)
 
-            np.testing.assert_array_almost_equal(mag, analytic, decimal=4,
+            np.testing.assert_array_almost_equal(
+                mag,
+                analytic,
+                decimal=4,
                 err_msg="Function graph test failed for method: "
                 + method
                 + " and ts: "
-                + str(ts)
+                + str(ts),
             )
