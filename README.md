@@ -7,7 +7,7 @@ We introduce the following codebase to compute and compare the magnitude of metr
 <img src="assets/magnipy_logo.svg" alt="magnipy logo"  style="float: right; width: 200px; height: 200px; ">
 </p>
 
-## 🚀 Main Functionalities and Classes
+## 🔍 Main Functionalities and Classes
 
 ### `Magnipy`: For in-depth magnitude computations on a single metric space.
 
