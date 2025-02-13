@@ -1,1 +1,0 @@
-from .magnipy import Magnipy
