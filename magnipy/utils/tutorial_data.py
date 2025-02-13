@@ -487,7 +487,9 @@ def plot_diversity_measures(mag_areas, mag_diffs, mag_diffs_normalised, size):
     fig.show()
 
 
-def create_animation(Xs, colors, div, is_dropping: bool, metric="magdiff"):
+def create_animation(
+    Xs, colors, div, path_to_assets, is_dropping: bool, metric="magdiff"
+):
     """Creates a mode-dropping or mode-collapse simulation, creating a gif in the assets folder as output.
     If is_dropping is True, does a mode dropping simulation. Otherwise, mode collapse.
     Metric is one of: "magarea", "magdiff", "normalised_magdiff"
@@ -585,18 +587,18 @@ def create_animation(Xs, colors, div, is_dropping: bool, metric="magdiff"):
     )
     if is_dropping:
         if metric == "normalised_magdiff":
-            ani.save("./assets/mode_dropping/normalised.gif", fps=10)
+            ani.save(path_to_assets + "mode_dropping/normalised.gif", fps=10)
         elif metric == "magdiff":
-            ani.save("./assets/mode_dropping/magdiff.gif", fps=10)
+            ani.save(path_to_assets + "mode_dropping/magdiff.gif", fps=10)
         else:
-            ani.save("./assets/mode_dropping/magarea.gif", fps=10)
+            ani.save(path_to_assets + "mode_dropping/magarea.gif", fps=10)
     else:
         if metric == "normalised_magdiff":
-            ani.save("./assets/mode_collapse/normalised.gif", fps=10)
+            ani.save(path_to_assets + "mode_collapse/normalised.gif", fps=10)
         elif metric == "magdiff":
-            ani.save("./assets/mode_collapse/magdiff.gif", fps=10)
+            ani.save(path_to_assets + "mode_collapse/magdiff.gif", fps=10)
         else:
-            ani.save("./assets/mode_collapse/magarea.gif", fps=10)
+            ani.save(path_to_assets + "mode_collapse/magarea.gif", fps=10)
     plt.close()
 
 

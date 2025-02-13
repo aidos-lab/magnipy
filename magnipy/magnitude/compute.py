@@ -15,6 +15,7 @@ def compute_magnitude_from_distances(
     perturb_singularities=True,
     positive_magnitude=False,
     input_distances=True,
+    **parameters
 ):
     """
     Compute the magnitude function of magnitude weights from a distance matrix
@@ -74,6 +75,24 @@ def compute_magnitude_from_distances(
             mag_fn = weights_pinv
         elif method == "naive":
             mag_fn = weights_naive
+        elif method == "spread_torch":
+            mag_fn = weights_spread_torch
+            Z = torch.tensor(Z)
+        elif method == "lstq_torch":
+            mag_fn = weights_lstq_torch
+            Z = torch.tensor(Z)
+        elif method == "naive_torch":
+            mag_fn = weights_naive_torch
+            Z = torch.tensor(Z)
+        elif method == "pinv_torch":
+            mag_fn = weights_pinv_torch
+            Z = torch.tensor(Z)
+        elif method == "cholesky_torch":
+            mag_fn = weights_cholesky_torch
+            Z = torch.tensor(Z)
+        elif method == "solve_torch":
+            Z = torch.tensor(Z)
+            mag_fn = weights_solve_torch
         else:
             raise Exception(
                 "The computation method must be one of 'cholesky', 'scipy', 'scipy_sym', 'pinv', 'conjugate_gradient_iteration', 'cg', 'naive', 'spread'."

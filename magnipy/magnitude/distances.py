@@ -3,6 +3,7 @@ from scipy.spatial import distance_matrix
 from scipy.spatial.distance import cdist
 import numpy as np
 from scipy.sparse.csgraph import shortest_path
+import torch
 
 
 def distances_isomap(X, n_neighbors=12, p=2):
@@ -111,6 +112,11 @@ def distances_scipy(X, X2, metric="cosine", p=2):
     return dist
 
 
+def distances_torch_cdist(X, X2, p=2):
+    D = torch.cdist(X, X2, p=p)
+    return D
+
+
 def distances_lp(X, X2, p=2):
     """
     Compute the Lp distance matrix using scipy.spatial.distance_matrix.
@@ -204,7 +210,7 @@ def get_dist(
         An adjacency matrix.
     metric: str
         The distance metric to use. The distance function can be
-        'Lp', 'isomap',
+        'Lp', 'isomap', "torch_cdist",
         'braycurtis', 'canberra', 'chebyshev', 'cityblock', 'correlation',
         'cosine', 'dice', 'euclidean', 'hamming', 'jaccard', 'jensenshannon',
         'kulczynski1', 'mahalanobis', 'matching', 'minkowski',
@@ -241,6 +247,8 @@ def get_dist(
             dist = distances_lp(X, X2, p=p)
         elif metric == "isomap":
             dist = distances_isomap(X, n_neighbors=n_neighbors, p=p)
+        elif metric == "torch_cdist":
+            dist = distances_torch_cdist(X, X2, p=p)
         else:
             dist = distances_scipy(X, X2, metric=metric, p=p)
 
