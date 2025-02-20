@@ -121,12 +121,21 @@ class Magnipy:
         """
 
         ### Check if the input matrix X is valid
-        if not isinstance(X, np.ndarray):
-            raise Exception("The input matrix must be a numpy array.")
+        if X is not None:
+            if not isinstance(X, np.ndarray):
+                raise Exception("The input matrix must be a numpy array.")
+        else:
+            if Adj is None:
+                raise Exception(
+                    "Either the input matrix or the adjacency matrix must be specified."
+                )
 
         ### Check if the inputs used for scale-finding are valid
         if isinstance(target_prop, float):
-            min_mag = 1 / X.shape[0]
+            if X is None:
+                min_mag = 1 / Adj.shape[0]
+            else:
+                min_mag = 1 / X.shape[0]
             if (target_prop < min_mag) | (target_prop > 1):
                 raise Exception(
                     f"The target proportion must be between {min_mag} and 1."
@@ -151,14 +160,15 @@ class Magnipy:
         if Adj is not None:
             if not isinstance(Adj, np.ndarray):
                 raise Exception("The adjacency matrix must be a numpy array.")
-            if Adj.shape[0] != X.shape[0]:
-                raise Exception(
-                    "The adjacency matrix must have the same number of rows as the dataset."
-                )
-            if Adj.shape[1] != X.shape[0]:
-                raise Exception(
-                    "The adjacency matrix must have the same number of columns as the dataset."
-                )
+            if X is not None:
+                if Adj.shape[0] != X.shape[0]:
+                    raise Exception(
+                        "The adjacency matrix must have the same number of rows as the dataset."
+                    )
+                if Adj.shape[1] != X.shape[0]:
+                    raise Exception(
+                        "The adjacency matrix must have the same number of columns as the dataset."
+                    )
 
         ### Setting up the distance computations and the similarity matrix
         self._Adj = Adj
@@ -167,7 +177,7 @@ class Magnipy:
         if metric != "precomputed":
             self._X = X
 
-            def compute_distances(X, X2, Adj=None):
+            def compute_distances(X, X2=None, Adj=None):
                 return get_dist(
                     X,
                     X2=X2,
