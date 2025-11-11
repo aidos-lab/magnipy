@@ -344,7 +344,7 @@ class Magnipy:
         """
         if (self._ts is None) | self._recompute:
             if self._scale_finding == "scattered":
-                if self._proportion_scattered is None | self._recompute:
+                if (self._proportion_scattered is None) | self._recompute:
                     _ = self._scale_when_almost_scattered(
                         q=self._proportion_scattered
                     )

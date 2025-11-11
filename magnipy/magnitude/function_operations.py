@@ -499,12 +499,15 @@ def mag_diff(
         t_cut=t_cut,
     )
 
-    area = area_under_curve(
-        ts=ts_list,
-        magnitude=diff_of_interpolated_vectors,
-        integration=integration,
-        absolute_area=absolute_area,
-        scale=scale,
+    if len(ts_list) == 1:
+        area = magnitude[0] - magnitude2[0]
+    else:
+        area = area_under_curve(
+            ts=ts_list,
+            magnitude=diff_of_interpolated_vectors,
+            integration=integration,
+            absolute_area=absolute_area,
+            scale=scale,
     )
     if plot:
         plt.plot(
@@ -517,6 +520,23 @@ def mag_diff(
         plt.title(f"MagDiff {round(area,2)}")
     return area
 
+def get_magdiff(mag1, mag2, ts):
+    """
+    Compute the difference between the magnitude (functions) of two spaces.
+    """
+    if len(ts) == 1:
+        return mag2[0] - mag1[0]
+    else:
+        return mag_diff(
+            magnitude=mag1,
+            D=None,
+            D2=None,
+            magnitude2=mag2,
+            ts=ts,
+            ts2=ts,
+            scale=False,
+            absolute_area=False
+        )
 
 def mag_area(
     magnitude,
