@@ -1,6 +1,7 @@
 import numpy as np
 import networkx as nx
 
+
 def get_scales(t_conv, n_ts=10, log_scale=False, one_point_property=True):
     """
     Choose a fixed number of scale parameters
@@ -83,6 +84,7 @@ def scale_when_almost_scattered(D, n=None, q=None):
         q = 1 / n
     return np.log(n - 1) / np.quantile(D[np.nonzero(D)], q=q)
 
+
 def median_heuristic_from_distances(D):
     """
     Compute the median heuristic for the scale selection.
@@ -97,16 +99,17 @@ def median_heuristic_from_distances(D):
     float
         The scale selected by the median heuristic.
     """
-    
+
     d_flat = D[np.triu_indices(D.shape[0], k=1)]
     median = np.median(d_flat)
-    return 1 / np.sqrt(median/2)
+    return 1 / np.sqrt(median / 2)
+
 
 def median_heuristic(dist_fn, G=None, subgraphs=None):
     """
     Compute the median heuristic for the scale selection.
 
-    
+
     Parameters
     ----------
     dist_fn : function
@@ -129,9 +132,10 @@ def median_heuristic(dist_fn, G=None, subgraphs=None):
         D = dist_fn(s)
         d_flat = D[np.triu_indices(D.shape[0], k=1)]
         distances = distances + list(d_flat)
-    
+
     median = np.median(distances)
-    return 1 / np.sqrt(median/2)
+    return 1 / np.sqrt(median / 2)
+
 
 def cut_ts(ts, t_cut):
     """

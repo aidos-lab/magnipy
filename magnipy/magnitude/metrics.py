@@ -43,7 +43,7 @@ def diffusion_distance(G, **kwargs):
 
     if not norm and not symmetric:
         warnings.warn(
-            "Assuming default Laplacian, which is symmetric.",  
+            "Assuming default Laplacian, which is symmetric.",
             UserWarning,
         )
         symmetric = True
@@ -61,7 +61,7 @@ def diffusion_distance(G, **kwargs):
 
     if np.iscomplexobj(psi):
         warnings.warn(
-            "Input data contains complex numbers. The imaginary part will be discarded.",  
+            "Input data contains complex numbers. The imaginary part will be discarded.",
             UserWarning,
         )
         psi = np.real(psi)
@@ -103,7 +103,7 @@ def heat_kernel_distance(G, **kwargs):
 
     if np.iscomplexobj(X):
         warnings.warn(
-            "Input data contains complex numbers. The imaginary part will be discarded.",  
+            "Input data contains complex numbers. The imaginary part will be discarded.",
             UserWarning,
         )
         X = np.real(X)

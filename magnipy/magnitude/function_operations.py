@@ -508,7 +508,7 @@ def mag_diff(
             integration=integration,
             absolute_area=absolute_area,
             scale=scale,
-    )
+        )
     if plot:
         plt.plot(
             ts_list,
@@ -519,6 +519,7 @@ def mag_diff(
         plt.ylabel("difference between magnitude functions")
         plt.title(f"MagDiff {round(area,2)}")
     return area
+
 
 def get_magdiff(mag1, mag2, ts):
     """
@@ -535,8 +536,9 @@ def get_magdiff(mag1, mag2, ts):
             ts=ts,
             ts2=ts,
             scale=False,
-            absolute_area=False
+            absolute_area=False,
         )
+
 
 def mag_area(
     magnitude,

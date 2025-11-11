@@ -3,13 +3,15 @@
 import numpy as np
 import networkx as nx
 import sklearn
-#from mag_edge_pool.src.metrics import standard_feature_metrics
+
+# from mag_edge_pool.src.metrics import standard_feature_metrics
 from magnipy.magnitude.distances import get_dist
 import magnipy.magnitude.metrics as supported_metrics
 
 #  ╭──────────────────────────────────────────────────────────╮
 #  │ Choosing the right Graph Metric                          │
 #  ╰──────────────────────────────────────────────────────────╯
+
 
 def choose_graph_metric(metric, mode="structure"):
     magnipy_metrics = [
@@ -89,10 +91,10 @@ def to_nx_graph(x, adj):
     return G
 
 
-
 #  ╭──────────────────────────────────────────────────────────╮
 #  │ Lifters                                                  │
 #  ╰──────────────────────────────────────────────────────────╯
+
 
 def lift_graph(G, metric, **kwargs):
     """Lift graph to a metric space.

@@ -3,9 +3,13 @@ from magnipy.magnitude.distances import get_dist
 import numexpr as ne
 from magnipy.magnitude.weights import *
 from magnipy.magnitude.scales import get_scales
-from magnipy.magnitude.convergence import guess_convergence_scale, median_heuristic
+from magnipy.magnitude.convergence import (
+    guess_convergence_scale,
+    median_heuristic,
+)
 import copy
 import networkx as nx
+
 
 def compute_magnitude_from_distances(
     D,
@@ -375,20 +379,16 @@ def compute_t_conv(
 #  │ Computing Magnitude on (Sub)graphs using Graph Metrics   │
 #  ╰──────────────────────────────────────────────────────────╯
 
+
 def compute_magnitude_subgraphs(
-    G,
-    ts,
-    dist_fn,
-    subgraphs=None,
-    method="cholesky",
-    get_weights=False
+    G, ts, dist_fn, subgraphs=None, method="cholesky", get_weights=False
 ):
-    """ 
+    """
     Compute the magnitude of a graph using a specified distance function.
     The magnitude is computed across a fixed choice of scales.
     This function computes the magnitude of each connected component
     of the graph separately and sums them up to obtain the total magnitude.
-    
+
     Parameters
     ----------
     G : networkx.Graph
@@ -432,7 +432,7 @@ def compute_magnitude_subgraphs(
             one_point_property=True,
             perturb_singularities=True,
             positive_magnitude=False,
-            input_distances=True
+            input_distances=True,
         )
         mags.append(mag)
 
@@ -442,26 +442,22 @@ def compute_magnitude_subgraphs(
 
         for subgraph, (mag) in zip(subgraphs, mags):
             for nn, node in enumerate(subgraph.nodes):
-                weights[node_idx[node], :] = mag[nn] 
+                weights[node_idx[node], :] = mag[nn]
         return weights, ts
     else:
         total_magnitude = np.sum([mag for mag in mags], axis=0)
         return total_magnitude, ts
 
+
 def compute_magnitude_subgraphs_with_dist(
-    G,
-    ts,
-    dist_fn,
-    subgraphs=None,
-    method="cholesky",
-    get_weights=False
+    G, ts, dist_fn, subgraphs=None, method="cholesky", get_weights=False
 ):
-    """ 
+    """
     Compute the magnitude of a graph using a specified distance function.
     The magnitude is computed across a fixed choice of scales.
     This function computes the magnitude of each connected component
     of the graph separately and sums them up to obtain the total magnitude.
-    
+
     Parameters
     ----------
     G : networkx.Graph
@@ -512,14 +508,15 @@ def compute_magnitude_subgraphs_with_dist(
             one_point_property=True,
             perturb_singularities=True,
             positive_magnitude=False,
-            input_distances=True
+            input_distances=True,
         )
         mags.append(mag)
 
     total_magnitude = np.sum([mag for mag in mags], axis=0)
-    
+
     return total_magnitude, ts, subgraphs, Ds, mags
-    
+
+
 def compute_magnitude_graph(
     G,
     dist_fn,
@@ -527,9 +524,9 @@ def compute_magnitude_graph(
     target_value=None,
     n_ts=10,
     log_scale=False,
-    scale_finding = "convergence",
-    method = "cholesky",
-    get_weights=False
+    scale_finding="convergence",
+    method="cholesky",
+    get_weights=False,
 ):
     """
     Compute the magnitude of a graph using a specified distance function.
@@ -562,7 +559,7 @@ def compute_magnitude_graph(
         will be used to compute magnitude. If 'spread' is chosen, the spread of a metric space will be computed.
     get_weights : bool
         If True output the magnitude weights. If False output the magnitude function.
-   
+
     Returns
     -------
     magnitude : array_like, shape (`n_ts`, ) or shape (`n_obs`, `n_ts`)
@@ -587,6 +584,7 @@ def compute_magnitude_graph(
             )
 
         if scale_finding == "convergence":
+
             def comp_mag(G, ts):
                 return compute_magnitude_subgraphs(
                     G=G,
@@ -607,14 +605,16 @@ def compute_magnitude_graph(
                         "The target value needs to be smaller than the cardinality!"
                     )
                 if 0 >= target_value:
-                    raise Exception("The target value needs to be larger than 0!")
+                    raise Exception(
+                        "The target value needs to be larger than 0!"
+                    )
 
             t_conv = guess_convergence_scale(
                 G, comp_mag=comp_mag, target_value=target_value, guess=10
             )
         else:
             t_conv = median_heuristic(dist_fn, G=None, subgraphs=subgraphs)
-        
+
         if n_ts == 1:
             ts = [t_conv]
         else:
