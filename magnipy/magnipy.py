@@ -32,13 +32,15 @@ from magnipy.utils.plots import (
 )
 import numpy as np
 import copy
+import networkx as nx
+from magnipy.magnitude.compute import compute_magnitude_subgraphs
 
 
 class Magnipy:
     def __init__(
         self,
         # Input data parameters
-        X,
+        X=None,
         # Parameters for the evaluation scales
         ts=None,
         n_ts=30,
@@ -48,9 +50,9 @@ class Magnipy:
         target_prop=0.95,
         # Parameters for the distance matrix
         metric="euclidean",
-        p=2,
+        custom_dist_fn=None,
+        mode="attributes",
         Adj=None,
-        n_neighbors=12,
         # Parameters for the computation of magnitude
         method="cholesky",
         one_point_property=True,
@@ -59,6 +61,7 @@ class Magnipy:
         # Other parameters
         recompute=False,
         name="",
+        **kwargs,
     ):
         """
         Initialises a Magnipy object.
@@ -79,7 +82,7 @@ class Magnipy:
         return_log_scale : bool
             Whether to return the scales on log-scale when computing the magnitude dimension profile.
         scale_finding : str
-            The method to use to find the scale at which to evaluate the magnitude functions. Either 'scattered' or 'convergence'.
+            The method to use to find the scale at which to evaluate the magnitude functions. Either 'scattered', 'convergence', or 'median_heuristic'.
         target_prop : float
             The proportion of points that are scattered OR the proportion of cardinality that the magnitude functon converges to.
 
@@ -92,6 +95,8 @@ class Magnipy:
             'kulczynski1', 'mahalanobis', 'matching', 'minkowski',
             'rogerstanimoto', 'russellrao', 'seuclidean', 'sokalmichener',
             'sokalsneath', 'sqeuclidean', 'yule'.
+        mode : str
+            The mode of distance computation. Can be either 'attributes', 'structure', or 'full'.
         p : float
             Parameter for the Minkowski metric.
         Adj : array_like, shape (`n_obs`, `n_obs`)
@@ -120,15 +125,33 @@ class Magnipy:
             A Magnipy object.
         """
 
+        self._mode = mode
+        if mode not in ["attributes", "structure", "full"]:
+            raise Exception(
+                "The mode of distance computation must be either 'attributes', 'structure', or 'full'."
+            )
+        
         ### Check if the input matrix X is valid
         if X is not None:
             if not isinstance(X, np.ndarray):
                 raise Exception("The input matrix must be a numpy array.")
         else:
-            if Adj is None:
-                raise Exception(
-                    "Either the input matrix or the adjacency matrix must be specified."
-                )
+            #if mode == "attributes" or mode == "full":
+            if (mode == "structure") or (mode == "full"):
+                if (Adj is None):
+                    raise Exception(
+                        "The adjacency matrix must be specified."
+                    )
+            if (mode == "attributes") or (mode == "full"):
+                if X is None:
+                    raise Exception(
+                        "The input matrix X must be specified."
+                    )
+                
+        #if Adj is None:
+        #    raise Exception(
+        #        "Either the input matrix or the adjacency matrix must be specified."
+        #    )
 
         ### Check if the inputs used for scale-finding are valid
         if isinstance(target_prop, float):
@@ -136,6 +159,7 @@ class Magnipy:
                 min_mag = 1 / Adj.shape[0]
             else:
                 min_mag = 1 / X.shape[0]
+
             if (target_prop < min_mag) | (target_prop > 1):
                 raise Exception(
                     f"The target proportion must be between {min_mag} and 1."
@@ -144,9 +168,9 @@ class Magnipy:
             raise Exception("The target proportion must be a float.")
 
         self._proportion_scattered = target_prop
-        if (scale_finding != "scattered") & (scale_finding != "convergence"):
+        if (scale_finding != "scattered") & (scale_finding != "convergence") & (scale_finding != "median_heuristic"):
             raise Exception(
-                "The scale finding method must be either 'scattered' or 'convergence'."
+                "The scale finding method must be either 'scattered', 'convergence', or 'median_heuristic'."
             )
         self._scale_finding = scale_finding
 
@@ -169,32 +193,36 @@ class Magnipy:
                     raise Exception(
                         "The adjacency matrix must have the same number of columns as the dataset."
                     )
-
+                
         ### Setting up the distance computations and the similarity matrix
+        #self._G = G
         self._Adj = Adj
         self._metric = metric
 
-        if metric != "precomputed":
-            self._X = X
+        self._X = X
 
-            def compute_distances(X, X2=None, Adj=None):
+        if custom_dist_fn is not None:
+            self._get_dist = custom_dist_fn
+        else:
+            def compute_distances(X=None, X2=None, Adj=None):
                 return get_dist(
-                    X,
+                    X=X,
                     X2=X2,
                     Adj=Adj,
-                    p=p,
-                    metric=metric,
+                     metric=metric,
+                    mode=mode,
                     normalise_by_diameter=False,
-                    n_neighbors=n_neighbors,
+                    **kwargs,
                 )
 
             self._get_dist = compute_distances
+
+        if metric != "precomputed":
             self._D = self._get_dist(X, X2=None, Adj=self._Adj)
             self._n = self._D.shape[0]
             self._target_value = target_prop * self._D.shape[0]
             self._Z = similarity_matrix(self._D)
         else:
-
             if X.shape[0] != X.shape[1]:
                 raise Exception(
                     "The precomputed distance matrix must be square."
@@ -227,6 +255,7 @@ class Magnipy:
                 "The computation method must be one of 'cholesky', 'scipy', 'scipy_sym', 'naive', 'pinv', 'conjugate_gradient_iteration', 'cg', 'spread'."
             )
 
+    
         def compute_mag(Z, ts, n_ts=n_ts, get_weights=False):
             return compute_magnitude_until_convergence(
                 Z,
@@ -279,6 +308,7 @@ class Magnipy:
         self._magnitude_area = None
         self._t_scattered = None
         self._t_almost_scattered = None
+        self._t_median = None
 
     #  ╭──────────────────────────────────────────────────────────╮
     #  │ Basic Informations                                       │
@@ -319,24 +349,19 @@ class Magnipy:
 
                 def comp_mag(X, ts):
                     return self._compute_mag(X, ts)[0]
-
+                
                 self._t_conv = guess_convergence_scale(
                     D=self._Z,
                     comp_mag=comp_mag,
                     target_value=self._target_value,
                     guess=10,
                 )
-                # print(f"Convergence scale: {self.t_conv}")
-                # self._t_conv = compute_t_conv(
-                #    self._Z,
-                #   target_value=self._target_value,
-                #    method=self._method,
-                #    positive_magnitude=self._positive_magnitude,
-                #    input_distances=False,
-                # )
+
             return self._t_conv
         elif self._scale_finding == "scattered":
             return self._scale_when_almost_scattered(q=None)
+        elif self._scale_finding == "median_heuristic":
+            return self._median_heuristic_scale()
 
     def get_scales(self):
         """
@@ -359,6 +384,15 @@ class Magnipy:
                     _ = self.get_t_conv()
                 self._ts = get_scales(
                     self._t_conv,
+                    self._n_ts,
+                    log_scale=self._log_scale,
+                    one_point_property=self._one_point_property,
+                )
+            elif self._scale_finding == "median_heuristic":
+                if (self._t_median is None) | self._recompute:
+                    _ = self._median_heuristic_scale()
+                self._ts = get_scales(
+                    self._t_median,
                     self._n_ts,
                     log_scale=self._log_scale,
                     one_point_property=self._one_point_property,
@@ -433,6 +467,21 @@ class Magnipy:
                 self._D, n=self._n, q=q
             )
         return self._t_almost_scattered
+    
+    def _median_heuristic_scale(self):
+        """
+        Compute the scale using the median heuristic.
+
+        Returns
+        -------
+        t_median : float
+            The scale computed using the median heuristic.
+        """
+        from magnipy.magnitude.scales import median_heuristic_from_distances
+
+        if (self._t_median is None) | self._recompute:
+            self._t_median = median_heuristic_from_distances(self._D)
+        return self._t_median
 
     #  ╭──────────────────────────────────────────────────────────╮
     #  │ Compute Magnitude Weights and Functions                  │
@@ -450,11 +499,8 @@ class Magnipy:
         if (self._weights is None) | self._recompute:
             ts = self.get_scales()
             weights, ts = self._compute_mag(
-                self._Z,
+                Z=self._Z,
                 ts=ts,
-                # n_ts=self._n_ts,
-                # method=self._method,
-                # log_scale=self._log_scale,
                 get_weights=True,
             )
             self._weights = weights
@@ -481,9 +527,6 @@ class Magnipy:
             self._magnitude, ts = self._compute_mag(
                 self._Z,
                 ts=ts,
-                # n_ts=self._n_ts,
-                # method=self._method,
-                # log_scale=self._log_scale,
                 get_weights=False,
             )
             if self._ts is None:
@@ -637,6 +680,7 @@ class Magnipy:
             self._t_conv = None
             self._t_scattered = None
             self._t_almost_scattered = None
+            self._t_median = None
         self._magnitude = None
         self._weights = None
         self._magnitude_dimension_profile = None
@@ -682,14 +726,13 @@ class Magnipy:
                 D = np.delete(D, ind_delete, axis=1)
             self._D = D
             self._Z = similarity_matrix(self._D)
-            # self._D = get_dist(X, p=self._p, metric=self._metric, normalise_by_diameter=False,
-            # n_neighbors=self._n_neighbors)
             self._n = self._D.shape[0]
         if update_ts:
             self._ts = None
             self._t_conv = None
             self._t_scattered = None
             self._t_almost_scattered = None
+            self._t_median = None
         self._magnitude = None
         self._weights = None
         self._magnitude_dimension_profile = None
@@ -707,6 +750,7 @@ class Magnipy:
         t_cut : float
             The scale at which to cut the magnitude functions.
         """
+
         if self._magnitude is not None:
             self._magnitude, self._ts = cut_until_scale(
                 self._ts,
@@ -737,7 +781,7 @@ class Magnipy:
         """
         return copy.deepcopy(self)
 
-    def _subtract(self, other, t_cut=None, exact=True):
+    def _subtract(self, other, t_cut=None, exact=False):
         """
         Subtract the magnitude functions of two Magnipy objects.
 
@@ -755,12 +799,8 @@ class Magnipy:
         Magnipy
             The difference of the magnitude functions
         """
-        if self._metric != other._metric:
-            raise Exception(
-                "Magnitude functions need to share the same notion of distance in order to be subtracted across the same scales of t!!"
-            )
-        combined = Magnipy(None)
-        combined._magnitude, combined._ts = diff_of_functions(
+        
+        combined_magnitude, combined_ts = diff_of_functions(
             self._magnitude,
             self._ts,
             self._Z,
@@ -773,10 +813,9 @@ class Magnipy:
             magnitude_from_distances=self._compute_mag,
             magnitude_from_distances2=other._compute_mag,
         )
-        combined._n_ts = len(combined._ts)
-        return combined
+        return combined_magnitude, combined_ts
 
-    def _add(self, other, t_cut=None, exact=True):
+    def _add(self, other, t_cut=None, exact=False):
         """
         Add the magnitude functions of two Magnipy objects.
 
@@ -794,12 +833,8 @@ class Magnipy:
         Magnipy
             The sum of the magnitude functions
         """
-        if self._metric != other._metric:
-            raise Exception(
-                "Magnitude functions need to share the same notion of distance in order to be added across the same scales of t!!"
-            )
-        combined = Magnipy(None)
-        combined._magnitude, combined._ts = sum_of_functions(
+        
+        combined_magnitude, combined_ts = sum_of_functions(
             self._magnitude,
             self._ts,
             self._Z,
@@ -812,8 +847,7 @@ class Magnipy:
             magnitude_from_distances=self._compute_mag,
             magnitude_from_distances2=other._compute_mag,
         )
-        combined._n_ts = len(combined._ts)
-        return combined
+        return combined_magnitude, combined_ts
 
     #  ╭──────────────────────────────────────────────────────────╮
     #  │ Diversity Summaries                                      │
@@ -874,7 +908,7 @@ class Magnipy:
         absolute_area=True,
         scale=False,
         plot=False,
-        exact=True,
+        exact=False,
     ):
         """
         Compute MagDiff i.e. the area between the magnitude functions of two Magnipy objects.
@@ -905,6 +939,7 @@ class Magnipy:
             _, _ = self.get_magnitude()
         if other._magnitude is None:
             _, _ = other.get_magnitude()
+
         mag_difference = mag_diff(
             self._magnitude,
             self._ts,
