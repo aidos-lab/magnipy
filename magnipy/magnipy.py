@@ -71,6 +71,9 @@ class Magnipy:
         Input data parameters:
         X : array_like, shape (`n_obs`, `n_vars`)
             A dataset whose rows are observations and columns are features.
+        Adj : array_like, shape (`n_obs`, `n_obs`)
+            An adjacency matrix used to compute geodesic or structure-based distances. If None, all points are adjacent.
+            Don't use Magnipy with disconnected graphs! Use Graphipy instead.
 
         Parameters for the evaluation scales:
         ts : array_like, shape (`n_ts`, )
@@ -94,15 +97,13 @@ class Magnipy:
             'cosine', 'dice', 'euclidean', 'hamming', 'jaccard', 'jensenshannon',
             'kulczynski1', 'mahalanobis', 'matching', 'minkowski',
             'rogerstanimoto', 'russellrao', 'seuclidean', 'sokalmichener',
-            'sokalsneath', 'sqeuclidean', 'yule'.
+            'sokalsneath', 'sqeuclidean', 'yule',
+            "shortest_path_distance", "resistance_distance", "diffusion_distance", "heat_kernel_distance",
+            or "precomputed".
         mode : str
             The mode of distance computation. Can be either 'attributes', 'structure', or 'full'.
-        p : float
-            Parameter for the Minkowski metric.
-        Adj : array_like, shape (`n_obs`, `n_obs`)
-            An adjacency matrix used to compute geodesic distances. If None, all points are adjacent.
-        n_neighbors : int
-            The number of nearest neighbours used to compute geodesic distances. Only used if the metric is "isomap".
+        **kwargs :
+            Additional keyword arguments passed to the distance computation function.
 
         Parameters for the computation of magnitude:
         method : str

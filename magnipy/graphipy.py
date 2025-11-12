@@ -51,7 +51,7 @@ class Graphipy:
         # Parameters for the distance matrix
         metric="euclidean",
         custom_dist_fn=None,
-        mode="attributes",
+        mode="structure",
         G=None,
         # Parameters for the computation of magnitude
         method="cholesky",
@@ -64,13 +64,15 @@ class Graphipy:
         **kwargs,
     ):
         """
-        Initialises a Magnipy object.
+        Initialises a Graphipy object.
 
         Parameters
         ----------
         Input data parameters:
         X : array_like, shape (`n_obs`, `n_vars`)
             A dataset whose rows are observations and columns are features.
+        G : networkx.Graph
+            A graph used to compute distances based on its subgraphs. 
 
         Parameters for the evaluation scales:
         ts : array_like, shape (`n_ts`, )
@@ -94,16 +96,13 @@ class Graphipy:
             'cosine', 'dice', 'euclidean', 'hamming', 'jaccard', 'jensenshannon',
             'kulczynski1', 'mahalanobis', 'matching', 'minkowski',
             'rogerstanimoto', 'russellrao', 'seuclidean', 'sokalmichener',
-            'sokalsneath', 'sqeuclidean', 'yule'.
+            'sokalsneath', 'sqeuclidean', 'yule',
+            "shortest_path_distance", "resistance_distance", "diffusion_distance", "heat_kernel_distance".
         mode : str
             The mode of distance computation. Can be either 'attributes', 'structure', or 'full'.
-        p : float
-            Parameter for the Minkowski metric.
-        Adj : array_like, shape (`n_obs`, `n_obs`)
-            An adjacency matrix used to compute geodesic distances. If None, all points are adjacent.
-        n_neighbors : int
-            The number of nearest neighbours used to compute geodesic distances. Only used if the metric is "isomap".
-
+        **kwargs :
+            Additional keyword arguments passed to the distance computation function.
+        
         Parameters for the computation of magnitude:
         method : str
             The method to use to compute the magnitude functions.
@@ -117,12 +116,12 @@ class Graphipy:
         recompute : bool
             Whether to recompute the magnitude functions if they have already been computed.
         name : str
-            The name of the Magnipy object.
+            The name of the Graphipy object.
 
         Returns
         -------
-        Magnipy
-            A Magnipy object.
+        Graphipy :
+            A Graphipy object.
         """
 
         self._mode = mode
