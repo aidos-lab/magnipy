@@ -11,6 +11,7 @@ import torch
 #  │ Magnitude weight vector computations                     │
 #  ╰──────────────────────────────────────────────────────────╯
 
+
 def weights_cholesky(Z):
     """
     Compute the magnitude weight vector from a similarity matrix using Cholesky inversion.
@@ -293,10 +294,12 @@ def weights_from_similarities_cg(Z, ts):
         weights[:, i] = w.squeeze()
     return weights
 
+
 #  ╭──────────────────────────────────────────────────────────╮
 #  │ Metric space spread computations                         │
 #  │   (reciprocal mean similarities)                         │
 #  ╰──────────────────────────────────────────────────────────╯
+
 
 def weights_spread(Z):
     """
@@ -337,9 +340,11 @@ def weights_spread_torch(Z):
     """
     return 1 / torch.sum(Z, axis=0)
 
+
 #  ╭──────────────────────────────────────────────────────────╮
 #  │ Compute weights at multiple scales                       │
 #  ╰──────────────────────────────────────────────────────────╯
+
 
 def spread_weights(Z, ts):
     """
@@ -372,6 +377,7 @@ def spread_weights(Z, ts):
         # Z = np.exp(-t * D)
         weights[:, i] = weights_spread(Z**t)
     return weights
+
 
 def magnitude_weights(
     Z, ts, mag_fn, one_point_property=True, perturb_singularities=True
@@ -433,9 +439,11 @@ def magnitude_weights(
                     raise Exception(f"Exception: {e} for t: {t}")
     return weights  # np.array(
 
+
 #  ╭──────────────────────────────────────────────────────────╮
 #  │ Helper functions                                         │
 #  ╰──────────────────────────────────────────────────────────╯
+
 
 def positive_weights_only(weights):
     """
@@ -473,9 +481,11 @@ def magnitude_from_weights(weights):
     """
     return weights.sum(axis=0)
 
+
 #  ╭──────────────────────────────────────────────────────────╮
 #  │ Compute the similarity matrix                            │
 #  ╰──────────────────────────────────────────────────────────╯
+
 
 def similarity_matrix(D):
     # n = D.shape[0]

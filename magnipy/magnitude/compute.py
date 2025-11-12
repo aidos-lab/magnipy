@@ -15,6 +15,7 @@ import networkx as nx
 #  │ Computing magnitude from distances                       │
 #  ╰──────────────────────────────────────────────────────────╯
 
+
 def compute_magnitude_from_distances(
     D,
     ts=np.arange(0.01, 5, 0.01),
@@ -123,10 +124,12 @@ def compute_magnitude_from_distances(
     else:
         return magnitude_from_weights(weights)
 
+
 #  ╭──────────────────────────────────────────────────────────╮
 #  │ Computing magnitude from distances                       │
 #  │ (until the convergence scale)                            │
 #  ╰──────────────────────────────────────────────────────────╯
+
 
 def compute_magnitude_until_convergence(
     D,
@@ -216,6 +219,7 @@ def compute_magnitude_until_convergence(
         ts,
     )
 
+
 def compute_t_conv(
     D,
     target_value,
@@ -287,9 +291,11 @@ def compute_t_conv(
     )
     return t_conv
 
+
 #  ╭──────────────────────────────────────────────────────────╮
 #  │ Computing magnitude from data                            │
 #  ╰──────────────────────────────────────────────────────────╯
+
 
 def compute_magnitude(
     X,
@@ -385,17 +391,23 @@ def compute_magnitude(
     return magnitude, ts
 
 
-
 #  ╭──────────────────────────────────────────────────────────╮
 #  │ Computing magnitude on (sub)graphs using graph metrics   │
 #  ╰──────────────────────────────────────────────────────────╯
 
 
 def compute_magnitude_subgraphs(
-    G, ts, dist_fn, mode="structure", subgraphs=None, method="cholesky", get_weights=False, one_point_property=True,
-            perturb_singularities=True,
-            positive_magnitude=False,
-            input_distances=True
+    G,
+    ts,
+    dist_fn,
+    mode="structure",
+    subgraphs=None,
+    method="cholesky",
+    get_weights=False,
+    one_point_property=True,
+    perturb_singularities=True,
+    positive_magnitude=False,
+    input_distances=True,
 ):
     """
     Compute the magnitude of a graph using a specified distance function.
@@ -436,21 +448,21 @@ def compute_magnitude_subgraphs(
     mags = []
 
     for s in subgraphs:
-        if mode=="structure":
+        if mode == "structure":
             D = dist_fn(G=s)
-            #D = dist_fn(G=s)
-        elif mode=="attributes":
+            # D = dist_fn(G=s)
+        elif mode == "attributes":
             features = np.array(
                 [s.nodes[node]["feature"] for node in s.nodes()]
             )
             D = dist_fn(X=features)
-        elif mode=="full":
+        elif mode == "full":
             features = np.array(
                 [s.nodes[node]["feature"] for node in s.nodes()]
             )
             D = dist_fn(X=features, G=s)
-            #D_struct = dist_fn(G=s)
-            #D = D_attr + D_struct
+            # D_struct = dist_fn(G=s)
+            # D = D_attr + D_struct
 
         mag = compute_magnitude_from_distances(
             D,

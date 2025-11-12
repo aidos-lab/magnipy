@@ -129,7 +129,9 @@ def median_heuristic(dist_fn, G=None, subgraphs=None, Ds=None):
     """
     if Ds is None:
         if subgraphs is None:
-            subgraphs = [G.subgraph(c).copy() for c in nx.connected_components(G)]
+            subgraphs = [
+                G.subgraph(c).copy() for c in nx.connected_components(G)
+            ]
         distances = []
         for s in subgraphs:
             D = dist_fn(s)

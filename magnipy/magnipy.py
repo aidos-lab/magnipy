@@ -131,25 +131,21 @@ class Magnipy:
             raise Exception(
                 "The mode of distance computation must be either 'attributes', 'structure', or 'full'."
             )
-        
+
         ### Check if the input matrix X is valid
         if X is not None:
             if not isinstance(X, np.ndarray):
                 raise Exception("The input matrix must be a numpy array.")
         else:
-            #if mode == "attributes" or mode == "full":
+            # if mode == "attributes" or mode == "full":
             if (mode == "structure") or (mode == "full"):
-                if (Adj is None):
-                    raise Exception(
-                        "The adjacency matrix must be specified."
-                    )
+                if Adj is None:
+                    raise Exception("The adjacency matrix must be specified.")
             if (mode == "attributes") or (mode == "full"):
                 if X is None:
-                    raise Exception(
-                        "The input matrix X must be specified."
-                    )
-                
-        #if Adj is None:
+                    raise Exception("The input matrix X must be specified.")
+
+        # if Adj is None:
         #    raise Exception(
         #        "Either the input matrix or the adjacency matrix must be specified."
         #    )
@@ -169,7 +165,11 @@ class Magnipy:
             raise Exception("The target proportion must be a float.")
 
         self._proportion_scattered = target_prop
-        if (scale_finding != "scattered") & (scale_finding != "convergence") & (scale_finding != "median_heuristic"):
+        if (
+            (scale_finding != "scattered")
+            & (scale_finding != "convergence")
+            & (scale_finding != "median_heuristic")
+        ):
             raise Exception(
                 "The scale finding method must be either 'scattered', 'convergence', or 'median_heuristic'."
             )
@@ -194,9 +194,9 @@ class Magnipy:
                     raise Exception(
                         "The adjacency matrix must have the same number of columns as the dataset."
                     )
-                
+
         ### Setting up the distance computations and the similarity matrix
-        #self._G = G
+        # self._G = G
         self._Adj = Adj
         self._metric = metric
 
@@ -205,12 +205,13 @@ class Magnipy:
         if custom_dist_fn is not None:
             self._get_dist = custom_dist_fn
         else:
+
             def compute_distances(X=None, X2=None, Adj=None):
                 return get_dist(
                     X=X,
                     X2=X2,
                     Adj=Adj,
-                     metric=metric,
+                    metric=metric,
                     mode=mode,
                     normalise_by_diameter=False,
                     **kwargs,
@@ -256,7 +257,6 @@ class Magnipy:
                 "The computation method must be one of 'cholesky', 'scipy', 'scipy_sym', 'naive', 'pinv', 'conjugate_gradient_iteration', 'cg', 'spread'."
             )
 
-    
         def compute_mag(Z, ts, n_ts=n_ts, get_weights=False):
             return compute_magnitude_until_convergence(
                 Z,
@@ -350,7 +350,7 @@ class Magnipy:
 
                 def comp_mag(X, ts):
                     return self._compute_mag(X, ts)[0]
-                
+
                 self._t_conv = guess_convergence_scale(
                     D=self._Z,
                     comp_mag=comp_mag,
@@ -468,7 +468,7 @@ class Magnipy:
                 self._D, n=self._n, q=q
             )
         return self._t_almost_scattered
-    
+
     def _median_heuristic_scale(self):
         """
         Compute the scale using the median heuristic.
@@ -800,7 +800,7 @@ class Magnipy:
         Magnipy
             The difference of the magnitude functions
         """
-        
+
         combined_magnitude, combined_ts = diff_of_functions(
             self._magnitude,
             self._ts,
@@ -834,7 +834,7 @@ class Magnipy:
         Magnipy
             The sum of the magnitude functions
         """
-        
+
         combined_magnitude, combined_ts = sum_of_functions(
             self._magnitude,
             self._ts,

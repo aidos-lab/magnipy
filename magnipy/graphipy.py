@@ -33,7 +33,11 @@ from magnipy.utils.plots import (
 import numpy as np
 import copy
 import networkx as nx
-from magnipy.magnitude.compute import compute_magnitude_subgraphs, compute_magnitude_subgraphs_with_dist, compute_magnitude_from_distances
+from magnipy.magnitude.compute import (
+    compute_magnitude_subgraphs,
+    compute_magnitude_subgraphs_with_dist,
+    compute_magnitude_from_distances,
+)
 
 
 class Graphipy:
@@ -72,7 +76,7 @@ class Graphipy:
         X : array_like, shape (`n_obs`, `n_vars`)
             A dataset whose rows are observations and columns are features.
         G : networkx.Graph
-            A graph used to compute distances based on its subgraphs. 
+            A graph used to compute distances based on its subgraphs.
 
         Parameters for the evaluation scales:
         ts : array_like, shape (`n_ts`, )
@@ -102,7 +106,7 @@ class Graphipy:
             The mode of distance computation. Can be either 'attributes', 'structure', or 'full'.
         **kwargs :
             Additional keyword arguments passed to the distance computation function.
-        
+
         Parameters for the computation of magnitude:
         method : str
             The method to use to compute the magnitude functions.
@@ -129,15 +133,15 @@ class Graphipy:
             raise Exception(
                 "The mode of distance computation must be either 'attributes', 'structure', or 'full'."
             )
-        
+
         ### Check if the input matrix X is valid
         if X is not None:
             if not isinstance(X, np.ndarray):
                 raise Exception("The input matrix must be a numpy array.")
         else:
-            #if mode == "attributes" or mode == "full":
+            # if mode == "attributes" or mode == "full":
             if (mode == "structure") or (mode == "full"):
-                if (G is None):
+                if G is None:
                     raise Exception(
                         "The graph must be specified when mode is 'structure' or 'full'."
                     )
@@ -164,7 +168,11 @@ class Graphipy:
             raise Exception("The target proportion must be a float.")
 
         self._proportion_scattered = target_prop
-        if (scale_finding != "scattered") & (scale_finding != "convergence") & (scale_finding != "median_heuristic"):
+        if (
+            (scale_finding != "scattered")
+            & (scale_finding != "convergence")
+            & (scale_finding != "median_heuristic")
+        ):
             raise Exception(
                 "The scale finding method must be either 'scattered', 'convergence', or 'median_heuristic'."
             )
@@ -175,11 +183,11 @@ class Graphipy:
         if not isinstance(n_ts, int):
             raise Exception("n_ts must be an integer.")
         self._n_ts = n_ts
-        #self._compute_subgraphs = False
+        # self._compute_subgraphs = False
 
         ### Check if the adjacency matrix is valid
-        
-        #if G is not None:
+
+        # if G is not None:
         if not isinstance(G, nx.Graph):
             raise Exception("The input graph must be a networkx graph.")
         if X is not None:
@@ -189,18 +197,19 @@ class Graphipy:
                 )
             for i, feature in enumerate(X):
                 G.nodes[i]["feature"] = feature
-        #if not nx.is_connected(G):
+        # if not nx.is_connected(G):
         #    self._compute_subgraphs = True
 
         ### Setting up the distance computations and the similarity matrix
         self._G = G
         self._metric = metric
 
-        #self._X = X
+        # self._X = X
 
         if custom_dist_fn is not None:
             self._get_dist = custom_dist_fn
         else:
+
             def compute_distances(X=None, X2=None, G=None):
                 return get_dist(
                     X=X,
@@ -235,7 +244,7 @@ class Graphipy:
                 "The computation method must be one of 'cholesky', 'scipy', 'scipy_sym', 'naive', 'pinv', 'conjugate_gradient_iteration', 'cg', 'spread'."
             )
 
-        #if self._compute_subgraphs:
+        # if self._compute_subgraphs:
         def compute_mag(
             Zs,
             ts,
@@ -243,10 +252,10 @@ class Graphipy:
             get_weights=False,
             one_point_property=one_point_property,
             perturb_singularities=perturb_singularities,
-            positive_magnitude=positive_magnitude
+            positive_magnitude=positive_magnitude,
         ):
             mags = []
-            for Z in Zs: 
+            for Z in Zs:
                 mag = compute_magnitude_from_distances(
                     Z,
                     ts=ts,
@@ -260,17 +269,17 @@ class Graphipy:
                 mags.append(mag)
             total_magnitude = np.sum([mag for mag in mags], axis=0)
             return total_magnitude, ts
-        
+
         subgraphs, Ds = compute_subgraphs_with_dist(
             G, dist_fn=self._get_dist, subgraphs=None
         )
         self._subgraphs = subgraphs
         self._Ds = Ds
-        #self._D = self._get_dist(X, X2=None, Adj=self._Adj, G=self._G)
+        # self._D = self._get_dist(X, X2=None, Adj=self._Adj, G=self._G)
         self._n = self._G.number_of_nodes()
-        #self._D.shape[0]
+        # self._D.shape[0]
         self._target_value = target_prop * G.number_of_nodes()
-        #self._Z = similarity_matrix(self._D)
+        # self._Z = similarity_matrix(self._D)
         self._Zs = [similarity_matrix(D) for D in Ds]
 
         self._compute_mag = compute_mag
@@ -354,7 +363,10 @@ class Graphipy:
                     return self._compute_mag(X, ts)[0]
 
                 self._t_conv = guess_convergence_scale(
-                    D=self._Zs, comp_mag=comp_mag, target_value=self._target_value, guess=10
+                    D=self._Zs,
+                    comp_mag=comp_mag,
+                    target_value=self._target_value,
+                    guess=10,
                 )
 
             return self._t_conv
@@ -433,7 +445,9 @@ class Graphipy:
         if (self._t_median is None) | self._recompute:
             if self._compute_subgraphs:
                 raise Exception("Not implemented for subgraphs.")
-            self._t_median = median_heuristic(self._get_dist, G=None, subgraphs=self._subgraphs, Ds=self._Ds)
+            self._t_median = median_heuristic(
+                self._get_dist, G=None, subgraphs=self._subgraphs, Ds=self._Ds
+            )
         return self._t_median
 
     #  ╭──────────────────────────────────────────────────────────╮
@@ -451,7 +465,7 @@ class Graphipy:
         """
         if (self._weights is None) | self._recompute:
             ts = self.get_scales()
-            weights=[]
+            weights = []
             for Z in self._Zs:
                 w, ts = self._compute_mag(
                     Z=Z,
@@ -480,7 +494,7 @@ class Graphipy:
             (self._magnitude is None) & (self._weights is None)
         ) | self._recompute:
             ts = self.get_scales()
-        
+
             self._magnitude, ts = self._compute_mag(
                 self._Zs,
                 ts=ts,
@@ -517,7 +531,7 @@ class Graphipy:
         ts : array_like, shape (`n_ts_new`, )
             The new scales at which the magnitude function has been evaluated.
         """
-    
+
         mag, ts = self._compute_mag(
             self._Zs,
             ts=ts_new,
@@ -541,7 +555,7 @@ class Graphipy:
             The stepsize to use for exact computations of the slope.
         """
         if (self._magnitude_dimension_profile is None) | self._recompute:
-        
+
             if self._magnitude is None:
                 _, _ = self.get_magnitude()
             (
@@ -641,7 +655,7 @@ class Graphipy:
             magnitude_from_distances=self._compute_mag,
             magnitude_from_distances2=other._compute_mag,
         )
-        #combined._n_ts = len(combined._ts)
+        # combined._n_ts = len(combined._ts)
 
         return combined_magnitude, combined_ts
 
@@ -677,7 +691,7 @@ class Graphipy:
             magnitude_from_distances=self._compute_mag,
             magnitude_from_distances2=other._compute_mag,
         )
-        #combined._n_ts = len(combined._ts)
+        # combined._n_ts = len(combined._ts)
         return combined_magnitude, combined_ts
 
     #  ╭──────────────────────────────────────────────────────────╮

@@ -73,6 +73,7 @@ def distances_isomap(X, **kwargs):
     isom = isomap.fit(X)
     return isom.dist_matrix_
 
+
 def distances_scipy(X, X2, metric="cosine", **kwargs):
     """
     Compute the distance matrix using scipy.spatial.distance.cdist.
@@ -138,9 +139,11 @@ def distances_lp(X, X2, **kwargs):
     dist = distance_matrix(X, X2, p=p)
     return dist
 
+
 #  ╭──────────────────────────────────────────────────────────╮
 #  │ Attributed graph metrics                                 │
 #  ╰──────────────────────────────────────────────────────────╯
+
 
 def to_nx_graph(x, adj):
     G = nx.from_numpy_array(adj)
@@ -149,7 +152,10 @@ def to_nx_graph(x, adj):
         G.nodes[i]["feature"] = feature
     return G
 
-def distances_geodesic(X=None, X2=None, Adj=None, G=None, metric="euclidean", **kwargs):
+
+def distances_geodesic(
+    X=None, X2=None, Adj=None, G=None, metric="euclidean", **kwargs
+):
     """
     Compute a weighted / geodesic distance matrix from a graph.
 
@@ -178,7 +184,7 @@ def distances_geodesic(X=None, X2=None, Adj=None, G=None, metric="euclidean", **
 
     if G is None and Adj is None:
         raise Exception("Either a graph G or adjacencies A must be provided.")
-    
+
     if G is not None and Adj is not None:
         raise Exception("Provide either a graph G or adjacencies A, not both.")
 
@@ -205,6 +211,7 @@ def distances_geodesic(X=None, X2=None, Adj=None, G=None, metric="euclidean", **
 #  ╭──────────────────────────────────────────────────────────╮
 #  │ Graph Structure Metrics                                  │
 #  ╰──────────────────────────────────────────────────────────╯
+
 
 def diffusion_distance(G=None, A=None, **kwargs):
     """Calculate diffusion distance between vertices of a graph.
@@ -244,7 +251,7 @@ def diffusion_distance(G=None, A=None, **kwargs):
 
     if G is None and A is None:
         raise Exception("Either a graph G or adjacencies A must be provided.")
-    
+
     if G is not None and A is not None:
         raise Exception("Provide either a graph G or adjacencies A, not both.")
 
@@ -295,7 +302,7 @@ def heat_kernel_distance(G=None, A=None, **kwargs):
 
     if G is None and A is None:
         raise Exception("Either a graph G or adjacencies A must be provided.")
-    
+
     if G is not None and A is not None:
         raise Exception("Provide either a graph G or adjacencies A, not both.")
 
@@ -344,10 +351,10 @@ def resistance_distance(G=None, A=None, weight=None, **kwargs):
     """
     if G is None and A is None:
         raise Exception("Either a graph G or adjacencies A must be provided.")
-    
+
     if G is not None and A is not None:
         raise Exception("Provide either a graph G or adjacencies A, not both.")
-    
+
     if A is not None:
         G = nx.from_numpy_array(A)
 
@@ -387,10 +394,10 @@ def shortest_path_distance(G=None, A=None, weight=None, **kwargs):
     """
     if G is None and A is None:
         raise Exception("Either a graph G or adjacencies A must be provided.")
-    
+
     if G is not None and A is not None:
         raise Exception("Provide either a graph G or adjacencies A, not both.")
-    
+
     if A is not None:
         G = nx.from_numpy_array(A)
 
@@ -552,9 +559,8 @@ def remove_duplicates(X):
         )
     return X_unique
 
-def compute_subgraphs_with_dist(
-    G, dist_fn, subgraphs=None
-):
+
+def compute_subgraphs_with_dist(G, dist_fn, subgraphs=None):
     """
     Compute the magnitude of a graph using a specified distance function.
     The magnitude is computed across a fixed choice of scales.
@@ -596,21 +602,20 @@ def compute_subgraphs_with_dist(
     """
     if subgraphs is None:
         subgraphs = [G.subgraph(c).copy() for c in nx.connected_components(G)]
-    
+
     Ds = []
 
     for s in subgraphs:
         D = dist_fn(G=s)
         Ds.append(D)
 
-
     return subgraphs, Ds
-
 
 
 #  ╭──────────────────────────────────────────────────────────╮
 #  │ Choosing the right distance                              │
 #  ╰──────────────────────────────────────────────────────────╯
+
 
 def get_dist(
     X,
@@ -621,7 +626,7 @@ def get_dist(
     normalise_by_diameter=False,
     check_for_duplicates=True,
     mode="attributes",
-    **kwargs
+    **kwargs,
 ):
     """
     Compute the distance matrix.
@@ -671,7 +676,7 @@ def get_dist(
         if (X is None) and (G is not None):
             if G.nodes[0].get("feature") is not None:
                 X = np.array([G.nodes[i]["feature"] for i in G.nodes])
-        
+
         if X is None:
             raise Exception("No data provided to compute distances.")
 
@@ -684,34 +689,42 @@ def get_dist(
         elif metric in scipy_distance_metrics:
             dist = distances_scipy(X, X2, metric=metric, **kwargs)
         else:
-            raise Exception(f"Metric {metric} not yet implemented for attributes mode.")
+            raise Exception(
+                f"Metric {metric} not yet implemented for attributes mode."
+            )
 
     else:
         if (Adj is not None) or (G is not None):
             if mode == "structure":
                 if G is not None:
-                    #G = to_nx_graph(X, Adj)
+                    # G = to_nx_graph(X, Adj)
                     if G.number_of_edges() == 0:
                         n = G.number_of_nodes()
                         return np.zeros((n, n))
-                    #if Adj is not None:
+                    # if Adj is not None:
 
-                if metric =="shortest_path_distance":
+                if metric == "shortest_path_distance":
                     dist = shortest_path_distance(G=G, A=Adj, **kwargs)
-                elif metric =="resistance_distance":
+                elif metric == "resistance_distance":
                     dist = resistance_distance(G=G, A=Adj, **kwargs)
-                elif metric =="diffusion_distance":
+                elif metric == "diffusion_distance":
                     dist = diffusion_distance(G=G, A=Adj, **kwargs)
-                elif metric =="heat_kernel_distance":
+                elif metric == "heat_kernel_distance":
                     dist = heat_kernel_distance(G=G, A=Adj, **kwargs)
                 else:
-                    raise Exception(f"Metric {metric} not yet implemented for structure mode.")
+                    raise Exception(
+                        f"Metric {metric} not yet implemented for structure mode."
+                    )
             elif mode == "full":
                 if metric in scipy_distance_metrics:
-                    #dist = distances_geodesic(X=X, X2=X2, Adj=Adj, G=G, metric=metric, **kwargs)
-                    dist = distances_geodesic(X, X2, Adj=Adj, G=G, metric=metric, **kwargs)
+                    # dist = distances_geodesic(X=X, X2=X2, Adj=Adj, G=G, metric=metric, **kwargs)
+                    dist = distances_geodesic(
+                        X, X2, Adj=Adj, G=G, metric=metric, **kwargs
+                    )
                 else:
-                    raise Exception(f"Metric {metric} not yet implemented for full mode.")
+                    raise Exception(
+                        f"Metric {metric} not yet implemented for full mode."
+                    )
         else:
             raise Exception("No graph provided to compute graph distances.")
 
