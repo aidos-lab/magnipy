@@ -12,7 +12,7 @@ We introduce the following codebase to compute and compare the magnitude of metr
 ### `Magnipy`: For in-depth magnitude computations on a single metric space.
 
 The functionalities of `Magnipy` for an individual metric space include:  
-- Computing the metric space's **distance matrix**
+- Computing the metric space's **distance matrix** based on a feature space (attributes), adjecencies between observations (structure), or both features and adjecencies (full).
 - Calculating the **similarity matrix** from the distances
 - Executing an **automated scale-finding** procedure to find suitable evaluation scales
 - Computing the **magnitude weight** of each point across multiple distance scales
@@ -26,6 +26,14 @@ The functionalities of `Diversipy` for a list of spaces (that share the same dis
 - Computing **magnitude functions** across varying distance scales
 - Calculating **MagArea**, the area under a magnitude function, a multi-scale measure of the **intrinsic diversity** of a dataset
 - Calculating **MagDiff**, the area between magnitude functions, to measure the **difference in diversity** between datasets
+
+### `Graphipy`: For in-depth magnitude computations on a single metric graph.
+
+The functionalities of `Graphipy` for an individual metric graph include:  
+- Calculating the magnitude of a `networkx` graph by computing magnitude seperately for each disconnected subgraph
+- Computing the metric based of features (attributes), graph structure (structure), or both features and graph structure (full).
+- Other functionalities similar to `Magnipy`
+
 
 ## ⚙️ Dependencies
 
@@ -52,6 +60,7 @@ Tutorials demonstrating the main functionalities can be found under the `noteboo
 The following tutorials demonstrate how to initialize and utiltize the corresponding classes:
 - `magnipy_tutorial.ipynb`:  Using `Magnipy` for computing the magnitude of one metric space
 - `diversipy_tutorial.ipynb`: Using `Diversipy` for comparing the magnitude of multiple metric spaces
+- `magnipy_tutorial.ipynb`:  Using `Graphipy` for computing the magnitude of metric graphs
 
 The following supplementary demos are also provided:
 - `mode_dropping.ipynb`: Using `MagDiff` for detecting mode dropping / mode collapse
@@ -61,6 +70,14 @@ The following supplementary demos are also provided:
 Please consider citing our work!
 
 ```bibtex
+@inproceedings{limbeck2025geometry,
+  title         = {Geometry-aware Edge Pooling for Graph Neural Networks}, 
+  author        = {Katharina Limbeck and Lydia Mezrag and Guy Wolf and Bastian Rieck},
+  booktitle     = {Advances in Neural Information Processing Systems},
+  volume        = {38},
+  year          = {2025 (in press)}
+}
+
 @inproceedings{limbeck2024metric,
   title         = {Metric Space Magnitude for Evaluating the Diversity of Latent Representations}, 
   author        = {Katharina Limbeck and Rayna Andreeva and Rik Sarkar and Bastian Rieck},
