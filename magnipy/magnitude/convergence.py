@@ -1,7 +1,6 @@
-from scipy.optimize import toms748
+"Methods for approximating the convergence scale of the magnitude function."
 
-# from magnipy.magnitude.weights import similarity_matrix
-# from magnipy.magnitude.compute import magnitude_from_distances
+from scipy.optimize import toms748
 
 
 def mag_convergence(x0, x1, f=None, max_iterations=100):
@@ -71,7 +70,6 @@ def guess_convergence_scale(D, comp_mag, target_value, guess=10):
         lower_guess = guess
         guess = guess * 10
         f_guess = f(guess)
-    # print(f"Lower guess: {lower_guess}, Upper guess: {guess}")
-    # print(f_guess)
+
     t_conv = mag_convergence(lower_guess, guess, f, max_iterations=100)
     return t_conv

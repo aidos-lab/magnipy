@@ -1,3 +1,5 @@
+"Methods for comparing magnitude functions."
+
 import numpy as np
 from scipy.integrate import simpson, trapz
 from scipy.interpolate import interp1d
@@ -285,7 +287,7 @@ def combine_functions(
         interpolated2 = mag2
         xs_list = ts
     else:
-        if (exact) | (D is None) | (D2 is None):
+        if (not exact) | (D is None) | (D2 is None):
             try:
                 interpolated, interpolated2, xs_list = interpolate_functions(
                     mag, ts, mag2, ts2, kind="quadratic"

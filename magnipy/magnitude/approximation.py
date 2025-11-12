@@ -1,3 +1,5 @@
+"Methods for approximating magnitude."
+
 import torch
 import numpy as np
 from scipy.spatial import distance_matrix
