@@ -1,3 +1,5 @@
+"Methods for choosing the scale parameters."
+
 import numpy as np
 import networkx as nx
 
@@ -105,7 +107,7 @@ def median_heuristic_from_distances(D):
     return 1 / np.sqrt(median / 2)
 
 
-def median_heuristic(dist_fn, G=None, subgraphs=None):
+def median_heuristic(dist_fn, G=None, subgraphs=None, Ds=None):
     """
     Compute the median heuristic for the scale selection.
 
@@ -125,13 +127,19 @@ def median_heuristic(dist_fn, G=None, subgraphs=None):
     float
         The scale selected by the median heuristic.
     """
-    if subgraphs is None:
-        subgraphs = [G.subgraph(c).copy() for c in nx.connected_components(G)]
-    distances = []
-    for s in subgraphs:
-        D = dist_fn(s)
-        d_flat = D[np.triu_indices(D.shape[0], k=1)]
-        distances = distances + list(d_flat)
+    if Ds is None:
+        if subgraphs is None:
+            subgraphs = [G.subgraph(c).copy() for c in nx.connected_components(G)]
+        distances = []
+        for s in subgraphs:
+            D = dist_fn(s)
+            d_flat = D[np.triu_indices(D.shape[0], k=1)]
+            distances = distances + list(d_flat)
+    else:
+        distances = []
+        for D in Ds:
+            d_flat = D[np.triu_indices(D.shape[0], k=1)]
+            distances = distances + list(d_flat)
 
     median = np.median(distances)
     return 1 / np.sqrt(median / 2)

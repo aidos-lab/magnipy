@@ -1,15 +1,19 @@
+"Methods for computing the magnitude function."
+
 import numpy as np
 from magnipy.magnitude.distances import get_dist
 import numexpr as ne
 from magnipy.magnitude.weights import *
-from magnipy.magnitude.scales import get_scales
+from magnipy.magnitude.scales import get_scales, median_heuristic
 from magnipy.magnitude.convergence import (
     guess_convergence_scale,
-    median_heuristic,
 )
 import copy
 import networkx as nx
 
+#  ╭──────────────────────────────────────────────────────────╮
+#  │ Computing magnitude from distances                       │
+#  ╰──────────────────────────────────────────────────────────╯
 
 def compute_magnitude_from_distances(
     D,
@@ -119,6 +123,10 @@ def compute_magnitude_from_distances(
     else:
         return magnitude_from_weights(weights)
 
+#  ╭──────────────────────────────────────────────────────────╮
+#  │ Computing magnitude from distances                       │
+#  │ (until the convergence scale)                            │
+#  ╰──────────────────────────────────────────────────────────╯
 
 def compute_magnitude_until_convergence(
     D,
@@ -208,6 +216,80 @@ def compute_magnitude_until_convergence(
         ts,
     )
 
+def compute_t_conv(
+    D,
+    target_value,
+    method="cholesky",
+    positive_magnitude=False,
+    input_distances=True,
+):
+    """
+    Compute the scale at which the magnitude function has reached a certain target value
+    using numeric root-finding.
+    The target value is typically set to a high proportion of the cardinality.
+    This pocedure assumes the magnitude function is typically non-decreasing.
+
+    Parameters
+    ----------
+    D : array_like, shape (`n_obs`, `n_obs`)
+        A matrix of distances.
+    target_value : float
+        The value of margnitude that should be reached.
+        This value needs to be larger than 1 and smaller than the cardinality of the space.
+    method : str
+        The method used to compute the magnitude function.
+
+    Returns
+    -------
+    t_conv : float
+        The scaling parameter at which the magnitude function reaches the target value.
+
+    References
+    ----------
+    .. [1] Limbeck, K., Andreeva, R., Sarkar, R. and Rieck, B., 2024.
+        Metric Space Magnitude for Evaluating the Diversity of Latent Representations.
+        arXiv preprint arXiv:2311.16054.
+    """
+    if D.shape[0] == 1:
+        raise Exception(
+            "We cannot find the convergence scale for a one point space!"
+        )
+
+    def comp_mag(X, ts):
+        return compute_magnitude_from_distances(
+            X,
+            ts,
+            method=method,
+            one_point_property=True,
+            perturb_singularities=True,
+            positive_magnitude=positive_magnitude,
+            input_distances=False,
+        )
+
+    if target_value is None:
+        target_value = 0.95 * D.shape[0]
+    else:
+        if target_value >= D.shape[0]:
+            raise Exception(
+                "The target value needs to be smaller than the cardinality!"
+            )
+        if 0 >= target_value:
+            raise Exception("The target value needs to be larger than 0!")
+        # TODO also check for duplicates
+
+    if input_distances:
+        Z = similarity_matrix(D)
+    else:
+        Z = D
+
+    t_conv = guess_convergence_scale(
+        D=Z, comp_mag=comp_mag, target_value=target_value, guess=10
+    )
+    return t_conv
+
+#  ╭──────────────────────────────────────────────────────────╮
+#  │ Computing magnitude from data                            │
+#  ╰──────────────────────────────────────────────────────────╯
 
 def compute_magnitude(
     X,
@@ -303,85 +385,17 @@ def compute_magnitude(
     return magnitude, ts
 
 
-def compute_t_conv(
-    D,
-    target_value,
-    method="cholesky",
-    positive_magnitude=False,
-    input_distances=True,
-):
-    """
-    Compute the scale at which the magnitude function has reached a certain target value
-    using numeric root-finding.
-    The target value is typically set to a high proportion of the cardinality.
-    This pocedure assumes the magnitude function is typically non-decreasing.
-
-    Parameters
-    ----------
-    D : array_like, shape (`n_obs`, `n_obs`)
-        A matrix of distances.
-    target_value : float
-        The value of margnitude that should be reached.
-        This value needs to be larger than 1 and smaller than the cardinality of the space.
-    method : str
-        The method used to compute the magnitude function.
-
-    Returns
-    -------
-    t_conv : float
-        The scaling parameter at which the magnitude function reaches the target value.
-
-    References
-    ----------
-    .. [1] Limbeck, K., Andreeva, R., Sarkar, R. and Rieck, B., 2024.
-        Metric Space Magnitude for Evaluating the Diversity of Latent Representations.
-        arXiv preprint arXiv:2311.16054.
-    """
-    if D.shape[0] == 1:
-        raise Exception(
-            "We cannot find the convergence scale for a one point space!"
-        )
-
-    def comp_mag(X, ts):
-        return compute_magnitude_from_distances(
-            X,
-            ts,
-            method=method,
-            one_point_property=True,
-            perturb_singularities=True,
-            positive_magnitude=positive_magnitude,
-            input_distances=False,
-        )
-
-    if target_value is None:
-        target_value = 0.95 * D.shape[0]
-    else:
-        if target_value >= D.shape[0]:
-            raise Exception(
-                "The target value needs to be smaller than the cardinality!"
-            )
-        if 0 >= target_value:
-            raise Exception("The target value needs to be larger than 0!")
-        # TODO also check for duplicates
-
-    if input_distances:
-        Z = similarity_matrix(D)
-    else:
-        Z = D
-
-    t_conv = guess_convergence_scale(
-        D=Z, comp_mag=comp_mag, target_value=target_value, guess=10
-    )
-    return t_conv
-
 
 #  ╭──────────────────────────────────────────────────────────╮
-#  │ Computing Magnitude on (Sub)graphs using Graph Metrics   │
+#  │ Computing magnitude on (sub)graphs using graph metrics   │
 #  ╰──────────────────────────────────────────────────────────╯
 
 
 def compute_magnitude_subgraphs(
-    G, ts, dist_fn, subgraphs=None, method="cholesky", get_weights=False
+    G, ts, dist_fn, mode="structure", subgraphs=None, method="cholesky", get_weights=False, one_point_property=True,
+            perturb_singularities=True,
+            positive_magnitude=False,
+            input_distances=True
 ):
     """
     Compute the magnitude of a graph using a specified distance function.
@@ -422,17 +436,31 @@ def compute_magnitude_subgraphs(
     mags = []
 
     for s in subgraphs:
-        D = dist_fn(s)
+        if mode=="structure":
+            D = dist_fn(G=s)
+            #D = dist_fn(G=s)
+        elif mode=="attributes":
+            features = np.array(
+                [s.nodes[node]["feature"] for node in s.nodes()]
+            )
+            D = dist_fn(X=features)
+        elif mode=="full":
+            features = np.array(
+                [s.nodes[node]["feature"] for node in s.nodes()]
+            )
+            D = dist_fn(X=features, G=s)
+            #D_struct = dist_fn(G=s)
+            #D = D_attr + D_struct
 
         mag = compute_magnitude_from_distances(
             D,
             ts=ts,
             method=method,
             get_weights=get_weights,
-            one_point_property=True,
-            perturb_singularities=True,
-            positive_magnitude=False,
-            input_distances=True,
+            one_point_property=one_point_property,
+            perturb_singularities=perturb_singularities,
+            positive_magnitude=positive_magnitude,
+            input_distances=input_distances,
         )
         mags.append(mag)
 
@@ -497,7 +525,7 @@ def compute_magnitude_subgraphs_with_dist(
     Ds = []
 
     for s in subgraphs:
-        D = dist_fn(s)
+        D = dist_fn(G=s)
         Ds.append(D)
 
         mag = compute_magnitude_from_distances(
