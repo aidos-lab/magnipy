@@ -676,6 +676,7 @@ def get_dist(
         if (X is None) and (G is not None):
             if G.nodes[0].get("feature") is not None:
                 X = np.array([G.nodes[i]["feature"] for i in G.nodes])
+                X2 = X
 
         if X is None:
             raise Exception("No data provided to compute distances.")
