@@ -665,7 +665,7 @@ def get_dist(
 
     if mode in ["attributes", "full"]:
         if (X is None) and (G is not None):
-            if G.nodes[0].get("feature") is not None:
+            if G.nodes[G.nodes[0]].get("feature") is not None:
                 X = np.array([G.nodes[i]["feature"] for i in G.nodes])
             else:
                 raise Exception(
