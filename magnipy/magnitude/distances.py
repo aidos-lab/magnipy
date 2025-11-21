@@ -190,7 +190,7 @@ def distances_geodesic(
 
     if G is not None:
         if X is None:
-            if G.nodes[0].get("feature") is not None:
+            if G.nodes[G.nodes[0]].get("feature") is not None:
                 X = np.array([G.nodes[i]["feature"] for i in G.nodes])
         Adj = nx.adjacency_matrix(G).todense()
 
@@ -674,7 +674,7 @@ def get_dist(
 
     if mode == "attributes":
         if (X is None) and (G is not None):
-            if G.nodes[0].get("feature") is not None:
+            if G.nodes[G.nodes[0]].get("feature") is not None:
                 X = np.array([G.nodes[i]["feature"] for i in G.nodes])
                 X2 = X
 
