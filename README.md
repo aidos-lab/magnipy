@@ -60,7 +60,7 @@ Tutorials demonstrating the main functionalities can be found under the `noteboo
 The following tutorials demonstrate how to initialize and utiltize the corresponding classes:
 - `magnipy_tutorial.ipynb`:  Using `Magnipy` for computing the magnitude of one metric space
 - `diversipy_tutorial.ipynb`: Using `Diversipy` for comparing the magnitude of multiple metric spaces
-- `magnipy_tutorial.ipynb`:  Using `Graphipy` for computing the magnitude of metric graphs
+- `graphipy_tutorial.ipynb`:  Using `Graphipy` for computing the magnitude of metric graphs
 
 The following supplementary demos are also provided:
 - `mode_dropping.ipynb`: Using `MagDiff` for detecting mode dropping / mode collapse

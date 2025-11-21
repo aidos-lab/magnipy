@@ -53,7 +53,7 @@ class Graphipy:
         scale_finding="convergence",
         target_prop=0.95,
         # Parameters for the distance matrix
-        metric="euclidean",
+        metric="diffusion_distance", # mode structure and metric euclidean not compatible
         custom_dist_fn=None,
         mode="structure",
         G=None,
@@ -98,7 +98,7 @@ class Graphipy:
             'Lp', 'isomap',
             'braycurtis', 'canberra', 'chebyshev', 'cityblock', 'correlation',
             'cosine', 'dice', 'euclidean', 'hamming', 'jaccard', 'jensenshannon',
-            'kulczynski1', 'mahalanobis', 'matching', 'minkowski',
+            'kulczynski1', 'mahalanobis', 'matching', 'minkowski', 'precomputed',
             'rogerstanimoto', 'russellrao', 'seuclidean', 'sokalmichener',
             'sokalsneath', 'sqeuclidean', 'yule',
             "shortest_path_distance", "resistance_distance", "diffusion_distance", "heat_kernel_distance".
@@ -110,7 +110,7 @@ class Graphipy:
         Parameters for the computation of magnitude:
         method : str
             The method to use to compute the magnitude functions.
-            One of 'cholesky', 'scipy', 'scipy_sym', 'naive', 'pinv', 'conjugate_gradient_iteration', 'cg'.
+            One of 'cholesky', 'scipy', 'scipy_sym', 'spread', 'naive', 'pinv', 'conjugate_gradient_iteration', 'cg'.
         one_point_property : bool
             Whether to enforce the one-point property.
         perturb_singularities : bool
@@ -210,7 +210,7 @@ class Graphipy:
             self._get_dist = custom_dist_fn
         else:
 
-            def compute_distances(X=None, X2=None, G=None):
+            def compute_distances(X=X, X2=None, G=None):
                 return get_dist(
                     X=X,
                     X2=X2,
@@ -248,7 +248,7 @@ class Graphipy:
         def compute_mag(
             Zs,
             ts,
-            n_ts=n_ts,
+            n_ts=n_ts, #not used??
             get_weights=False,
             one_point_property=one_point_property,
             perturb_singularities=perturb_singularities,
@@ -371,7 +371,7 @@ class Graphipy:
 
             return self._t_conv
         elif self._scale_finding == "scattered":
-            return self._scale_when_almost_scattered(q=None)
+            return self._scale_when_almost_scattered(q=None) #not defined
         elif self._scale_finding == "median_heuristic":
             return self._median_heuristic_scale()
 
@@ -443,8 +443,8 @@ class Graphipy:
         from magnipy.magnitude.scales import median_heuristic
 
         if (self._t_median is None) | self._recompute:
-            if self._compute_subgraphs:
-                raise Exception("Not implemented for subgraphs.")
+            if self._compute_subgraphs: #no longer used?
+                raise Exception("Not implemented for subgraphs.") 
             self._t_median = median_heuristic(
                 self._get_dist, G=None, subgraphs=self._subgraphs, Ds=self._Ds
             )
@@ -476,7 +476,7 @@ class Graphipy:
             self._weights = weights
             self._ts = ts
             if self._ts is None:
-                self._t_conv = ts[-1]
+                self._t_conv = ts[-1] #?
         return self._weights, self._ts
 
     def get_magnitude(self):
@@ -501,7 +501,7 @@ class Graphipy:
                 get_weights=False,
             )
 
-            if self._ts is None:
+            if self._ts is None: #why
                 self._t_conv = ts[-1]
                 self._ts = ts
 
