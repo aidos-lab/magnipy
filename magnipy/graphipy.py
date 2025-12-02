@@ -210,7 +210,7 @@ class Graphipy:
             self._get_dist = custom_dist_fn
         else:
 
-            def compute_distances(X=X, X2=None, G=None):
+            def compute_distances(X=None, X2=None, G=None):
                 return get_dist(
                     X=X,
                     X2=X2,
