@@ -152,6 +152,29 @@ def to_nx_graph(x, adj):
         G.nodes[i]["feature"] = feature
     return G
 
+def to_attributed_graph(X, G):
+    """
+    Convert a dataset and a graph into an attributed graph.
+
+    Parameters
+    ----------
+    X : array_like, shape (`n_obs`, `n_vars`)
+        A dataset whose rows are observations and columns are features.
+    G : networkx.Graph
+        A graph whose number of nodes matches the number of observations in X.
+
+    Returns
+    -------
+    G_attr : networkx.Graph
+        An attributed graph where each node has a 'feature' attribute corresponding to the rows in X.
+    """
+    if G.number_of_nodes() != X.shape[0]:
+        raise ValueError("Number of nodes in G must match number of observations in X.")
+
+    for i, feature in enumerate(X):
+        G.nodes[i]["feature"] = feature
+    return G
+
 
 def distances_geodesic(
     X=None, X2=None, Adj=None, G=None, metric="euclidean", **kwargs
@@ -676,6 +699,7 @@ def get_dist(
         if (X is None) and (G is not None):
             if G.nodes[0].get("feature") is not None:
                 X = np.array([G.nodes[i]["feature"] for i in G.nodes])
+                X2 = X
 
         if X is None:
             raise Exception("No data provided to compute distances.")

@@ -18,7 +18,7 @@ from magnipy.magnitude.dimension import (
     magnitude_dimension,
     magnitude_dimension_profile_exact,
 )
-from magnipy.magnitude.distances import get_dist, compute_subgraphs_with_dist
+from magnipy.magnitude.distances import get_dist, compute_subgraphs_with_dist, to_attributed_graph
 from magnipy.magnitude.function_operations import (
     diff_of_functions,
     sum_of_functions,
@@ -138,6 +138,9 @@ class Graphipy:
         if X is not None:
             if not isinstance(X, np.ndarray):
                 raise Exception("The input matrix must be a numpy array.")
+            if G.nodes[0].get("feature") is not None:
+                raise Warning("The graph already has features assigned to its nodes. Overriding the features with the input X.")
+            G = to_attributed_graph(X, G)
         else:
             # if mode == "attributes" or mode == "full":
             if (mode == "structure") or (mode == "full"):
