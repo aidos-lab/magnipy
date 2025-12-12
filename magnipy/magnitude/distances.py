@@ -101,6 +101,8 @@ def distances_scipy(X, X2, metric="cosine", **kwargs):
     ----------
     .. [1] https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.distance.cdist.html
     """
+
+    # print(f'shape X1: {X.shape}, shape X2: {X2.shape}')
     p = kwargs.get("p", 2)
     if metric == "minkowski":
         dist = cdist(X, X2, metric=metric, p=p)
@@ -675,7 +677,8 @@ def get_dist(
     if mode == "attributes":
         if (X is None) and (G is not None):
             if G.nodes[0].get("feature") is not None:
-                X = np.array([G.nodes[i]["feature"] for i in G.nodes])
+                X = np.array([G.nodes[i]["feature"] for i in G.nodes]) #why do we define it again, shouldn't that be passed from graphipy object?
+                X2 = X
 
         if X is None:
             raise Exception("No data provided to compute distances.")
@@ -716,6 +719,12 @@ def get_dist(
                         f"Metric {metric} not yet implemented for structure mode."
                     )
             elif mode == "full":
+                if (X is None) and (
+                    G is not None
+                ):  # do this check together for mode full and attributes
+                    if G.nodes[0].get("feature") is not None:
+                        X = np.array([G.nodes[i]["feature"] for i in G.nodes])
+                        X2 = X
                 if metric in scipy_distance_metrics:
                     # dist = distances_geodesic(X=X, X2=X2, Adj=Adj, G=G, metric=metric, **kwargs)
                     dist = distances_geodesic(
