@@ -431,16 +431,12 @@ def magnitude_weights(
             except Exception as e:
                 if perturb_singularities:
                     print(f"Exception: {e} for t: {t} perturbing matrix")
-                    Z_new = Z**t + np.diag(np.random.normal(0, 1, (n)))  # perturb similarity mtx to invert
-                    print('we should try again?')
-                    # weights[:, i] = mag_fn(Z_new)
-                    try:
-                        weights[:, i] = mag_fn(Z_new)
-                    except Exception as enew:
-                        print('new perturbed matrix still singular... pass NaN weights')
-                        weights[:, i] = np.nan
+                    Z_new = Z**t + 0.01 * np.identity(
+                        n=n
+                    )  # perturb similarity mtx to invert
+                    weights[:, i] = mag_fn(Z_new)
                 else:
-                    raise Exception(f"Exception: {e} for t: {t}")
+                    raise Exception(f"Exception: {e} for t: {t}")  
     return weights  # np.array(
 
 
