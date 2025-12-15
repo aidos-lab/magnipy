@@ -215,7 +215,7 @@ def distances_geodesic(
 
     if G is not None:
         if X is None:
-            if G.nodes[0].get("feature") is not None:
+            if G.nodes[G.nodes[0]].get("feature") is not None:
                 X = np.array([G.nodes[i]["feature"] for i in G.nodes])
         Adj = nx.adjacency_matrix(G).todense()
 
@@ -688,6 +688,15 @@ def get_dist(
         A matrix of distances.
     """
 
+    if mode in ["attributes", "full"]:
+        if (X is None) and (G is not None):
+            if G.nodes[next(iter(G.nodes))].get("feature") is not None:
+                X = np.array([G.nodes[i]["feature"] for i in G.nodes])
+            else:
+                raise Exception(
+                    "No attribute data provided to compute distances."
+                )
+
     if check_for_duplicates and (X is not None):
         X = remove_duplicates(X)
 
@@ -699,7 +708,7 @@ def get_dist(
 
     if mode == "attributes":
         if (X is None) and (G is not None):
-            if G.nodes[0].get("feature") is not None:
+            if G.nodes[next(iter(G.nodes))].get("feature") is not None:
                 X = np.array([G.nodes[i]["feature"] for i in G.nodes]) #why do we define it again, shouldn't that be passed from graphipy object?
                 X2 = X
 
@@ -718,7 +727,6 @@ def get_dist(
             raise Exception(
                 f"Metric {metric} not yet implemented for attributes mode."
             )
-
     else:
         if (Adj is not None) or (G is not None):
             if mode == "structure":
