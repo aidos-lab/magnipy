@@ -18,7 +18,11 @@ from magnipy.magnitude.dimension import (
     magnitude_dimension,
     magnitude_dimension_profile_exact,
 )
-from magnipy.magnitude.distances import get_dist, compute_subgraphs_with_dist, to_attributed_graph
+from magnipy.magnitude.distances import (
+    get_dist,
+    compute_subgraphs_with_dist,
+    to_attributed_graph,
+)
 from magnipy.magnitude.function_operations import (
     diff_of_functions,
     sum_of_functions,
@@ -39,6 +43,8 @@ from magnipy.magnitude.compute import (
     compute_magnitude_from_distances,
 )
 
+import warnings
+
 
 class Graphipy:
     def __init__(
@@ -53,7 +59,7 @@ class Graphipy:
         scale_finding="convergence",
         target_prop=0.95,
         # Parameters for the distance matrix
-        metric="diffusion_distance", # mode structure and metric euclidean not compatible
+        metric="diffusion_distance",  # mode structure and metric euclidean not compatible
         custom_dist_fn=None,
         mode="structure",
         G=None,
@@ -139,7 +145,10 @@ class Graphipy:
             if not isinstance(X, np.ndarray):
                 raise Exception("The input matrix must be a numpy array.")
             if G.nodes[0].get("feature") is not None:
-                raise Warning("The graph already has features assigned to its nodes. Overriding the features with the input X.")
+                warnings.warn(
+                    '"The graph already has features assigned to its nodes. Overriding the features with the input X."'
+                )
+                # raise Warning("The graph already has features assigned to its nodes. Overriding the features with the input X.")
             G = to_attributed_graph(X, G)
         else:
             # if mode == "attributes" or mode == "full":
@@ -251,7 +260,7 @@ class Graphipy:
         def compute_mag(
             Zs,
             ts,
-            n_ts=n_ts, #not used??
+            n_ts=n_ts,  # not used??
             get_weights=False,
             one_point_property=one_point_property,
             perturb_singularities=perturb_singularities,
@@ -374,7 +383,7 @@ class Graphipy:
 
             return self._t_conv
         elif self._scale_finding == "scattered":
-            return self._scale_when_almost_scattered(q=None) #not defined
+            return self._scale_when_almost_scattered(q=None)  # not defined
         elif self._scale_finding == "median_heuristic":
             return self._median_heuristic_scale()
 
@@ -446,8 +455,8 @@ class Graphipy:
         from magnipy.magnitude.scales import median_heuristic
 
         if (self._t_median is None) | self._recompute:
-            if self._compute_subgraphs: #no longer used?
-                raise Exception("Not implemented for subgraphs.") 
+            if self._compute_subgraphs:  # no longer used?
+                raise Exception("Not implemented for subgraphs.")
             self._t_median = median_heuristic(
                 self._get_dist, G=None, subgraphs=self._subgraphs, Ds=self._Ds
             )
@@ -479,7 +488,7 @@ class Graphipy:
             self._weights = weights
             self._ts = ts
             if self._ts is None:
-                self._t_conv = ts[-1] #?
+                self._t_conv = ts[-1]  # ?
         return self._weights, self._ts
 
     def get_magnitude(self):
@@ -504,7 +513,7 @@ class Graphipy:
                 get_weights=False,
             )
 
-            if self._ts is None: #why
+            if self._ts is None:  # why
                 self._t_conv = ts[-1]
                 self._ts = ts
 
