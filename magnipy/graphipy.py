@@ -70,6 +70,7 @@ class Graphipy:
         positive_magnitude=False,
         # Other parameters
         recompute=False,
+        check_for_duplicates=False,
         name="",
         **kwargs,
     ):
@@ -230,6 +231,7 @@ class Graphipy:
                     metric=metric,
                     mode=mode,
                     normalise_by_diameter=False,
+                    check_for_duplicates=check_for_duplicates,
                     **kwargs,
                 )
 
