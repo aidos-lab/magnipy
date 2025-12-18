@@ -285,6 +285,10 @@ class Graphipy:
         subgraphs, Ds = compute_subgraphs_with_dist(
             G, dist_fn=self._get_dist, subgraphs=None
         )
+        #### Suggestion Nadja
+        # subgraphs, Ds = compute_subgraphs_with_dist( #maybe pass X and X2 to this function?
+        #     G, X=X, X2=X, dist_fn=self._get_dist, subgraphs=None
+        # )   
         self._subgraphs = subgraphs
         self._Ds = Ds
         # self._D = self._get_dist(X, X2=None, Adj=self._Adj, G=self._G)
