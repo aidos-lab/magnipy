@@ -22,6 +22,7 @@ from magnipy.magnitude.distances import (
     get_dist,
     compute_subgraphs_with_dist,
     to_attributed_graph,
+    remove_duplicates,
 )
 from magnipy.magnitude.function_operations import (
     diff_of_functions,
@@ -220,7 +221,35 @@ class Graphipy:
         # self._X = X
 
         if custom_dist_fn is not None:
-            self._get_dist = custom_dist_fn
+
+            def compute_custom_dist(X=None, X2=None, G=None):
+                if mode in ["attributes", "full"]:
+                    if (X is None) and (G is not None):
+                        if (
+                            G.nodes[next(iter(G.nodes))].get("feature")
+                            is not None
+                        ):
+                            X = np.array(
+                                [G.nodes[i]["feature"] for i in G.nodes]
+                            )
+                        else:
+                            raise Exception(
+                                "No attribute data provided to compute distances."
+                            )
+
+                if check_for_duplicates and (X is not None):
+                    X = remove_duplicates(X)
+                    print(f"shape X:{X.shape}")
+
+                if X2 is None:
+                    X2 = X
+                else:
+                    if check_for_duplicates and (X is not None):
+                        X2 = remove_duplicates(X2)
+                        print(f"shape X2: {X2.shape}")
+                return custom_dist_fn(X=X, X2=X2, G=G)
+
+            self._get_dist = compute_custom_dist
         else:
 
             def compute_distances(X=None, X2=None, G=None):
@@ -290,7 +319,7 @@ class Graphipy:
         #### Suggestion Nadja
         # subgraphs, Ds = compute_subgraphs_with_dist( #maybe pass X and X2 to this function?
         #     G, X=X, X2=X, dist_fn=self._get_dist, subgraphs=None
-        # )   
+        # )
         self._subgraphs = subgraphs
         self._Ds = Ds
         # self._D = self._get_dist(X, X2=None, Adj=self._Adj, G=self._G)
