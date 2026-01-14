@@ -154,6 +154,7 @@ def to_nx_graph(x, adj):
         G.nodes[i]["feature"] = feature
     return G
 
+
 def to_attributed_graph(X, G):
     """
     Convert a dataset and a graph into an attributed graph.
@@ -171,7 +172,9 @@ def to_attributed_graph(X, G):
         An attributed graph where each node has a 'feature' attribute corresponding to the rows in X.
     """
     if G.number_of_nodes() != X.shape[0]:
-        raise ValueError("Number of nodes in G must match number of observations in X.")
+        raise ValueError(
+            "Number of nodes in G must match number of observations in X."
+        )
 
     for i, feature in enumerate(X):
         G.nodes[i]["feature"] = feature
@@ -229,8 +232,17 @@ def distances_geodesic(
         weighted_adjacency = Adj * feature_distances
 
     # Step 3: Compute geodesic distances using Dijkstra's algorithm on the weighted adjacency matrix
-    geodesic_distances = shortest_path(weighted_adjacency, directed=False)
-    return geodesic_distances
+    # geodesic_distances = shortest_path(weighted_adjacency, directed=False)
+    nx_geodesic_dist_dict = dict(
+        nx.shortest_path_length(
+            G, weight=lambda u, v, d: feature_distances[u][v]
+        )
+    )
+    nx_shortest_path_lengths = np.array(
+        [[nx_geodesic_dist_dict[i][j] for j in G.nodes()] for i in G.nodes()]
+    )
+
+    return nx_shortest_path_lengths
 
 
 #  ╭──────────────────────────────────────────────────────────╮
@@ -632,6 +644,8 @@ def compute_subgraphs_with_dist(G, dist_fn, subgraphs=None):
 
     for s in subgraphs:
         D = dist_fn(G=s)
+        ### Suggestion Nadja
+        # D = dist_fn(G=s, X=X, X2=X2)
         Ds.append(D)
 
     return subgraphs, Ds
@@ -699,17 +713,21 @@ def get_dist(
 
     if check_for_duplicates and (X is not None):
         X = remove_duplicates(X)
+        print(f"shape X:{X.shape}")
 
     if X2 is None:
         X2 = X
     else:
         if check_for_duplicates and (X is not None):
             X2 = remove_duplicates(X2)
+            print(f"shape X2: {X2.shape}")
 
     if mode == "attributes":
         if (X is None) and (G is not None):
             if G.nodes[next(iter(G.nodes))].get("feature") is not None:
-                X = np.array([G.nodes[i]["feature"] for i in G.nodes]) #why do we define it again, shouldn't that be passed from graphipy object?
+                X = np.array(
+                    [G.nodes[i]["feature"] for i in G.nodes]
+                )  # why do we define it again, shouldn't that be passed from graphipy object?
                 X2 = X
 
         if X is None:
