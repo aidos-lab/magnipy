@@ -621,7 +621,7 @@ def create_all_animations():
 
 
 def plot_graphs(
-    graphs, positions, graphnames, features=None, featurenames=None
+    graphs, positions, graphnames, features=None, featurenames=None, title=None
 ):
     if positions == None:
         positions = [nx.spring_layout(G) for G in graphs]
@@ -658,10 +658,10 @@ def plot_graphs(
             ax[j].spines["right"].set_visible(False)
             ax[j].spines["bottom"].set_visible(False)
 
-            ax[j].set_title(graphnames[j], fontsize='x-large')
+            ax[j].set_title(graphnames[j], fontsize="x-large")
 
-        ax[0].set_ylabel(featurenames[0], fontsize='x-large')
-
+        ax[0].set_ylabel(featurenames[0], fontsize="x-large")
+        fig.suptitle(title, fontsize=18, y=1.05)
         plt.show()
     else:
         for i in range(len(features)):
@@ -684,15 +684,15 @@ def plot_graphs(
                 ax[i, j].spines["bottom"].set_visible(False)
 
         for j in range(len(graphs)):
-            ax[0, j].set_title(graphnames[j], fontsize='x-large')
+            ax[0, j].set_title(graphnames[j], fontsize="x-large")
 
         for i in range(len(features)):
-            ax[i, 0].set_ylabel(featurenames[i], fontsize='x-large')
-
+            ax[i, 0].set_ylabel(featurenames[i], fontsize="x-large")
+        fig.suptitle(title, fontsize=18, y=0.95)
         plt.show()
 
 
-def plot_mag_funs(cols, graphnames, magnis, ts):
+def plot_mag_funs(cols, graphnames, magnis, ts, title):
     fig, ax = plt.subplots(1, len(cols), figsize=(5 * len(cols), 5))
 
     for i, col in enumerate(cols):
@@ -705,8 +705,11 @@ def plot_mag_funs(cols, graphnames, magnis, ts):
 
     ax[0].set_ylabel("magnitude function", fontsize=14)
 
+    fig.suptitle(title, fontsize=18, y=1)
+
     plt.show()
-    
+
+
 def plot_dist_matrices(graphis, graphnames, rows, metrics):
     fig = plt.figure(figsize=(11.5, len(rows) * 3.125))
     subfigs = fig.subfigures(len(rows), 1, wspace=0.07, hspace=0.07)
