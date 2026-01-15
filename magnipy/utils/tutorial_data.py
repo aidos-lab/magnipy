@@ -14,6 +14,7 @@ from .datasets import (
 from .plots import plot_points
 import bisect
 from matplotlib.animation import FuncAnimation
+import networkx as nx
 
 #  ╭──────────────────────────────────────────────────────────╮
 #  │ Diversipy Tutorial                                       │
@@ -613,3 +614,140 @@ def create_all_animations():
 
 
 # create_all_animations()
+
+#  ╭──────────────────────────────────────────────────────────╮
+#  │ Graphipy Tutorial                                        │
+#  ╰──────────────────────────────────────────────────────────╯
+
+
+def plot_graphs(
+    graphs, positions, graphnames, features=None, featurenames=None
+):
+    if positions == None:
+        positions = [nx.spring_layout(G) for G in graphs]
+
+    if features == None:
+        features = [
+            [
+                np.reshape(np.array([0] * G.number_of_nodes()), (-1, 1))
+                for G in graphs
+            ]
+        ]
+        featurenames = ["1 class"]
+
+    fig, ax = plt.subplots(
+        len(features), len(graphs), figsize=(len(graphs) * 4, len(features) * 4)
+    )
+
+    if len(features) == 1:
+        for j, G in enumerate(graphs):
+            nx.draw_networkx(
+                G=G,
+                pos=positions[j],
+                ax=ax[j],
+                with_labels=False,
+                node_size=80,
+                node_color=features[0][j],
+                cmap="plasma",
+                vmin=0,
+                vmax=5,
+                width=0.5,
+            )
+            ax[j].spines["top"].set_visible(False)
+            ax[j].spines["left"].set_visible(False)
+            ax[j].spines["right"].set_visible(False)
+            ax[j].spines["bottom"].set_visible(False)
+
+            ax[j].set_title(graphnames[j], fontsize='x-large')
+
+        ax[0].set_ylabel(featurenames[0], fontsize='x-large')
+
+        plt.show()
+    else:
+        for i in range(len(features)):
+            for j, G in enumerate(graphs):
+                nx.draw_networkx(
+                    G=G,
+                    pos=positions[j],
+                    ax=ax[i, j],
+                    with_labels=False,
+                    node_size=80,
+                    node_color=features[i][j],
+                    cmap="plasma",
+                    vmin=0,
+                    vmax=5,
+                    width=0.5,
+                )
+                ax[i, j].spines["top"].set_visible(False)
+                ax[i, j].spines["left"].set_visible(False)
+                ax[i, j].spines["right"].set_visible(False)
+                ax[i, j].spines["bottom"].set_visible(False)
+
+        for j in range(len(graphs)):
+            ax[0, j].set_title(graphnames[j], fontsize='x-large')
+
+        for i in range(len(features)):
+            ax[i, 0].set_ylabel(featurenames[i], fontsize='x-large')
+
+        plt.show()
+
+
+def plot_mag_funs(cols, graphnames, magnis, ts):
+    fig, ax = plt.subplots(1, len(cols), figsize=(5 * len(cols), 5))
+
+    for i, col in enumerate(cols):
+        for j, graphname in enumerate(graphnames):
+            ax[i].plot(ts, magnis[col][j], label=graphname)
+            ax[i].legend(loc="lower right")
+            ax[i].set_title(col, fontsize=14)
+            ax[i].spines["top"].set_visible(False)
+            ax[i].spines["right"].set_visible(False)
+
+    ax[0].set_ylabel("magnitude function", fontsize=14)
+
+    plt.show()
+    
+def plot_dist_matrices(graphis, graphnames, rows, metrics):
+    fig = plt.figure(figsize=(11.5, len(rows) * 3.125))
+    subfigs = fig.subfigures(len(rows), 1, wspace=0.07, hspace=0.07)
+
+    for i, row in enumerate(rows):
+        matrices = {
+            graphnames[i]: graphis[row][i].get_dist()
+            for i in range(len(graphnames))
+        }
+        axs = subfigs[i].subplots(1, 3, sharey=False)
+        vmin = min([matrices[i][0].min() for i in matrices.keys()])
+        vmax = max(
+            [
+                np.ma.masked_invalid(matrices[i][0].max())
+                for i in matrices.keys()
+            ]
+        )
+        for j, name in enumerate(matrices):
+            heatmap = axs[j].imshow(
+                matrices[name][0], cmap="viridis", vmin=vmin, vmax=vmax
+            )
+
+            axs[j].set_title(name, fontsize=11)
+            axs[j].spines["top"].set_visible(False)
+            axs[j].spines["right"].set_visible(False)
+            axs[j].spines["left"].set_visible(False)
+            axs[j].spines["bottom"].set_visible(False)
+
+            axs[0].set_ylabel("Vertex")
+            axs[0].set_xlabel("Vertex")
+
+        subfigs[i].colorbar(
+            heatmap,
+            ax=axs,
+            orientation="vertical",
+            location="right",
+            label=metrics[i],
+            shrink=0.8,
+        )
+
+        subfigs[i].suptitle(row, x=0.5, y=1.025, fontsize="large")
+        fig.suptitle("Distance matrices", y=1.035, fontsize="xx-large")
+
+    plt.show()
