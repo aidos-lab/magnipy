@@ -436,7 +436,7 @@ def magnitude_weights(
                     )  # perturb similarity mtx to invert
                     weights[:, i] = mag_fn(Z_new)
                 else:
-                    raise Exception(f"Exception: {e} for t: {t}")  
+                    raise Exception(f"Exception: {e} for t: {t}")
     return weights  # np.array(
 
 
