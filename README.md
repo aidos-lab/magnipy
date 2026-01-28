@@ -75,7 +75,7 @@ Please consider citing our work!
   author        = {Katharina Limbeck and Lydia Mezrag and Guy Wolf and Bastian Rieck},
   booktitle     = {Advances in Neural Information Processing Systems},
   volume        = {38},
-  year          = {2025 (in press)}
+  year          = {2025}
 }
 
 @inproceedings{limbeck2024metric,
