@@ -552,7 +552,8 @@ def compute_magnitude_subgraphs_with_dist(
         )
         mags.append(mag)
 
-    total_magnitude = np.sum([mag for mag in mags], axis=0)
+    mags = np.concatenate(mags)
+    total_magnitude = np.sum(mags, axis=0)
 
     return total_magnitude, ts, subgraphs, Ds, mags
 
