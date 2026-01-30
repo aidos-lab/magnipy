@@ -1,5 +1,4 @@
 """File for creating example datasets for user tutorials."""
-
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -692,7 +691,7 @@ def plot_graphs(
         plt.show()
 
 
-def plot_mag_funs(cols, graphnames, magnis, ts, title):
+def plot_mag_funs(cols, graphnames, magnis, ts, title, type='magnitude'):
     fig, ax = plt.subplots(1, len(cols), figsize=(5 * len(cols), 5))
 
     for i, col in enumerate(cols):
@@ -703,7 +702,10 @@ def plot_mag_funs(cols, graphnames, magnis, ts, title):
             ax[i].spines["top"].set_visible(False)
             ax[i].spines["right"].set_visible(False)
 
-    ax[0].set_ylabel("magnitude function", fontsize=14)
+    if type == 'magnitude':
+        ax[0].set_ylabel("magnitude", fontsize=14)
+    elif type == 'spread':
+        ax[0].set_ylabel('spread', fontsize=14)
 
     fig.suptitle(title, fontsize=18, y=1)
 
