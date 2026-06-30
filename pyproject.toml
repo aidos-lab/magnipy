@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "magnipy"
-version = "0.1.1"
+version = "0.1.2"
 description = "A framework for computing the magnitude of a metric space."
 authors = ["LimbeckKat <katharina.limbeck@helmholtz-munich.de>"]
 repository="https://github.com/aidos-lab/magnipy"
@@ -11,11 +11,10 @@ include = ["README.md", "LICENSE"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-scipy = "==1.13.0"
+scipy = "^1.13.0"
 krypy = "^2.2.0"
 matplotlib = "^3.8.3"
-scikit-learn = "^1.4.1.post1"
-ipykernel = "^6.29.3"
+scikit-learn = "^1.4.1"
 numba = "^0.59.1"
 numexpr = "^2.10.1"
 torch = "^2.4.1"
@@ -26,9 +25,10 @@ filterwarnings = [
     "ignore::DeprecationWarning:scipy.sparse.sputils"
 ]
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^8.3.3"
 black = "^24.10.0"
+ipykernel = "^6.29.3"
 
 [tool.poetry.scripts]
 magnipy = "magnipy.magnipy:Magnipy"
