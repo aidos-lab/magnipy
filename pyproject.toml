@@ -8,6 +8,7 @@ keywords = ["metric space magnitude"]
 license = "BSD-3-Clause"
 readme = "README.md"
 include = ["README.md", "LICENSE"]
+requires-python = ">=3.10,<3.13"
 
 [tool.poetry.dependencies]
 python = "^3.10"
