@@ -250,7 +250,7 @@ class Diversipy:
             self._ts = ts
         else:
             t_convs = None
-        
+
         Mags = []
         for i, X in enumerate(self._Xs):
             Mag = Magnipy(
