@@ -248,12 +248,12 @@ class Diversipy:
             t_convs = self.get_t_convs()
             ts = self.get_common_scales(quantile=quantile)
             self._ts = ts
-
+        
         Mags = []
         for i, X in enumerate(self._Xs):
             Mag = Magnipy(
                 X,
-                ts=ts,
+                ts=self._ts,
                 scale_finding="convergence",
                 target_prop=self._target_prop,
                 method=self._method,

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "magnipy"
-version = "0.1.0"
+version = "0.1.1"
 description = "A framework for computing the magnitude of a metric space."
 authors = ["LimbeckKat <katharina.limbeck@helmholtz-munich.de>"]
 repository="https://github.com/aidos-lab/magnipy"
@@ -20,7 +20,6 @@ numba = "^0.59.1"
 numexpr = "^2.10.1"
 torch = "^2.4.1"
 seaborn = "^0.13.2"
-black = "==24.10.0"
 
 [tool.pytest.ini_options]
 filterwarnings = [
@@ -29,6 +28,7 @@ filterwarnings = [
 
 [tool.poetry.dev-dependencies]
 pytest = "^8.3.3"
+black = "^24.10.0"
 
 [tool.poetry.scripts]
 magnipy = "magnipy.magnipy:Magnipy"
