@@ -255,7 +255,9 @@ def compute_t_conv(
         arXiv preprint arXiv:2311.16054.
     """
     if D.shape[0] == 1:
-        raise Exception("We cannot find the convergence scale for a one point space!")
+        raise Exception(
+            "We cannot find the convergence scale for a one point space!"
+        )
 
     def comp_mag(X, ts):
         return compute_magnitude_from_distances(
@@ -450,10 +452,14 @@ def compute_magnitude_subgraphs(
             D = dist_fn(G=s)
             # D = dist_fn(G=s)
         elif mode == "attributes":
-            features = np.array([s.nodes[node]["feature"] for node in s.nodes()])
+            features = np.array(
+                [s.nodes[node]["feature"] for node in s.nodes()]
+            )
             D = dist_fn(X=features)
         elif mode == "full":
-            features = np.array([s.nodes[node]["feature"] for node in s.nodes()])
+            features = np.array(
+                [s.nodes[node]["feature"] for node in s.nodes()]
+            )
             D = dist_fn(X=features, G=s)
             # D_struct = dist_fn(G=s)
             # D = D_attr + D_struct
@@ -640,7 +646,9 @@ def compute_magnitude_graph(
                         "The target value needs to be smaller than the cardinality!"
                     )
                 if 0 >= target_value:
-                    raise Exception("The target value needs to be larger than 0!")
+                    raise Exception(
+                        "The target value needs to be larger than 0!"
+                    )
 
             t_conv = guess_convergence_scale(
                 G, comp_mag=comp_mag, target_value=target_value, guess=10

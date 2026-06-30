@@ -53,9 +53,9 @@ def cut_until_scale(
 
     if D is None:
         # Perform linear interpolation to find f(x_cut)
-        f_x_cut = interp1d(x_sorted, y_sorted, kind=kind, fill_value="extrapolate")(
-            t_cut
-        )
+        f_x_cut = interp1d(
+            x_sorted, y_sorted, kind=kind, fill_value="extrapolate"
+        )(t_cut)
     else:
         f_x_cut = magnitude_from_distances(D, [t_cut], method)[0]
 

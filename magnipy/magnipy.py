@@ -226,7 +226,9 @@ class Magnipy:
             self._Z = similarity_matrix(self._D)
         else:
             if X.shape[0] != X.shape[1]:
-                raise Exception("The precomputed distance matrix must be square.")
+                raise Exception(
+                    "The precomputed distance matrix must be square."
+                )
 
             self._X = None
             self._D = X
@@ -369,7 +371,9 @@ class Magnipy:
         if (self._ts is None) | self._recompute:
             if self._scale_finding == "scattered":
                 if (self._proportion_scattered is None) | self._recompute:
-                    _ = self._scale_when_almost_scattered(q=self._proportion_scattered)
+                    _ = self._scale_when_almost_scattered(
+                        q=self._proportion_scattered
+                    )
                 self._ts = get_scales(
                     self._t_almost_scattered,
                     self._n_ts,
@@ -517,7 +521,9 @@ class Magnipy:
         ts : array_like, shape (`n_ts`, )
             The scales at which the magnitude function has been evaluated.
         """
-        if ((self._magnitude is None) & (self._weights is None)) | self._recompute:
+        if (
+            (self._magnitude is None) & (self._weights is None)
+        ) | self._recompute:
             ts = self.get_scales()
             self._magnitude, ts = self._compute_mag(
                 self._Z,

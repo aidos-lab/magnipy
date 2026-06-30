@@ -51,7 +51,9 @@ def weights_cholesky_torch(Z):
     x = torch.linalg.solve_triangular(
         L, torch.ones(Z.shape[0], 1), upper=False
     )  ## L x = 1
-    w = torch.linalg.solve_triangular(L, x.T, upper=False, left=False)  # w L = x.T
+    w = torch.linalg.solve_triangular(
+        L, x.T, upper=False, left=False
+    )  # w L = x.T
     return w
 
 
