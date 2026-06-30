@@ -248,6 +248,8 @@ class Diversipy:
             t_convs = self.get_t_convs()
             ts = self.get_common_scales(quantile=quantile)
             self._ts = ts
+        else:
+            t_convs = None
         
         Mags = []
         for i, X in enumerate(self._Xs):
