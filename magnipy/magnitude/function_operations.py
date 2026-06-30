@@ -1,3 +1,5 @@
+"Methods for comparing magnitude functions."
+
 import numpy as np
 from scipy.integrate import simpson, trapz
 from scipy.interpolate import interp1d
@@ -285,7 +287,7 @@ def combine_functions(
         interpolated2 = mag2
         xs_list = ts
     else:
-        if (exact) | (D is None) | (D2 is None):
+        if (not exact) | (D is None) | (D2 is None):
             try:
                 interpolated, interpolated2, xs_list = interpolate_functions(
                     mag, ts, mag2, ts2, kind="quadratic"
@@ -499,13 +501,16 @@ def mag_diff(
         t_cut=t_cut,
     )
 
-    area = area_under_curve(
-        ts=ts_list,
-        magnitude=diff_of_interpolated_vectors,
-        integration=integration,
-        absolute_area=absolute_area,
-        scale=scale,
-    )
+    if len(ts_list) == 1:
+        area = magnitude[0] - magnitude2[0]
+    else:
+        area = area_under_curve(
+            ts=ts_list,
+            magnitude=diff_of_interpolated_vectors,
+            integration=integration,
+            absolute_area=absolute_area,
+            scale=scale,
+        )
     if plot:
         plt.plot(
             ts_list,
@@ -516,6 +521,25 @@ def mag_diff(
         plt.ylabel("difference between magnitude functions")
         plt.title(f"MagDiff {round(area,2)}")
     return area
+
+
+def get_magdiff(mag1, mag2, ts):
+    """
+    Compute the difference between the magnitude (functions) of two spaces.
+    """
+    if len(ts) == 1:
+        return mag2[0] - mag1[0]
+    else:
+        return mag_diff(
+            magnitude=mag1,
+            D=None,
+            D2=None,
+            magnitude2=mag2,
+            ts=ts,
+            ts2=ts,
+            scale=False,
+            absolute_area=False,
+        )
 
 
 def mag_area(

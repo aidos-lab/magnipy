@@ -18,7 +18,12 @@ from magnipy.magnitude.dimension import (
     magnitude_dimension,
     magnitude_dimension_profile_exact,
 )
-from magnipy.magnitude.distances import get_dist
+from magnipy.magnitude.distances import (
+    get_dist,
+    compute_subgraphs_with_dist,
+    to_attributed_graph,
+    remove_duplicates,
+)
 from magnipy.magnitude.function_operations import (
     diff_of_functions,
     sum_of_functions,
@@ -33,10 +38,16 @@ from magnipy.utils.plots import (
 import numpy as np
 import copy
 import networkx as nx
-from magnipy.magnitude.compute import compute_magnitude_subgraphs
+from magnipy.magnitude.compute import (
+    compute_magnitude_subgraphs,
+    compute_magnitude_subgraphs_with_dist,
+    compute_magnitude_from_distances,
+)
+
+import warnings
 
 
-class Magnipy:
+class Graphipy:
     def __init__(
         self,
         # Input data parameters
@@ -49,10 +60,10 @@ class Magnipy:
         scale_finding="convergence",
         target_prop=0.95,
         # Parameters for the distance matrix
-        metric="euclidean",
+        metric="diffusion_distance",  # mode structure and metric euclidean not compatible
         custom_dist_fn=None,
-        mode="attributes",
-        Adj=None,
+        mode="structure",
+        G=None,
         # Parameters for the computation of magnitude
         method="cholesky",
         one_point_property=True,
@@ -60,20 +71,20 @@ class Magnipy:
         positive_magnitude=False,
         # Other parameters
         recompute=False,
+        check_for_duplicates=False,
         name="",
         **kwargs,
     ):
         """
-        Initialises a Magnipy object.
+        Initialises a Graphipy object.
 
         Parameters
         ----------
         Input data parameters:
         X : array_like, shape (`n_obs`, `n_vars`)
             A dataset whose rows are observations and columns are features.
-        Adj : array_like, shape (`n_obs`, `n_obs`)
-            An adjacency matrix used to compute geodesic or structure-based distances. If None, all points are adjacent.
-            Don't use Magnipy with disconnected graphs! Use Graphipy instead.
+        G : networkx.Graph
+            A graph used to compute distances based on its subgraphs.
 
         Parameters for the evaluation scales:
         ts : array_like, shape (`n_ts`, )
@@ -95,11 +106,10 @@ class Magnipy:
             'Lp', 'isomap',
             'braycurtis', 'canberra', 'chebyshev', 'cityblock', 'correlation',
             'cosine', 'dice', 'euclidean', 'hamming', 'jaccard', 'jensenshannon',
-            'kulczynski1', 'mahalanobis', 'matching', 'minkowski',
+            'kulczynski1', 'mahalanobis', 'matching', 'minkowski', 'precomputed',
             'rogerstanimoto', 'russellrao', 'seuclidean', 'sokalmichener',
             'sokalsneath', 'sqeuclidean', 'yule',
-            "shortest_path_distance", "resistance_distance", "diffusion_distance", "heat_kernel_distance",
-            or "precomputed".
+            "shortest_path_distance", "resistance_distance", "diffusion_distance", "heat_kernel_distance".
         mode : str
             The mode of distance computation. Can be either 'attributes', 'structure', or 'full'.
         **kwargs :
@@ -108,7 +118,7 @@ class Magnipy:
         Parameters for the computation of magnitude:
         method : str
             The method to use to compute the magnitude functions.
-            One of 'cholesky', 'scipy', 'scipy_sym', 'naive', 'pinv', 'conjugate_gradient_iteration', 'cg'.
+            One of 'cholesky', 'scipy', 'scipy_sym', 'spread', 'naive', 'pinv', 'conjugate_gradient_iteration', 'cg'.
         one_point_property : bool
             Whether to enforce the one-point property.
         perturb_singularities : bool
@@ -118,12 +128,12 @@ class Magnipy:
         recompute : bool
             Whether to recompute the magnitude functions if they have already been computed.
         name : str
-            The name of the Magnipy object.
+            The name of the Graphipy object.
 
         Returns
         -------
-        Magnipy
-            A Magnipy object.
+        Graphipy :
+            A Graphipy object.
         """
 
         self._mode = mode
@@ -136,27 +146,34 @@ class Magnipy:
         if X is not None:
             if not isinstance(X, np.ndarray):
                 raise Exception("The input matrix must be a numpy array.")
+            if G.nodes[0].get("feature") is not None:
+                warnings.warn(
+                    '"The graph already has features assigned to its nodes. Overriding the features with the input X."'
+                )
+                # raise Warning("The graph already has features assigned to its nodes. Overriding the features with the input X.")
+            G = to_attributed_graph(X, G)
         else:
             # if mode == "attributes" or mode == "full":
             if (mode == "structure") or (mode == "full"):
-                if Adj is None:
-                    raise Exception("The adjacency matrix must be specified.")
+                if G is None:
+                    raise Exception(
+                        "The graph must be specified when mode is 'structure' or 'full'."
+                    )
             if (mode == "attributes") or (mode == "full"):
-                if X is None:
-                    raise Exception("The input matrix X must be specified.")
-
-        # if Adj is None:
-        #    raise Exception(
-        #        "Either the input matrix or the adjacency matrix must be specified."
-        #    )
+                if G is not None:
+                    if G.nodes[0].get("feature") is not None:
+                        X = np.array([G.nodes[i]["feature"] for i in G.nodes])
+                    else:
+                        raise Exception(
+                            "Either the input matrix X must be specified or the graph nodes must have a 'feature' attribute."
+                        )
 
         ### Check if the inputs used for scale-finding are valid
         if isinstance(target_prop, float):
             if X is None:
-                min_mag = 1 / Adj.shape[0]
+                min_mag = 1 / G.number_of_nodes()
             else:
                 min_mag = 1 / X.shape[0]
-
             if (target_prop < min_mag) | (target_prop > 1):
                 raise Exception(
                     f"The target proportion must be between {min_mag} and 1."
@@ -180,61 +197,74 @@ class Magnipy:
         if not isinstance(n_ts, int):
             raise Exception("n_ts must be an integer.")
         self._n_ts = n_ts
+        # self._compute_subgraphs = False
 
         ### Check if the adjacency matrix is valid
-        if Adj is not None:
-            if not isinstance(Adj, np.ndarray):
-                raise Exception("The adjacency matrix must be a numpy array.")
-            if X is not None:
-                if Adj.shape[0] != X.shape[0]:
-                    raise Exception(
-                        "The adjacency matrix must have the same number of rows as the dataset."
-                    )
-                if Adj.shape[1] != X.shape[0]:
-                    raise Exception(
-                        "The adjacency matrix must have the same number of columns as the dataset."
-                    )
+
+        # if G is not None:
+        if not isinstance(G, nx.Graph):
+            raise Exception("The input graph must be a networkx graph.")
+        if X is not None:
+            if G.number_of_nodes() != X.shape[0]:
+                raise Exception(
+                    "The number of nodes in the graph must be equal to the number of rows in the dataset."
+                )
+            for i, feature in enumerate(X):
+                G.nodes[i]["feature"] = feature
+        # if not nx.is_connected(G):
+        #    self._compute_subgraphs = True
 
         ### Setting up the distance computations and the similarity matrix
-        # self._G = G
-        self._Adj = Adj
+        self._G = G
         self._metric = metric
 
-        self._X = X
+        # self._X = X
 
         if custom_dist_fn is not None:
-            self._get_dist = custom_dist_fn
+
+            def compute_custom_dist(X=None, X2=None, G=None):
+                if mode in ["attributes", "full"]:
+                    if (X is None) and (G is not None):
+                        if (
+                            G.nodes[next(iter(G.nodes))].get("feature")
+                            is not None
+                        ):
+                            X = np.array(
+                                [G.nodes[i]["feature"] for i in G.nodes]
+                            )
+                        else:
+                            raise Exception(
+                                "No attribute data provided to compute distances."
+                            )
+
+                if check_for_duplicates and (X is not None):
+                    X = remove_duplicates(X)
+                    print(f"shape X:{X.shape}")
+
+                if X2 is None:
+                    X2 = X
+                else:
+                    if check_for_duplicates and (X is not None):
+                        X2 = remove_duplicates(X2)
+                        print(f"shape X2: {X2.shape}")
+                return custom_dist_fn(X=X, X2=X2, G=G)
+
+            self._get_dist = compute_custom_dist
         else:
 
-            def compute_distances(X=None, X2=None, Adj=None):
+            def compute_distances(X=None, X2=None, G=None):
                 return get_dist(
                     X=X,
                     X2=X2,
-                    Adj=Adj,
+                    G=G,
                     metric=metric,
                     mode=mode,
                     normalise_by_diameter=False,
+                    check_for_duplicates=check_for_duplicates,
                     **kwargs,
                 )
 
             self._get_dist = compute_distances
-
-        if metric != "precomputed":
-            self._D = self._get_dist(X, X2=None, Adj=self._Adj)
-            self._n = self._D.shape[0]
-            self._target_value = target_prop * self._D.shape[0]
-            self._Z = similarity_matrix(self._D)
-        else:
-            if X.shape[0] != X.shape[1]:
-                raise Exception(
-                    "The precomputed distance matrix must be square."
-                )
-
-            self._X = None
-            self._D = X
-            self._n = self._D.shape[0]
-            self._Z = similarity_matrix(self._D)
-            self._target_value = target_prop * self._D.shape[0]
 
         ### Check if the method for computing the magnitude is valid and set up the magnitude computations
         if method not in [
@@ -257,19 +287,47 @@ class Magnipy:
                 "The computation method must be one of 'cholesky', 'scipy', 'scipy_sym', 'naive', 'pinv', 'conjugate_gradient_iteration', 'cg', 'spread'."
             )
 
-        def compute_mag(Z, ts, n_ts=n_ts, get_weights=False):
-            return compute_magnitude_until_convergence(
-                Z,
-                ts=ts,
-                n_ts=n_ts,
-                method=method,
-                log_scale=log_scale,
-                get_weights=get_weights,
-                one_point_property=one_point_property,
-                perturb_singularities=perturb_singularities,
-                positive_magnitude=positive_magnitude,
-                input_distances=False,
-            )
+        # if self._compute_subgraphs:
+        def compute_mag(
+            Zs,
+            ts,
+            n_ts=n_ts,  # not used??
+            get_weights=False,
+            one_point_property=one_point_property,
+            perturb_singularities=perturb_singularities,
+            positive_magnitude=positive_magnitude,
+        ):
+            mags = []
+            for Z in Zs:
+                mag = compute_magnitude_from_distances(
+                    Z,
+                    ts=ts,
+                    method=method,
+                    get_weights=get_weights,
+                    one_point_property=one_point_property,
+                    perturb_singularities=perturb_singularities,
+                    positive_magnitude=positive_magnitude,
+                    input_distances=False,
+                )
+                mags.append(mag)
+            total_magnitude = np.sum([mag for mag in mags], axis=0)
+            return total_magnitude, ts
+
+        subgraphs, Ds = compute_subgraphs_with_dist(
+            G, dist_fn=self._get_dist, subgraphs=None
+        )
+        #### Suggestion Nadja
+        # subgraphs, Ds = compute_subgraphs_with_dist( #maybe pass X and X2 to this function?
+        #     G, X=X, X2=X, dist_fn=self._get_dist, subgraphs=None
+        # )
+        self._subgraphs = subgraphs
+        self._Ds = Ds
+        # self._D = self._get_dist(X, X2=None, Adj=self._Adj, G=self._G)
+        self._n = self._G.number_of_nodes()
+        # self._D.shape[0]
+        self._target_value = target_prop * G.number_of_nodes()
+        # self._Z = similarity_matrix(self._D)
+        self._Zs = [similarity_matrix(D) for D in Ds]
 
         self._compute_mag = compute_mag
         self._method = method
@@ -323,19 +381,19 @@ class Magnipy:
 
     def get_dist(self):
         """
-        Compute the distance matrix.
+        Compute the distance matrices.
         """
-        if (self._D is None) | self._recompute:
-            self._D = self._get_dist(self._X, X2=None, Adj=self._Adj)
-        return self._D
+        if (self._Ds is None) | self._recompute:
+            self._Ds = [self._get_dist(G=s) for s in self._subgraphs]
+        return self._Ds
 
     def get_similarity_matrix(self):
         """
         Compute the similarity matrix.
         """
-        if (self._Z is None) | self._recompute:
-            self._Z = similarity_matrix(self._D)
-        return self._Z
+        if (self._Zs is None) | self._recompute:
+            self._Zs = [similarity_matrix(D) for D in self._Ds]
+        return self._Zs
 
     #  ╭──────────────────────────────────────────────────────────╮
     #  │ Find the Evaluation Scales                               │
@@ -352,7 +410,7 @@ class Magnipy:
                     return self._compute_mag(X, ts)[0]
 
                 self._t_conv = guess_convergence_scale(
-                    D=self._Z,
+                    D=self._Zs,
                     comp_mag=comp_mag,
                     target_value=self._target_value,
                     guess=10,
@@ -360,7 +418,7 @@ class Magnipy:
 
             return self._t_conv
         elif self._scale_finding == "scattered":
-            return self._scale_when_almost_scattered(q=None)
+            return self._scale_when_almost_scattered(q=None)  # not defined
         elif self._scale_finding == "median_heuristic":
             return self._median_heuristic_scale()
 
@@ -369,18 +427,7 @@ class Magnipy:
         Compute the scales at which to evaluate the magnitude functions.
         """
         if (self._ts is None) | self._recompute:
-            if self._scale_finding == "scattered":
-                if (self._proportion_scattered is None) | self._recompute:
-                    _ = self._scale_when_almost_scattered(
-                        q=self._proportion_scattered
-                    )
-                self._ts = get_scales(
-                    self._t_almost_scattered,
-                    self._n_ts,
-                    log_scale=self._log_scale,
-                    one_point_property=self._one_point_property,
-                )
-            elif self._scale_finding == "convergence":
+            if self._scale_finding == "convergence":
                 if (self._t_conv is None) | self._recompute:
                     _ = self.get_t_conv()
                 self._ts = get_scales(
@@ -431,44 +478,6 @@ class Magnipy:
         self._weights = None
         self._ts_dim = None
 
-    def _scale_when_scattered(self):
-        """
-        Compute the scale at which the metric space is scattered.
-
-        Returns
-        -------
-        t_scattered : float
-            The scale at which the metric space is scattered.
-
-        References
-        ----------
-        [1] Leinster T. The magnitude of metric spaces. Documenta Mathematica. 2013 Jan 1;18:857-905.
-        """
-        if (self._t_scattered is None) | self._recompute:
-            self._t_scattered = scale_when_scattered(self._D)
-        return self._t_scattered
-
-    def _scale_when_almost_scattered(self, q=None):
-        """
-        Compute the scale at which the metric space is almost scattered.
-
-        Parameters
-        ----------
-        q : float
-            The proportion of points that are scattered.
-
-        Returns
-        -------
-        t_almost_scattered : float
-            The scale at which the metric space is almost scattered.
-        """
-
-        if (self._t_almost_scattered is None) | self._recompute:
-            self._t_almost_scattered = scale_when_almost_scattered(
-                self._D, n=self._n, q=q
-            )
-        return self._t_almost_scattered
-
     def _median_heuristic_scale(self):
         """
         Compute the scale using the median heuristic.
@@ -478,10 +487,14 @@ class Magnipy:
         t_median : float
             The scale computed using the median heuristic.
         """
-        from magnipy.magnitude.scales import median_heuristic_from_distances
+        from magnipy.magnitude.scales import median_heuristic
 
         if (self._t_median is None) | self._recompute:
-            self._t_median = median_heuristic_from_distances(self._D)
+            if self._compute_subgraphs:  # no longer used?
+                raise Exception("Not implemented for subgraphs.")
+            self._t_median = median_heuristic(
+                self._get_dist, G=None, subgraphs=self._subgraphs, Ds=self._Ds
+            )
         return self._t_median
 
     #  ╭──────────────────────────────────────────────────────────╮
@@ -499,15 +512,18 @@ class Magnipy:
         """
         if (self._weights is None) | self._recompute:
             ts = self.get_scales()
-            weights, ts = self._compute_mag(
-                Z=self._Z,
-                ts=ts,
-                get_weights=True,
-            )
+            weights = []
+            for Z in self._Zs:
+                w, ts = self._compute_mag(
+                    Z=Z,
+                    ts=ts,
+                    get_weights=True,
+                )
+                weights.append(w)
             self._weights = weights
             self._ts = ts
             if self._ts is None:
-                self._t_conv = ts[-1]
+                self._t_conv = ts[-1]  # ?
         return self._weights, self._ts
 
     def get_magnitude(self):
@@ -525,16 +541,23 @@ class Magnipy:
             (self._magnitude is None) & (self._weights is None)
         ) | self._recompute:
             ts = self.get_scales()
+
             self._magnitude, ts = self._compute_mag(
-                self._Z,
+                self._Zs,
                 ts=ts,
                 get_weights=False,
             )
-            if self._ts is None:
+
+            if self._ts is None:  # why
                 self._t_conv = ts[-1]
                 self._ts = ts
+
         elif (self._magnitude is None) & (not (self._weights is None)):
-            self._magnitude = magnitude_from_weights(self._weights)
+            total_mag = np.zeros(len(self._weights[0][0]))
+            for w in self._weights:
+                mag = magnitude_from_weights(w)
+                total_mag += mag
+            self._magnitude = total_mag
         return self._magnitude, self._ts
 
     def _eval_at_scales(self, ts_new, get_weights=False):
@@ -555,8 +578,9 @@ class Magnipy:
         ts : array_like, shape (`n_ts_new`, )
             The new scales at which the magnitude function has been evaluated.
         """
+
         mag, ts = self._compute_mag(
-            self._Z,
+            self._Zs,
             ts=ts_new,
             get_weights=get_weights,
         )
@@ -578,33 +602,18 @@ class Magnipy:
             The stepsize to use for exact computations of the slope.
         """
         if (self._magnitude_dimension_profile is None) | self._recompute:
-            if exact:
-                (
-                    self._magnitude_dimension_profile,
-                    self._ts_dim,
-                ) = magnitude_dimension_profile_exact(
-                    self._D,
-                    ts=self._ts,
-                    h=h,
-                    target_value=self._target_value,
-                    n_ts=self._n_ts,
-                    return_log_scale=self._return_log_scale,
-                    one_point_property=self._one_point_property,
-                    method=self._method,
-                    log_scale=self._log_scale,
-                )
-            else:
-                if self._magnitude is None:
-                    _, _ = self.get_magnitude()
-                (
-                    self._magnitude_dimension_profile,
-                    self._ts_dim,
-                ) = magitude_dimension_profile_interp(
-                    mag=self._magnitude,
-                    ts=self._ts,
-                    return_log_scale=self._return_log_scale,
-                    one_point_property=self._one_point_property,
-                )
+
+            if self._magnitude is None:
+                _, _ = self.get_magnitude()
+            (
+                self._magnitude_dimension_profile,
+                self._ts_dim,
+            ) = magitude_dimension_profile_interp(
+                mag=self._magnitude,
+                ts=self._ts,
+                return_log_scale=self._return_log_scale,
+                one_point_property=self._one_point_property,
+            )
         return self._magnitude_dimension_profile, self._ts_dim
 
     def get_magnitude_dimension(self, exact=False):
@@ -655,127 +664,6 @@ class Magnipy:
             name=self._name,
         )
 
-    #  ╭──────────────────────────────────────────────────────────╮
-    #  │ Operations with Magnipy Objects                          │
-    #  ╰──────────────────────────────────────────────────────────╯
-
-    def include_points(self, X_new, Adj_new=None, update_ts=False):
-        if self._X is None:
-            self._X = X_new
-            self._Adj = Adj_new
-            self._D = self._get_dist(self._X, Adj=self._Adj)
-            self._n = self._D.shape[0]
-            self._Z = similarity_matrix(self._D)
-        else:
-            X = np.concatenate((self._X, X_new), axis=0)
-            self._X = X
-            self._Adj = Adj_new
-            self._D = self._get_dist(
-                self._X,
-                Adj=self._Adj,
-            )
-            self._Z = similarity_matrix(self._D)
-            self._n = self._D.shape[0]
-        if update_ts:
-            self._ts = None
-            self._t_conv = None
-            self._t_scattered = None
-            self._t_almost_scattered = None
-            self._t_median = None
-        self._magnitude = None
-        self._weights = None
-        self._magnitude_dimension_profile = None
-        self._magnitude_dimension = None
-        self._magnitude_area = None
-        self._weights = None
-        self._ts_dim = None
-
-    def remove_points(self, ind_delete, update_ts=False):
-        """
-        Remove observations.
-
-        Parameters
-        ----------
-        ind_delete :
-            The indices of the observations to remove.
-        update_ts : bool
-            Whether to update the scales of evaluation.
-
-        Returns
-        -------
-        Magnipy :
-            A Magnipy object with the observations removed.
-        """
-
-        if (self._X is None) and (self._Adj is None):
-            raise Exception("There are no points to remove!")
-        else:
-            if self._X is not None:
-                X = np.delete(self._X, ind_delete, axis=0)
-                self._X = X
-
-            if (self._Adj is not None) | (self._metric == "isomap"):
-                if self._Adj is not None:
-                    self._Adj = np.delete(self._Adj, ind_delete, axis=0)
-                    self._Adj = np.delete(self._Adj, ind_delete, axis=1)
-                D = self._get_dist(
-                    self._X,
-                    Adj=self._Adj,
-                )
-            else:
-                D = np.delete(self._D, ind_delete, axis=0)
-                D = np.delete(D, ind_delete, axis=1)
-            self._D = D
-            self._Z = similarity_matrix(self._D)
-            self._n = self._D.shape[0]
-        if update_ts:
-            self._ts = None
-            self._t_conv = None
-            self._t_scattered = None
-            self._t_almost_scattered = None
-            self._t_median = None
-        self._magnitude = None
-        self._weights = None
-        self._magnitude_dimension_profile = None
-        self._magnitude_dimension = None
-        self._magnitude_area = None
-        self._weights = None
-        self._ts_dim = None
-
-    def _cut_until_scale(self, t_cut):
-        """
-        Cut the magnitude functions at a given scale.
-
-        Parameters
-        ----------
-        t_cut : float
-            The scale at which to cut the magnitude functions.
-        """
-
-        if self._magnitude is not None:
-            self._magnitude, self._ts = cut_until_scale(
-                self._ts,
-                self._magnitude,
-                t_cut=t_cut,
-                D=self._Z,
-                method=self._method,
-                magnitude_from_distances=self._compute_mag,
-            )
-        elif self._ts is not None:
-            self._ts = cut_ts(self._ts, t_cut)
-        self._magnitude_area = None
-        self._magnitude_dimension = None
-        if self._magnitude_dimension_profile is not None:
-            self._magnitude_dimension_profile, self._ts_dim = cut_until_scale(
-                self._ts_dim,
-                self._magnitude_dimension_profile,
-                t_cut=t_cut,
-                D=None,
-                method=self._method,
-            )
-        if self._weights is not None:
-            self._weights = self._weights[: len()]
-
     def copy(self):
         """
         Return a copy of the Magnipy object.
@@ -804,16 +692,18 @@ class Magnipy:
         combined_magnitude, combined_ts = diff_of_functions(
             self._magnitude,
             self._ts,
-            self._Z,
+            None,
             other._magnitude,
             other._ts,
-            other._Z,
+            None,
             method=self._method,
             exact=exact,
             t_cut=t_cut,
             magnitude_from_distances=self._compute_mag,
             magnitude_from_distances2=other._compute_mag,
         )
+        # combined._n_ts = len(combined._ts)
+
         return combined_magnitude, combined_ts
 
     def _add(self, other, t_cut=None, exact=False):
@@ -838,16 +728,17 @@ class Magnipy:
         combined_magnitude, combined_ts = sum_of_functions(
             self._magnitude,
             self._ts,
-            self._Z,
+            None,
             other._magnitude,
             other._ts,
-            other._Z,
+            None,
             method=self._method,
             exact=exact,
             t_cut=t_cut,
             magnitude_from_distances=self._compute_mag,
             magnitude_from_distances2=other._compute_mag,
         )
+        # combined._n_ts = len(combined._ts)
         return combined_magnitude, combined_ts
 
     #  ╭──────────────────────────────────────────────────────────╮
@@ -856,7 +747,6 @@ class Magnipy:
 
     def MagArea(
         self,
-        t_cut=None,
         integration="trapz",
         absolute_area=True,
         scale=False,
@@ -890,8 +780,7 @@ class Magnipy:
             self._magnitude_area = mag_area(
                 magnitude=self._magnitude,
                 ts=self._ts,
-                D=self._D,
-                t_cut=t_cut,
+                D=None,
                 integration=integration,  # normalise_by_cardinality=False,
                 absolute_area=absolute_area,
                 scale=scale,
@@ -944,10 +833,10 @@ class Magnipy:
         mag_difference = mag_diff(
             self._magnitude,
             self._ts,
-            self._D,
+            None,
             other._magnitude,
             other._ts,
-            other._D,
+            None,
             method=self._method,
             exact=exact,
             t_cut=t_cut,

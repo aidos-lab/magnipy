@@ -1,9 +1,15 @@
+"Methods for computing the magnitude weight vectors."
+
 import numpy as np
 from scipy.linalg import cho_factor
 from scipy.linalg import solve_triangular, solve
 from scipy.sparse.linalg import cg
 import numexpr as ne
 import torch
+
+#  ╭──────────────────────────────────────────────────────────╮
+#  │ Magnitude weight vector computations                     │
+#  ╰──────────────────────────────────────────────────────────╯
 
 
 def weights_cholesky(Z):
@@ -289,6 +295,12 @@ def weights_from_similarities_cg(Z, ts):
     return weights
 
 
+#  ╭──────────────────────────────────────────────────────────╮
+#  │ Metric space spread computations                         │
+#  │   (reciprocal mean similarities)                         │
+#  ╰──────────────────────────────────────────────────────────╯
+
+
 def weights_spread(Z):
     """
     Compute the spread weight vector from a similarity matrix.
@@ -327,6 +339,11 @@ def weights_spread_torch(Z):
 
     """
     return 1 / torch.sum(Z, axis=0)
+
+
+#  ╭──────────────────────────────────────────────────────────╮
+#  │ Compute weights at multiple scales                       │
+#  ╰──────────────────────────────────────────────────────────╯
 
 
 def spread_weights(Z, ts):
@@ -423,6 +440,11 @@ def magnitude_weights(
     return weights  # np.array(
 
 
+#  ╭──────────────────────────────────────────────────────────╮
+#  │ Helper functions                                         │
+#  ╰──────────────────────────────────────────────────────────╯
+
+
 def positive_weights_only(weights):
     """
     Ensure that the magnitude weights are positive.
@@ -458,6 +480,11 @@ def magnitude_from_weights(weights):
         A vector with the values of the magnitude function.
     """
     return weights.sum(axis=0)
+
+
+#  ╭──────────────────────────────────────────────────────────╮
+#  │ Compute the similarity matrix                            │
+#  ╰──────────────────────────────────────────────────────────╯
 
 
 def similarity_matrix(D):

@@ -1,3 +1,5 @@
+"Methods for computing the magnitude dimension from data."
+
 import numpy as np
 from magnipy.magnitude.compute import (
     compute_t_conv,

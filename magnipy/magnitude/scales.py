@@ -1,4 +1,7 @@
+"Methods for choosing the scale parameters."
+
 import numpy as np
+import networkx as nx
 
 
 def get_scales(t_conv, n_ts=10, log_scale=False, one_point_property=True):
@@ -82,6 +85,66 @@ def scale_when_almost_scattered(D, n=None, q=None):
     if q is None:
         q = 1 / n
     return np.log(n - 1) / np.quantile(D[np.nonzero(D)], q=q)
+
+
+def median_heuristic_from_distances(D):
+    """
+    Compute the median heuristic for the scale selection.
+
+    Parameters
+    ----------
+    D : np.array
+        Distance matrix.
+
+    Returns
+    -------
+    float
+        The scale selected by the median heuristic.
+    """
+
+    d_flat = D[np.triu_indices(D.shape[0], k=1)]
+    median = np.median(d_flat)
+    return 1 / np.sqrt(median / 2)
+
+
+def median_heuristic(dist_fn, G=None, subgraphs=None, Ds=None):
+    """
+    Compute the median heuristic for the scale selection.
+
+
+    Parameters
+    ----------
+    dist_fn : function
+        A function that takes a graph as input and returns a distance matrix.
+    G : networkx.Graph, optional
+        A graph. If provided, the median heuristic will be computed on this graph.
+    subgraphs : list of networkx.Graph, optional
+        A list of subgraphs. If provided, the median heuristic will be computed
+        on each subgraph and the median of the medians will be returned.
+
+    Returns
+    -------
+    float
+        The scale selected by the median heuristic.
+    """
+    if Ds is None:
+        if subgraphs is None:
+            subgraphs = [
+                G.subgraph(c).copy() for c in nx.connected_components(G)
+            ]
+        distances = []
+        for s in subgraphs:
+            D = dist_fn(s)
+            d_flat = D[np.triu_indices(D.shape[0], k=1)]
+            distances = distances + list(d_flat)
+    else:
+        distances = []
+        for D in Ds:
+            d_flat = D[np.triu_indices(D.shape[0], k=1)]
+            distances = distances + list(d_flat)
+
+    median = np.median(distances)
+    return 1 / np.sqrt(median / 2)
 
 
 def cut_ts(ts, t_cut):
