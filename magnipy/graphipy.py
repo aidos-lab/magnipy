@@ -225,13 +225,8 @@ class Graphipy:
             def compute_custom_dist(X=None, X2=None, G=None):
                 if mode in ["attributes", "full"]:
                     if (X is None) and (G is not None):
-                        if (
-                            G.nodes[next(iter(G.nodes))].get("feature")
-                            is not None
-                        ):
-                            X = np.array(
-                                [G.nodes[i]["feature"] for i in G.nodes]
-                            )
+                        if G.nodes[next(iter(G.nodes))].get("feature") is not None:
+                            X = np.array([G.nodes[i]["feature"] for i in G.nodes])
                         else:
                             raise Exception(
                                 "No attribute data provided to compute distances."
@@ -537,9 +532,7 @@ class Graphipy:
         ts : array_like, shape (`n_ts`, )
             The scales at which the magnitude function has been evaluated.
         """
-        if (
-            (self._magnitude is None) & (self._weights is None)
-        ) | self._recompute:
+        if ((self._magnitude is None) & (self._weights is None)) | self._recompute:
             ts = self.get_scales()
 
             self._magnitude, ts = self._compute_mag(

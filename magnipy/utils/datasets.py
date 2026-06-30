@@ -54,9 +54,7 @@ def hawkes_process(lam, alpha):
     while next < total_so_far:
         next_X = X[next]  # select the next point
         N_children = np.random.poisson(alpha)
-        new_X = np.tile(next_X, (N_children, 1)) + sigma * np.random.rand(
-            N_children, 2
-        )
+        new_X = np.tile(next_X, (N_children, 1)) + sigma * np.random.rand(N_children, 2)
         # update the next rows of X with the coordinates of the children
         X[total_so_far : total_so_far + N_children, :] = new_X
         total_so_far += N_children

@@ -1,4 +1,5 @@
 """File for creating example datasets for user tutorials."""
+
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -32,9 +33,7 @@ def get_Xs():
     # Sample 100 points each from Gaussians at (0.5, 0.5) and (1.5, 1.5)
     mean2 = [[0.5, 0.5], [1.5, 1.5]]
     cov2 = np.eye(2) * 0.02
-    X3 = np.concatenate(
-        [sample_points_gaussian(mean, cov2, 100) for mean in mean2]
-    )
+    X3 = np.concatenate([sample_points_gaussian(mean, cov2, 100) for mean in mean2])
 
     # Sample 200 points from a Gaussian centered at (0, 0.5)
     mean1 = [0.5, 0.5]
@@ -136,9 +135,7 @@ def show_magnitude_function(df, ts):
 def plot_df(df, title):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection="3d")
-    ax.scatter(
-        df["x"], df["y"], df["z"], c=df["z"], cmap="viridis", marker="o", s=5
-    )
+    ax.scatter(df["x"], df["y"], df["z"], c=df["z"], cmap="viridis", marker="o", s=5)
     plt.title(title)
     plt.show()
 
@@ -147,9 +144,7 @@ def plot_dfs(dfs, titles):
     n = len(dfs)
 
     # Create a figure with 1 row and n columns of 3D subplots
-    fig, axes = plt.subplots(
-        1, n, figsize=(18, 6), subplot_kw={"projection": "3d"}
-    )
+    fig, axes = plt.subplots(1, n, figsize=(18, 6), subplot_kw={"projection": "3d"})
 
     for idx in range(0, n):
         df = dfs[idx]
@@ -194,18 +189,12 @@ def plot_matrix_heatmaps(matrices, distance=True, metric="Euclidean Distance"):
     vmin = min(matrices[0].min(), matrices[1].min(), matrices[2].min())
     vmax = max(matrices[0].max(), matrices[1].max(), matrices[2].max())
 
-    rando_heatmap = axs[0].imshow(
-        matrices[0], cmap="viridis", vmin=vmin, vmax=vmax
-    )
+    rando_heatmap = axs[0].imshow(matrices[0], cmap="viridis", vmin=vmin, vmax=vmax)
     axs[0].set_title("Random")
     axs[0].set_ylabel("Index of Datapoint")
-    blob_heatmap = axs[1].imshow(
-        matrices[1], cmap="viridis", vmin=vmin, vmax=vmax
-    )
+    blob_heatmap = axs[1].imshow(matrices[1], cmap="viridis", vmin=vmin, vmax=vmax)
     axs[1].set_title("Blobs / Clusters")
-    swiss_heatmap = axs[2].imshow(
-        matrices[2], cmap="viridis", vmin=vmin, vmax=vmax
-    )
+    swiss_heatmap = axs[2].imshow(matrices[2], cmap="viridis", vmin=vmin, vmax=vmax)
     axs[2].set_title("Swiss Roll")
 
     fig.colorbar(
@@ -220,9 +209,7 @@ def plot_matrix_heatmaps(matrices, distance=True, metric="Euclidean Distance"):
 
 def plot_weights(dfs, ts, weights, titles):
     # scaling colorbar
-    vmin = min(
-        weights[0][:, 0].min(), weights[1][:, 0].min(), weights[2][:, 0].min()
-    )
+    vmin = min(weights[0][:, 0].min(), weights[1][:, 0].min(), weights[2][:, 0].min())
     vmax = max(
         weights[0][:, -1].max(),
         weights[1][:, -1].max(),
@@ -286,9 +273,7 @@ def plot_weights(dfs, ts, weights, titles):
                         "$t=1/2 * t_{{conv}}$ \n1/2 of the Convergence Scale"
                     )
                 else:
-                    axes[idx, t_idx].set_title(
-                        "$t=t_{{conv}}$ \nConvergence Scale"
-                    )
+                    axes[idx, t_idx].set_title("$t=t_{{conv}}$ \nConvergence Scale")
 
     # Adjust layout and show the figure
     cbar = fig.colorbar(
@@ -446,9 +431,7 @@ def plot_simulation_progression(Xs, colors, size):
 
     fig, ax = plt.subplots(1, 3, figsize=(15, 5))
 
-    ax[0].scatter(
-        Xs[0][:, 0], Xs[0][:, 1], c=colors[0], cmap="viridis", alpha=0.6
-    )
+    ax[0].scatter(Xs[0][:, 0], Xs[0][:, 1], c=colors[0], cmap="viridis", alpha=0.6)
     ax[0].set_xlim(x_int)
     ax[0].set_ylim(y_int)
     ax[0].set_title("Beginning of Simulation (X0)")
@@ -462,9 +445,7 @@ def plot_simulation_progression(Xs, colors, size):
     ax[1].set_title("Midway Through Simulation")
     ax[1].set_xlim(x_int)
     ax[1].set_ylim(y_int)
-    ax[2].scatter(
-        Xs[-1][:, 0], Xs[-1][:, 1], c=colors[-1], cmap="viridis", alpha=0.6
-    )
+    ax[2].scatter(Xs[-1][:, 0], Xs[-1][:, 1], c=colors[-1], cmap="viridis", alpha=0.6)
     ax[2].set_title("End of Simulation")
     ax[2].set_xlim(x_int)
     ax[2].set_ylim(y_int)
@@ -504,9 +485,7 @@ def create_animation(
 
     # Initial figure
     fig, ax = plt.subplots(figsize=(10, 5))
-    scat = ax.scatter(
-        Xs[0][:, 0], Xs[0][:, 1], c=colors[0], cmap="viridis", alpha=0.6
-    )
+    scat = ax.scatter(Xs[0][:, 0], Xs[0][:, 1], c=colors[0], cmap="viridis", alpha=0.6)
 
     def update(frame):
         fig.clear()
@@ -627,10 +606,7 @@ def plot_graphs(
 
     if features == None:
         features = [
-            [
-                np.reshape(np.array([0] * G.number_of_nodes()), (-1, 1))
-                for G in graphs
-            ]
+            [np.reshape(np.array([0] * G.number_of_nodes()), (-1, 1)) for G in graphs]
         ]
         featurenames = ["1 class"]
 
@@ -691,7 +667,7 @@ def plot_graphs(
         plt.show()
 
 
-def plot_mag_funs(cols, graphnames, magnis, ts, title, type='magnitude'):
+def plot_mag_funs(cols, graphnames, magnis, ts, title, type="magnitude"):
     fig, ax = plt.subplots(1, len(cols), figsize=(5 * len(cols), 5))
 
     for i, col in enumerate(cols):
@@ -702,10 +678,10 @@ def plot_mag_funs(cols, graphnames, magnis, ts, title, type='magnitude'):
             ax[i].spines["top"].set_visible(False)
             ax[i].spines["right"].set_visible(False)
 
-    if type == 'magnitude':
+    if type == "magnitude":
         ax[0].set_ylabel("magnitude", fontsize=14)
-    elif type == 'spread':
-        ax[0].set_ylabel('spread', fontsize=14)
+    elif type == "spread":
+        ax[0].set_ylabel("spread", fontsize=14)
 
     fig.suptitle(title, fontsize=18, y=1)
 
@@ -718,16 +694,12 @@ def plot_dist_matrices(graphis, graphnames, rows, metrics):
 
     for i, row in enumerate(rows):
         matrices = {
-            graphnames[i]: graphis[row][i].get_dist()
-            for i in range(len(graphnames))
+            graphnames[i]: graphis[row][i].get_dist() for i in range(len(graphnames))
         }
         axs = subfigs[i].subplots(1, 3, sharey=False)
         vmin = min([matrices[i][0].min() for i in matrices.keys()])
         vmax = max(
-            [
-                np.ma.masked_invalid(matrices[i][0].max())
-                for i in matrices.keys()
-            ]
+            [np.ma.masked_invalid(matrices[i][0].max()) for i in matrices.keys()]
         )
         for j, name in enumerate(matrices):
             heatmap = axs[j].imshow(

@@ -111,14 +111,10 @@ def magnitude_dimension_profile_exact(
     lower_ts = np.exp(log_ts - h)
     upper_ts = np.exp(log_ts + h)
     lower = np.log(
-        compute_magnitude_from_distances(
-            D, lower_ts, method=method, get_weights=False
-        )
+        compute_magnitude_from_distances(D, lower_ts, method=method, get_weights=False)
     )
     upper = np.log(
-        compute_magnitude_from_distances(
-            D, upper_ts, method=method, get_weights=False
-        )
+        compute_magnitude_from_distances(D, upper_ts, method=method, get_weights=False)
     )
     slopes = (upper - lower) / (2 * h)
     if return_log_scale:

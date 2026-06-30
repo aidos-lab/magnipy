@@ -172,18 +172,14 @@ def to_attributed_graph(X, G):
         An attributed graph where each node has a 'feature' attribute corresponding to the rows in X.
     """
     if G.number_of_nodes() != X.shape[0]:
-        raise ValueError(
-            "Number of nodes in G must match number of observations in X."
-        )
+        raise ValueError("Number of nodes in G must match number of observations in X.")
 
     for i, feature in enumerate(X):
         G.nodes[i]["feature"] = feature
     return G
 
 
-def distances_geodesic(
-    X=None, X2=None, Adj=None, G=None, metric="euclidean", **kwargs
-):
+def distances_geodesic(X=None, X2=None, Adj=None, G=None, metric="euclidean", **kwargs):
     """
     Compute a weighted / geodesic distance matrix from a graph.
 
@@ -234,9 +230,7 @@ def distances_geodesic(
     # Step 3: Compute geodesic distances using Dijkstra's algorithm on the weighted adjacency matrix
     # geodesic_distances = shortest_path(weighted_adjacency, directed=False)
     nx_geodesic_dist_dict = dict(
-        nx.shortest_path_length(
-            G, weight=lambda u, v, d: feature_distances[u][v]
-        )
+        nx.shortest_path_length(G, weight=lambda u, v, d: feature_distances[u][v])
     )
     nx_shortest_path_lengths = np.array(
         [[nx_geodesic_dist_dict[i][j] for j in G.nodes()] for i in G.nodes()]
@@ -707,9 +701,7 @@ def get_dist(
             if G.nodes[next(iter(G.nodes))].get("feature") is not None:
                 X = np.array([G.nodes[i]["feature"] for i in G.nodes])
             else:
-                raise Exception(
-                    "No attribute data provided to compute distances."
-                )
+                raise Exception("No attribute data provided to compute distances.")
 
     if check_for_duplicates and (X is not None):
         X = remove_duplicates(X)
@@ -742,9 +734,7 @@ def get_dist(
         elif metric in scipy_distance_metrics:
             dist = distances_scipy(X, X2, metric=metric, **kwargs)
         else:
-            raise Exception(
-                f"Metric {metric} not yet implemented for attributes mode."
-            )
+            raise Exception(f"Metric {metric} not yet implemented for attributes mode.")
     else:
         if (Adj is not None) or (G is not None):
             if mode == "structure":
